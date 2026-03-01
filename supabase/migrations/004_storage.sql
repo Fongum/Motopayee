@@ -1,0 +1,29 @@
+-- ============================================================
+-- Migration 004 — Storage Buckets
+-- ============================================================
+-- NOTE: Storage buckets cannot be created via the SQL editor
+-- in Supabase's managed environment (postgres role does not
+-- own the storage schema).
+--
+-- Create the two buckets manually in the Supabase Dashboard:
+--   Dashboard → Storage → New Bucket
+--
+--   1. Name: listing-media
+--      Public: OFF (private)
+--      File size limit: 50 MB
+--      Allowed MIME types: image/jpeg, image/png, image/webp, video/mp4
+--
+--   2. Name: documents-private
+--      Public: OFF (private)
+--      File size limit: 20 MB
+--      Allowed MIME types: image/jpeg, image/png, application/pdf
+--
+-- Storage RLS policies are NOT needed — all storage access
+-- is server-side via the service role key (supabaseAdmin),
+-- which bypasses RLS. No client ever touches storage directly.
+--
+-- This file is intentionally a no-op so migrations stay
+-- in sequence without failing.
+-- ============================================================
+
+select 1; -- no-op

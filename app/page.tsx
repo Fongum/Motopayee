@@ -1,101 +1,112 @@
-import Image from "next/image";
+import Link from 'next/link';
+import Navbar from './(components)/Navbar';
+import Footer from './(components)/Footer';
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <>
+      <Navbar />
+      <main>
+        {/* Hero */}
+        <section className="bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500 text-white py-24 px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-6">
+              Achetez, vendez et financez votre véhicule au Cameroun
+            </h1>
+            <p className="text-blue-100 text-lg mb-10 max-w-2xl mx-auto">
+              MotoPayee connecte acheteurs, vendeurs et institutions de microfinance pour
+              rendre l&apos;accès au véhicule simple, transparent et abordable.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/listings"
+                className="bg-white text-blue-700 font-semibold px-8 py-3 rounded-xl hover:bg-blue-50 transition"
+              >
+                Parcourir les véhicules
+              </Link>
+              <Link
+                href="/register"
+                className="bg-blue-800 text-white font-semibold px-8 py-3 rounded-xl hover:bg-blue-900 transition border border-blue-400"
+              >
+                Commencer gratuitement
+              </Link>
+            </div>
+          </div>
+        </section>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+        {/* How it works */}
+        <section className="py-20 px-4 bg-gray-50">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-3xl font-bold text-center text-gray-900 mb-4">Comment ça marche</h2>
+            <p className="text-gray-500 text-center mb-12">Un processus simple et transparent en quelques étapes</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[
+                {
+                  step: '1',
+                  title: 'Trouvez votre véhicule',
+                  desc: 'Parcourez nos annonces vérifiées avec photos, inspection et prix évalués par des experts.',
+                  icon: '🔍',
+                },
+                {
+                  step: '2',
+                  title: "Vérifiez l'éligibilité",
+                  desc: 'Notre système calcule automatiquement votre éligibilité au financement selon votre zone et vos revenus.',
+                  icon: '✅',
+                },
+                {
+                  step: '3',
+                  title: 'Obtenez votre financement',
+                  desc: 'Déposez vos documents, notre équipe de vérificateurs les traite rapidement pour vous connecter à une IMF.',
+                  icon: '💰',
+                },
+              ].map((item) => (
+                <div key={item.step} className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm text-center">
+                  <div className="text-4xl mb-4">{item.icon}</div>
+                  <div className="text-xs font-bold text-blue-600 uppercase tracking-wide mb-2">Étape {item.step}</div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">{item.title}</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Stats */}
+        <section className="py-16 px-4 bg-white">
+          <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            {[
+              { label: 'Véhicules listés', value: '500+' },
+              { label: 'Demandes traitées', value: '1 200+' },
+              { label: 'Zones couvertes', value: '3' },
+              { label: "Taux d'approbation", value: '72%' },
+            ].map((stat) => (
+              <div key={stat.label}>
+                <p className="text-3xl font-bold text-blue-600">{stat.value}</p>
+                <p className="text-sm text-gray-500 mt-1">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* CTA strip */}
+        <section className="bg-blue-600 text-white py-16 px-4">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">Prêt à commencer ?</h2>
+            <p className="text-blue-100 mb-8">
+              Créez un compte gratuit et accédez à toutes les fonctionnalités de MotoPayee.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/apply" className="bg-white text-blue-700 font-semibold px-6 py-3 rounded-xl hover:bg-blue-50">
+                Je veux financer un véhicule
+              </Link>
+              <Link href="/sell" className="bg-blue-700 border border-blue-400 text-white font-semibold px-6 py-3 rounded-xl hover:bg-blue-800">
+                Je veux vendre un véhicule
+              </Link>
+            </div>
+          </div>
+        </section>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      <Footer />
+    </>
   );
 }
