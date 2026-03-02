@@ -4,20 +4,17 @@ import Navbar from '../../(components)/Navbar';
 import Footer from '../../(components)/Footer';
 import PriceBandBadge from '../../(components)/PriceBandBadge';
 import ZoneBadge from '../../(components)/ZoneBadge';
+import { supabaseAdmin } from '@/lib/auth/server';
 import type { Listing } from '@/lib/types';
 
 async function getListing(id: string): Promise<Listing | null> {
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL}/api/listings/${id}`,
-      { cache: 'no-store' }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.listing ?? null;
-  } catch {
-    return null;
-  }
+  const { data } = await supabaseAdmin
+    .from('listings')
+    .select('*, vehicle:vehicles(*), media:media_assets(*)')
+    .eq('id', id)
+    .eq('status', 'published')
+    .single();
+  return data as unknown as Listing | null;
 }
 
 function formatXAF(amount: number): string {

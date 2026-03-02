@@ -1,6 +1,7 @@
 import Navbar from '../(components)/Navbar';
 import Footer from '../(components)/Footer';
 import ListingCard from '../(components)/ListingCard';
+import { supabaseAdmin } from '@/lib/auth/server';
 import type { Listing } from '@/lib/types';
 
 interface SearchParams {
@@ -13,21 +14,26 @@ interface SearchParams {
 }
 
 async function getListings(params: SearchParams) {
-  const url = new URL(`${process.env.NEXT_PUBLIC_APP_URL}/api/listings`);
-  if (params.zone) url.searchParams.set('zone', params.zone);
-  if (params.make) url.searchParams.set('make', params.make);
-  if (params.model) url.searchParams.set('model', params.model);
-  if (params.min_price) url.searchParams.set('min_price', params.min_price);
-  if (params.max_price) url.searchParams.set('max_price', params.max_price);
-  if (params.page) url.searchParams.set('page', params.page);
+  const page = parseInt(params.page ?? '1', 10);
+  const limit = 20;
+  const offset = (page - 1) * limit;
 
-  try {
-    const res = await fetch(url.toString(), { cache: 'no-store' });
-    if (!res.ok) return { listings: [], total: 0 };
-    return res.json() as Promise<{ listings: Listing[]; total: number }>;
-  } catch {
-    return { listings: [], total: 0 };
-  }
+  let query = supabaseAdmin
+    .from('listings')
+    .select('*, vehicle:vehicles(*), media:media_assets(*)', { count: 'exact' })
+    .eq('status', 'published');
+
+  if (params.zone) query = query.eq('zone', params.zone);
+  if (params.make) query = query.ilike('vehicle.make', `%${params.make}%`);
+  if (params.model) query = query.ilike('vehicle.model', `%${params.model}%`);
+  if (params.min_price) query = query.gte('asking_price', parseFloat(params.min_price));
+  if (params.max_price) query = query.lte('asking_price', parseFloat(params.max_price));
+
+  const { data, count } = await query
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  return { listings: (data ?? []) as unknown as Listing[], total: count ?? 0 };
 }
 
 export default async function ListingsPage({
@@ -35,8 +41,8 @@ export default async function ListingsPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const { listings, total } = await getListings(searchParams);
   const page = parseInt(searchParams.page ?? '1', 10);
+  const { listings, total } = await getListings(searchParams);
 
   return (
     <>
