@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState } from 'react';
-import { logout } from '@/lib/auth/client';
-import { useUser } from '@/lib/auth/client';
+import { logout, useUser } from '@/lib/auth/client';
 import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
@@ -19,99 +19,112 @@ export default function Navbar() {
 
   function getPortalLink() {
     if (!user) return null;
-    if (user.role === 'buyer') return { href: '/me/applications', label: 'My Applications' };
-    if (user.role === 'seller_individual' || user.role === 'seller_dealer') return { href: '/me/listings', label: 'My Listings' };
-    if (['field_agent', 'inspector', 'verifier', 'admin'].includes(user.role)) return { href: '/admin/dashboard', label: 'Dashboard' };
+    if (user.role === 'buyer') return { href: '/me/applications', label: 'Mes demandes' };
+    if (user.role === 'seller_individual' || user.role === 'seller_dealer') return { href: '/me/listings', label: 'Mes annonces' };
+    if (['field_agent', 'inspector', 'verifier', 'admin'].includes(user.role)) return { href: '/admin/dashboard', label: 'Tableau de bord' };
     return null;
   }
 
   const portalLink = getPortalLink();
 
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <nav className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between py-3">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-blue-600">MotoPayee</span>
+          <Link href="/" className="flex items-center">
+            <Image src="/logo2.png" alt="MotoPayee" width={160} height={52} className="h-12 w-auto" priority />
           </Link>
 
           {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-6">
-            <Link href="/listings" className="text-sm text-gray-600 hover:text-gray-900">
-              Browse Vehicles
+          <div className="hidden md:flex items-center gap-8">
+            <Link href="/listings" className="text-sm font-medium text-gray-700 hover:text-[#1a3a6b] transition-colors">
+              Véhicules
             </Link>
-            <Link href="/sell" className="text-sm text-gray-600 hover:text-gray-900">
-              Sell a Vehicle
+            <Link href="/sell" className="text-sm font-medium text-gray-700 hover:text-[#1a3a6b] transition-colors">
+              Vendre
             </Link>
-            <Link href="/apply" className="text-sm text-gray-600 hover:text-gray-900">
-              Get Financing
+            <Link href="/apply" className="text-sm font-medium text-gray-700 hover:text-[#1a3a6b] transition-colors">
+              Financement
             </Link>
+
             {!loading && (
-              <>
-                {user ? (
-                  <div className="flex items-center gap-4">
-                    {portalLink && (
-                      <Link href={portalLink.href} className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                        {portalLink.label}
-                      </Link>
-                    )}
-                    <button
-                      onClick={handleLogout}
-                      className="text-sm text-gray-500 hover:text-gray-700"
-                    >
-                      Sign out
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3">
-                    <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900">
-                      Sign in
+              user ? (
+                <div className="flex items-center gap-4">
+                  {portalLink && (
+                    <Link href={portalLink.href} className="text-sm font-semibold text-[#1a3a6b] hover:text-[#3d9e3d] transition-colors">
+                      {portalLink.label}
                     </Link>
-                    <Link
-                      href="/register"
-                      className="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                    >
-                      Get Started
-                    </Link>
-                  </div>
-                )}
-              </>
+                  )}
+                  <button
+                    onClick={handleLogout}
+                    className="text-sm text-gray-500 hover:text-gray-700 border border-gray-300 px-4 py-2 rounded-lg transition"
+                  >
+                    Déconnexion
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <Link href="/login" className="text-sm font-medium text-[#1a3a6b] hover:text-[#3d9e3d] transition-colors">
+                    Connexion
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="text-sm font-semibold bg-[#3d9e3d] text-white px-5 py-2.5 rounded-lg hover:bg-[#2d8a2d] transition shadow-sm"
+                  >
+                    Commencer
+                  </Link>
+                </div>
+              )
             )}
           </div>
 
           {/* Mobile toggle */}
           <button
-            className="md:hidden p-2 rounded-md text-gray-500 hover:text-gray-700"
+            className="md:hidden p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition"
             onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
           >
-            <span className="sr-only">Menu</span>
-            {menuOpen ? '✕' : '☰'}
+            {menuOpen ? (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
           </button>
         </div>
       </div>
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden border-t border-gray-200 px-4 py-4 space-y-3">
-          <Link href="/listings" className="block text-sm text-gray-700">Browse Vehicles</Link>
-          <Link href="/sell" className="block text-sm text-gray-700">Sell a Vehicle</Link>
-          <Link href="/apply" className="block text-sm text-gray-700">Get Financing</Link>
-          {user ? (
-            <>
-              {portalLink && (
-                <Link href={portalLink.href} className="block text-sm text-blue-600 font-medium">
-                  {portalLink.label}
+        <div className="md:hidden border-t border-gray-100 bg-white px-4 py-5 space-y-4">
+          <Link href="/listings" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Véhicules</Link>
+          <Link href="/sell" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Vendre</Link>
+          <Link href="/apply" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Financement</Link>
+          <div className="pt-2 border-t border-gray-100">
+            {user ? (
+              <>
+                {portalLink && (
+                  <Link href={portalLink.href} onClick={() => setMenuOpen(false)} className="block text-sm font-semibold text-[#1a3a6b] py-1">{portalLink.label}</Link>
+                )}
+                <button onClick={handleLogout} className="block text-sm text-gray-500 py-1">Déconnexion</button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 py-1 mb-2">Connexion</Link>
+                <Link
+                  href="/register"
+                  onClick={() => setMenuOpen(false)}
+                  className="block w-full text-center text-sm font-semibold bg-[#3d9e3d] text-white px-5 py-3 rounded-lg"
+                >
+                  Commencer gratuitement
                 </Link>
-              )}
-              <button onClick={handleLogout} className="block text-sm text-gray-500">Sign out</button>
-            </>
-          ) : (
-            <>
-              <Link href="/login" className="block text-sm text-gray-700">Sign in</Link>
-              <Link href="/register" className="block text-sm font-medium text-blue-600">Get Started</Link>
-            </>
-          )}
+              </>
+            )}
+          </div>
         </div>
       )}
     </nav>
