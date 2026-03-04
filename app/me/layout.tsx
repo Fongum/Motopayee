@@ -11,6 +11,7 @@ export default async function MeLayout({ children }: { children: React.ReactNode
   const navLinks = user.role === 'buyer'
     ? [
         { href: '/me/applications', label: 'Mes demandes' },
+        { href: '/me/favourites', label: 'Mes favoris' },
       ]
     : [
         { href: '/me/listings', label: 'Mes annonces' },

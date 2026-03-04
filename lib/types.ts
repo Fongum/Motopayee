@@ -26,9 +26,19 @@ export interface Profile {
   zone: string | null;
   role: Role;
   status: 'active' | 'inactive' | 'suspended';
+  is_verified: boolean;
   last_login_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+// --------------- Favourite ---------------
+export interface Favourite {
+  id: string;
+  user_id: string;
+  listing_id: string;
+  created_at: string;
+  listing?: Listing;
 }
 
 // --------------- Dealer ---------------

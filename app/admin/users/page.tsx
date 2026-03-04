@@ -2,6 +2,7 @@ import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
 import { redirect } from 'next/navigation';
 import { isAdminRole } from '@/lib/auth/roles';
 import type { Profile } from '@/lib/types';
+import VerifyToggle from '@/app/(components)/VerifyToggle';
 
 const ROLE_COLORS: Record<string, string> = {
   buyer: 'bg-gray-100 text-gray-700',
@@ -80,12 +81,13 @@ export default async function UsersPage({
               <th className="text-left px-4 py-3 font-medium text-gray-700">Rôle</th>
               <th className="text-left px-4 py-3 font-medium text-gray-700">Statut</th>
               <th className="text-left px-4 py-3 font-medium text-gray-700">Zone</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-700">Vérifié</th>
               <th className="text-left px-4 py-3 font-medium text-gray-700">Inscrit</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {profiles.length === 0 ? (
-              <tr><td colSpan={6} className="text-center py-8 text-gray-400">Aucun utilisateur</td></tr>
+              <tr><td colSpan={7} className="text-center py-8 text-gray-400">Aucun utilisateur</td></tr>
             ) : profiles.map((profile) => (
               <tr key={profile.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 font-medium text-gray-900">{profile.full_name ?? '—'}</td>
@@ -101,6 +103,16 @@ export default async function UsersPage({
                   </span>
                 </td>
                 <td className="px-4 py-3 text-gray-500">{profile.zone ?? '—'}</td>
+                <td className="px-4 py-3">
+                  {['seller_individual', 'seller_dealer'].includes(profile.role) ? (
+                    <VerifyToggle
+                      userId={profile.id}
+                      initialVerified={(profile as Profile & { is_verified: boolean }).is_verified ?? false}
+                    />
+                  ) : (
+                    <span className="text-gray-300 text-xs">—</span>
+                  )}
+                </td>
                 <td className="px-4 py-3 text-gray-400 text-xs">
                   {new Date(profile.created_at).toLocaleDateString('fr-FR')}
                 </td>

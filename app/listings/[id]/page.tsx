@@ -5,14 +5,16 @@ import Navbar from '../../(components)/Navbar';
 import Footer from '../../(components)/Footer';
 import PriceBandBadge from '../../(components)/PriceBandBadge';
 import ZoneBadge from '../../(components)/ZoneBadge';
-import { supabaseAdmin } from '@/lib/auth/server';
+import FavouriteButton from '../../(components)/FavouriteButton';
+import ViewTracker from '../../(components)/ViewTracker';
+import { supabaseAdmin, getCurrentUser } from '@/lib/auth/server';
 import type { Listing } from '@/lib/types';
 import FinancingCalculator from '../../(components)/FinancingCalculator';
 
 async function getListing(id: string): Promise<Listing | null> {
   const { data } = await supabaseAdmin
     .from('listings')
-    .select('*, vehicle:vehicles(*), media:media_assets(*)')
+    .select('*, vehicle:vehicles(*), media:media_assets(*), seller:profiles!seller_id(is_verified, full_name)')
     .eq('id', id)
     .eq('status', 'published')
     .single();
@@ -79,14 +81,30 @@ export default async function ListingDetailPage({
 }: {
   params: { id: string };
 }) {
-  const listing = await getListing(params.id);
+  const [listing, user] = await Promise.all([
+    getListing(params.id),
+    getCurrentUser().catch(() => null),
+  ]);
   if (!listing) notFound();
+
+  // Check if buyer has saved this listing
+  let isFavourited = false;
+  if (user?.role === 'buyer') {
+    const { data: fav } = await supabaseAdmin
+      .from('favourites')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('listing_id', listing.id)
+      .maybeSingle();
+    isFavourited = !!fav;
+  }
 
   const v = listing.vehicle;
 
   return (
     <>
       <Navbar />
+      <ViewTracker listingId={listing.id} />
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <Link href="/listings" className="text-sm text-blue-600 hover:underline mb-6 inline-block">
           ← Retour aux annonces
@@ -121,8 +139,25 @@ export default async function ListingDetailPage({
               <h1 className="text-2xl font-bold text-gray-900">
                 {v ? `${v.year} ${v.make} ${v.model}` : 'Véhicule'}
               </h1>
-              <ZoneBadge zone={listing.zone} />
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <ZoneBadge zone={listing.zone} />
+                <FavouriteButton
+                  listingId={listing.id}
+                  initialSaved={isFavourited}
+                  isAuthenticated={!!user}
+                />
+              </div>
             </div>
+
+            {/* Verified seller badge */}
+            {listing.seller?.is_verified && (
+              <div className="flex items-center gap-1.5 text-blue-700">
+                <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="text-xs font-semibold">Vendeur vérifié MotoPayee</span>
+              </div>
+            )}
 
             {/* Price */}
             <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">

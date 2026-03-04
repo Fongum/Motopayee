@@ -68,7 +68,7 @@ async function getListings(params: SearchParams) {
   // Step 2: Build listings query
   let q = supabaseAdmin
     .from('listings')
-    .select('*, vehicle:vehicles(*), media:media_assets(*)', { count: 'exact' })
+    .select('*, vehicle:vehicles(*), media:media_assets(*), seller:profiles!seller_id(is_verified)', { count: 'exact' })
     .eq('status', 'published');
 
   if (vehicleIds)              q = q.in('vehicle_id', vehicleIds);

@@ -34,11 +34,24 @@ export default async function SellerListingDetailPage({ params }: { params: { id
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/me/listings" className="text-sm text-blue-600 hover:underline">← Mes annonces</Link>
-        <h1 className="text-2xl font-bold text-gray-900">
-          {v ? `${v.year} ${v.make} ${v.model}` : 'Annonce'}
-        </h1>
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-4">
+          <Link href="/me/listings" className="text-sm text-blue-600 hover:underline">← Mes annonces</Link>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {v ? `${v.year} ${v.make} ${v.model}` : 'Annonce'}
+          </h1>
+        </div>
+        {listing.status === 'published' && (
+          <Link
+            href={`/me/listings/${params.id}/analytics`}
+            className="flex items-center gap-1.5 text-sm font-medium text-[#1a3a6b] border border-[#1a3a6b]/30 px-3 py-1.5 rounded-lg hover:bg-[#1a3a6b]/5 transition"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            Statistiques
+          </Link>
+        )}
       </div>
 
       {/* Status card */}
