@@ -99,19 +99,28 @@ export default function ListingCarousel({
               >
                 {/* Image */}
                 <div className="w-40 h-28 bg-gray-100 rounded-xl overflow-hidden relative mb-2 border border-gray-200 group-hover/card:border-[#3d9e3d] transition-colors">
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-300">
-                    <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2-.001M3 7l2-3h10l2 3M13 6h5l2 4-1 1v5" />
-                    </svg>
-                    {listing.media && listing.media.length > 0 && (
-                      <span className="text-[10px] mt-1 text-gray-400">{listing.media.length} photo{listing.media.length > 1 ? 's' : ''}</span>
-                    )}
-                  </div>
+                  {listing.media && listing.media.length > 0 ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={`/api/files/thumb/${listing.media[0].id}`}
+                      alt={v ? `${v.make} ${v.model}` : 'Véhicule'}
+                      className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-300">
+                      <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2-.001M3 7l2-3h10l2 3M13 6h5l2 4-1 1v5" />
+                      </svg>
+                    </div>
+                  )}
                   {/* Zone badge */}
                   <span className="absolute top-1.5 left-1.5 bg-[#1a3a6b] text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
                     Zone {listing.zone}
                   </span>
+                  {listing.financeable && (
+                    <span className="absolute top-1.5 right-1.5 bg-[#3d9e3d] text-white text-[10px] font-bold px-1.5 py-0.5 rounded">F</span>
+                  )}
                 </div>
                 {/* Info */}
                 <p className="text-[11px] font-bold text-[#1a3a6b] uppercase leading-tight group-hover/card:text-[#3d9e3d] transition-colors">

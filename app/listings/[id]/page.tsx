@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import Navbar from '../../(components)/Navbar';
 import Footer from '../../(components)/Footer';
 import PriceBandBadge from '../../(components)/PriceBandBadge';
@@ -15,6 +16,53 @@ async function getListing(id: string): Promise<Listing | null> {
     .eq('status', 'published')
     .single();
   return data as unknown as Listing | null;
+}
+
+// ─── Dynamic SEO metadata ──────────────────────────────────────────────────────
+
+export async function generateMetadata(
+  { params }: { params: { id: string } }
+): Promise<Metadata> {
+  const listing = await getListing(params.id);
+  if (!listing) return { title: 'Annonce introuvable — MotoPayee' };
+
+  const v = listing.vehicle;
+  const priceStr = listing.asking_price >= 1_000_000
+    ? `${(listing.asking_price / 1_000_000).toFixed(1)}M XAF`
+    : `${listing.asking_price.toLocaleString('fr-FR')} XAF`;
+
+  const title = v
+    ? `${v.year} ${v.make} ${v.model} — ${priceStr} | MotoPayee`
+    : `Annonce véhicule — ${priceStr} | MotoPayee`;
+
+  const description = [
+    v ? `${v.make} ${v.model} ${v.year}` : 'Véhicule',
+    v ? `${v.mileage_km.toLocaleString('fr-FR')} km` : null,
+    `Zone ${listing.zone} au Cameroun`,
+    `Prix: ${priceStr}`,
+    listing.financeable ? 'Financement disponible via MotoPayee.' : null,
+    'Véhicule inspecté et vérifié.',
+  ].filter(Boolean).join(' · ');
+
+  const imageUrl = listing.media && listing.media.length > 0
+    ? `/api/files/thumb/${listing.media[0].id}`
+    : undefined;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      ...(imageUrl ? { images: [{ url: imageUrl, width: 1200, height: 630 }] } : {}),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  };
 }
 
 function formatXAF(amount: number): string {

@@ -14,8 +14,29 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'MotoPayee — Buy, Sell & Finance Vehicles in Cameroon',
-  description: 'Cameroon\'s trusted vehicle marketplace with built-in financing facilitation. Find your next vehicle or get funded today.',
+  title: {
+    default: 'MotoPayee — Achetez, vendez et financez votre véhicule au Cameroun',
+    template: '%s | MotoPayee',
+  },
+  description: 'La marketplace automobile #1 au Cameroun. Véhicules inspectés, prix transparents et financement facilité via nos IMF partenaires.',
+  keywords: ['voiture Cameroun', 'achat véhicule Douala', 'financement auto Yaoundé', 'marketplace automobile', 'MotoPayee'],
+  authors: [{ name: 'MotoPayee' }],
+  creator: 'MotoPayee',
+  metadataBase: new URL('https://motopayee.vercel.app'),
+  openGraph: {
+    type: 'website',
+    locale: 'fr_CM',
+    siteName: 'MotoPayee',
+    title: 'MotoPayee — Marketplace automobile du Cameroun',
+    description: 'Achetez, vendez et financez votre véhicule. Véhicules inspectés, prix transparents, financement sous 72h.',
+    images: [{ url: '/logo2.png', width: 1024, height: 1024, alt: 'MotoPayee Logo' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'MotoPayee — Marketplace automobile du Cameroun',
+    description: 'Achetez, vendez et financez votre véhicule au Cameroun.',
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({
