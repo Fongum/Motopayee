@@ -7,6 +7,7 @@ import PriceBandBadge from '../../(components)/PriceBandBadge';
 import ZoneBadge from '../../(components)/ZoneBadge';
 import { supabaseAdmin } from '@/lib/auth/server';
 import type { Listing } from '@/lib/types';
+import FinancingCalculator from '../../(components)/FinancingCalculator';
 
 async function getListing(id: string): Promise<Listing | null> {
   const { data } = await supabaseAdmin
@@ -187,6 +188,19 @@ export default async function ListingDetailPage({
                 Contacter le vendeur
               </Link>
             </div>
+
+            {/* Financing calculator */}
+            {listing.financeable && (
+              <div className="pt-2">
+                <FinancingCalculator
+                  defaultPrice={listing.asking_price}
+                  defaultZone={listing.zone}
+                  defaultConditionGrade={listing.vehicle?.condition_grade ?? undefined}
+                  defaultPriceBand={listing.price_band ?? undefined}
+                  compact
+                />
+              </div>
+            )}
           </div>
         </div>
       </main>

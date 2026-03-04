@@ -43,7 +43,7 @@ export default function SearchFilters({ total }: { total: number }) {
     router.push('/listings');
   }
 
-  const hasAnyFilter = [...sp.keys()].some((k) => k !== 'page');
+  const hasAnyFilter = Array.from(sp.keys()).some((k) => k !== 'page');
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">

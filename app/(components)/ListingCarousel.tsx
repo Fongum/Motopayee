@@ -8,6 +8,7 @@ interface CarouselListing {
   asking_price: number;
   zone: string;
   price_band?: string | null;
+  financeable?: boolean | null;
   vehicle?: {
     make: string;
     model: string;

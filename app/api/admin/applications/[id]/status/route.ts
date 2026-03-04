@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server';
 import { requireVerifier } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { z } from 'zod';
+import {
+  notifyDocsRequired,
+  notifyUnderReview,
+  notifyApproved,
+  notifyRejected,
+  notifyDisbursed,
+} from '@/lib/notifications';
 
 interface RouteParams { params: { id: string } }
 
@@ -44,7 +51,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
   const { data: app } = await supabaseAdmin
     .from('financing_applications')
-    .select('id, status')
+    .select('id, status, buyer_id')
     .eq('id', params.id)
     .single();
 
@@ -92,6 +99,22 @@ export async function POST(request: Request, { params }: RouteParams) {
     entity_id: params.id,
     meta: { from: app.status, to: parsed.data.status, income_grade: parsed.data.income_grade },
   });
+
+  // SMS notification (fire-and-forget)
+  void (async () => {
+    const { data: buyerProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('phone')
+      .eq('id', (app as { buyer_id: string }).buyer_id)
+      .single();
+    const phone = buyerProfile?.phone ?? null;
+    const newStatus = parsed.data.status;
+    if (newStatus === 'docs_pending')   notifyDocsRequired(phone, params.id).catch(console.error);
+    else if (newStatus === 'under_review') notifyUnderReview(phone).catch(console.error);
+    else if (newStatus === 'approved')     notifyApproved(phone).catch(console.error);
+    else if (newStatus === 'rejected')     notifyRejected(phone).catch(console.error);
+    else if (newStatus === 'disbursed')    notifyDisbursed(phone).catch(console.error);
+  })();
 
   if (request.headers.get('accept')?.includes('text/html')) {
     return NextResponse.redirect(new URL(`/admin/applications/${params.id}`, request.url));

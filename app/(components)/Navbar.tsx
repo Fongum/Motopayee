@@ -47,6 +47,9 @@ export default function Navbar() {
             <Link href="/apply" className="text-sm font-medium text-gray-700 hover:text-[#1a3a6b] transition-colors">
               Financement
             </Link>
+            <Link href="/calculator" className="text-sm font-medium text-gray-700 hover:text-[#1a3a6b] transition-colors">
+              Simulateur
+            </Link>
 
             {!loading && (
               user ? (
@@ -104,6 +107,7 @@ export default function Navbar() {
           <Link href="/listings" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Véhicules</Link>
           <Link href="/sell" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Vendre</Link>
           <Link href="/apply" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Financement</Link>
+          <Link href="/calculator" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Simulateur</Link>
           <div className="pt-2 border-t border-gray-100">
             {user ? (
               <>

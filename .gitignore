@@ -110,3 +110,4 @@ Desktop.ini
 # Vite timestamp logs (harmless even if not used)
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+.vercel

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
+import { notifyListingPublished } from '@/lib/notifications';
 
 interface RouteParams { params: { id: string } }
 
@@ -35,7 +36,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
   const { data: listing } = await supabaseAdmin
     .from('listings')
-    .select('id, status')
+    .select('id, status, seller_id, vehicle_id')
     .eq('id', params.id)
     .single();
 
@@ -74,6 +75,22 @@ export async function POST(request: Request, { params }: RouteParams) {
     entity_id: params.id,
     meta: { from: listing.status, to: targetStatus },
   });
+
+  // SMS notification to seller when published (fire-and-forget)
+  if (targetStatus === 'published') {
+    void (async () => {
+      const l = listing as { seller_id: string; vehicle_id: string };
+      const [sellerRes, vehicleRes] = await Promise.all([
+        supabaseAdmin.from('profiles').select('phone').eq('id', l.seller_id).single(),
+        supabaseAdmin.from('vehicles').select('make, model').eq('id', l.vehicle_id).single(),
+      ]);
+      notifyListingPublished(
+        sellerRes.data?.phone ?? null,
+        vehicleRes.data?.make ?? '',
+        vehicleRes.data?.model ?? ''
+      ).catch(console.error);
+    })();
+  }
 
   if (request.headers.get('accept')?.includes('text/html')) {
     return NextResponse.redirect(new URL(`/admin/listings/${params.id}`, request.url));
