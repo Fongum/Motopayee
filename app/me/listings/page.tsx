@@ -48,12 +48,22 @@ export default async function SellerListingsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Mes annonces</h1>
           <p className="text-gray-500 text-sm mt-1">{items.length} annonce{items.length !== 1 ? 's' : ''}</p>
         </div>
-        <Link
-          href="/me/listings/new"
-          className="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700"
-        >
-          + Nouvelle annonce
-        </Link>
+        <div className="flex items-center gap-2">
+          {user.role === 'seller_dealer' && (
+            <Link
+              href="/me/listings/bulk"
+              className="bg-gray-100 text-gray-700 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-gray-200"
+            >
+              Import en lot
+            </Link>
+          )}
+          <Link
+            href="/me/listings/new"
+            className="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            + Nouvelle annonce
+          </Link>
+        </div>
       </div>
 
       {items.length === 0 ? (

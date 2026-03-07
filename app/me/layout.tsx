@@ -8,15 +8,20 @@ export default async function MeLayout({ children }: { children: React.ReactNode
     redirect('/login');
   }
 
+  const sellerLinks = [
+    { href: '/me/listings', label: 'Mes annonces' },
+    { href: '/me/listings/new', label: 'Nouvelle annonce' },
+    ...(user.role === 'seller_dealer'
+      ? [{ href: '/me/listings/bulk', label: 'Import en lot' }]
+      : []),
+  ];
+
   const navLinks = user.role === 'buyer'
     ? [
         { href: '/me/applications', label: 'Mes demandes' },
         { href: '/me/favourites', label: 'Mes favoris' },
       ]
-    : [
-        { href: '/me/listings', label: 'Mes annonces' },
-        { href: '/me/listings/new', label: 'Nouvelle annonce' },
-      ];
+    : sellerLinks;
 
   return (
     <div className="min-h-screen bg-gray-50">

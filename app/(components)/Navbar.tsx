@@ -21,6 +21,7 @@ export default function Navbar() {
     if (!user) return null;
     if (user.role === 'buyer') return { href: '/me/applications', label: 'Mes demandes' };
     if (user.role === 'seller_individual' || user.role === 'seller_dealer') return { href: '/me/listings', label: 'Mes annonces' };
+    if (user.role === 'mfi_partner') return { href: '/mfi/applications', label: 'Demandes IMF' };
     if (['field_agent', 'inspector', 'verifier', 'admin'].includes(user.role)) return { href: '/admin/dashboard', label: 'Tableau de bord' };
     return null;
   }

@@ -2,7 +2,9 @@ import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { isAdminRole, isVerifierRole } from '@/lib/auth/roles';
-import type { FinancingApplication } from '@/lib/types';
+import type { FinancingApplication, MFIInstitution, Payment } from '@/lib/types';
+import PaymentRequestForm from '@/app/(components)/PaymentRequestForm';
+import AssignMFIForm from '@/app/(components)/AssignMFIForm';
 
 function formatXAF(amount: number) {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
@@ -26,24 +28,44 @@ export default async function AdminApplicationDetailPage({ params }: { params: {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  const { data, error } = await supabaseAdmin
-    .from('financing_applications')
-    .select(`
-      *,
-      listing:listings(*, vehicle:vehicles(*)),
-      buyer:profiles!buyer_id(id, email, full_name, phone, city, zone),
-      verifier:profiles!verifier_id(id, email, full_name),
-      documents(*)
-    `)
-    .eq('id', params.id)
-    .single();
+  const [appResult, paymentsResult, institutionsResult] = await Promise.all([
+    supabaseAdmin
+      .from('financing_applications')
+      .select(`
+        *,
+        listing:listings(*, vehicle:vehicles(*)),
+        buyer:profiles!buyer_id(id, email, full_name, phone, city, zone),
+        verifier:profiles!verifier_id(id, email, full_name),
+        documents(*)
+      `)
+      .eq('id', params.id)
+      .single(),
+    supabaseAdmin
+      .from('payments')
+      .select('*')
+      .eq('application_id', params.id)
+      .order('initiated_at', { ascending: false }),
+    isAdminRole(user.role)
+      ? supabaseAdmin
+          .from('mfi_institutions')
+          .select('id, name, code')
+          .eq('active', true)
+          .order('name')
+      : Promise.resolve({ data: [] }),
+  ]);
+
+  const { data, error } = appResult;
 
   if (error || !data) notFound();
 
   const app = data as unknown as FinancingApplication & {
+    mfi_institution_id?: string | null;
     buyer?: { id: string; email: string; full_name?: string; phone?: string; city?: string; zone?: string };
     verifier?: { id: string; email: string; full_name?: string } | null;
   };
+
+  const payments = (paymentsResult.data ?? []) as Payment[];
+  const institutions = (institutionsResult.data ?? []) as Pick<MFIInstitution, 'id' | 'name' | 'code'>[];
 
   const canAct = isAdminRole(user.role) || isVerifierRole(user.role);
   const transitions = STATUS_TRANSITIONS[app.status] ?? [];
@@ -145,6 +167,32 @@ export default async function AdminApplicationDetailPage({ params }: { params: {
               </form>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Assign MFI — admin only */}
+      {isAdminRole(user.role) && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-6">
+          <h2 className="font-semibold text-gray-900 mb-4">Assigner une IMF</h2>
+          <AssignMFIForm
+            applicationId={params.id}
+            currentMFIId={app.mfi_institution_id}
+            institutions={institutions}
+          />
+        </div>
+      )}
+
+      {/* Payments */}
+      {canAct && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-6">
+          <h2 className="font-semibold text-gray-900 mb-4">Paiements Mobile Money</h2>
+          <PaymentRequestForm
+            applicationId={params.id}
+            applicationStatus={app.status}
+            askingPrice={listing?.asking_price ?? 0}
+            buyerPhone={app.buyer?.phone}
+            existingPayments={payments}
+          />
         </div>
       )}
 

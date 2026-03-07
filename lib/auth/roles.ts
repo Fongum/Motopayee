@@ -7,6 +7,7 @@ export const ROLES = {
   FIELD_AGENT: 'field_agent' as Role,
   INSPECTOR: 'inspector' as Role,
   VERIFIER: 'verifier' as Role,
+  MFI_PARTNER: 'mfi_partner' as Role,
   ADMIN: 'admin' as Role,
 } as const;
 
@@ -43,4 +44,8 @@ export function isInspectorRole(role: string | undefined | null): boolean {
 
 export function isVerifierRole(role: string | undefined | null): boolean {
   return role === 'verifier';
+}
+
+export function isMFIPartnerRole(role: string | undefined | null): boolean {
+  return role === 'mfi_partner';
 }

@@ -19,6 +19,7 @@ import {
   isFieldAgentRole,
   isInspectorRole,
   isVerifierRole,
+  isMFIPartnerRole,
 } from './roles';
 
 export type AuthCheckResult =
@@ -146,6 +147,15 @@ export async function requireStaff(request: Request): Promise<AuthCheckResult> {
   if (!result.authenticated) return result;
   if (!isStaffRole(result.user.role)) {
     return { authenticated: false, error: 'Staff access required.', status: 403 };
+  }
+  return result;
+}
+
+export async function requireMFIPartner(request: Request): Promise<AuthCheckResult> {
+  const result = await authenticateRequest(request);
+  if (!result.authenticated) return result;
+  if (!isMFIPartnerRole(result.user.role) && !isAdminRole(result.user.role)) {
+    return { authenticated: false, error: 'MFI partner access required.', status: 403 };
   }
   return result;
 }

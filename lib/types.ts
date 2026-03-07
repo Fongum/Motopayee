@@ -10,6 +10,7 @@ export type Role =
   | 'field_agent'
   | 'inspector'
   | 'verifier'
+  | 'mfi_partner'
   | 'admin';
 
 export type SellerRole = 'seller_individual' | 'seller_dealer';
@@ -27,6 +28,7 @@ export interface Profile {
   role: Role;
   status: 'active' | 'inactive' | 'suspended';
   is_verified: boolean;
+  mfi_institution_id: string | null;
   last_login_at: string | null;
   created_at: string;
   updated_at: string;
@@ -39,6 +41,18 @@ export interface Favourite {
   listing_id: string;
   created_at: string;
   listing?: Listing;
+}
+
+// --------------- MFI Institution ---------------
+export interface MFIInstitution {
+  id: string;
+  name: string;
+  code: string;
+  contact_email: string | null;
+  contact_phone: string | null;
+  city: string | null;
+  active: boolean;
+  created_at: string;
 }
 
 // --------------- Dealer ---------------
@@ -179,7 +193,9 @@ export interface FinancingApplication {
   manual_review_required: boolean;
   notes: string | null;
   submitted_at: string | null;
+  mfi_institution_id: string | null;
   decided_at: string | null;
+  disbursed_at: string | null;
   created_at: string;
   updated_at: string;
   // Joined
@@ -230,6 +246,28 @@ export interface ZoneRule {
   manual_review_required: boolean;
   created_at: string;
   updated_at: string;
+}
+
+// --------------- Payment ---------------
+export type PaymentStatus = 'pending' | 'processing' | 'successful' | 'failed' | 'cancelled';
+export type PaymentProvider = 'mtn_momo' | 'orange_money';
+export type PaymentType = 'down_payment' | 'full_payment' | 'installment';
+
+export interface Payment {
+  id: string;
+  application_id: string;
+  buyer_id: string;
+  amount: number;
+  currency: string;
+  payment_type: PaymentType;
+  provider: PaymentProvider;
+  phone: string;
+  external_ref: string | null;
+  status: PaymentStatus;
+  initiated_at: string;
+  completed_at: string | null;
+  meta: Record<string, unknown>;
+  created_at: string;
 }
 
 // --------------- Audit Log ---------------
