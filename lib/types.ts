@@ -270,6 +270,250 @@ export interface Payment {
   created_at: string;
 }
 
+// --------------- Import Request ---------------
+export type ImportRequestMode = 'offer' | 'custom';
+export type ImportBodyType = 'sedan' | 'suv' | 'pickup' | 'hatchback' | 'van' | 'coupe' | 'wagon' | 'other';
+export type ImportRequestStatus =
+  | 'draft'
+  | 'submitted'
+  | 'reviewing'
+  | 'quoted'
+  | 'accepted'
+  | 'cancelled'
+  | 'expired';
+
+export interface ImportRequest {
+  id: string;
+  buyer_id: string;
+  offer_id: string | null;
+  mode: ImportRequestMode;
+  source_country: string;
+  make: string;
+  model: string | null;
+  year_min: number | null;
+  year_max: number | null;
+  budget_max_xaf: number;
+  body_type: ImportBodyType | null;
+  fuel_type: FuelType | null;
+  transmission: TransmissionType | null;
+  color_preferences: string | null;
+  notes: string | null;
+  status: ImportRequestStatus;
+  created_at: string;
+  updated_at: string;
+  buyer?: Profile;
+  offer?: ImportOffer;
+  quotes?: ImportQuote[];
+}
+
+// --------------- Import Offer ---------------
+export type ImportOfferStatus = 'draft' | 'active' | 'reserved' | 'withdrawn' | 'expired';
+export type ImportSourceType = 'auction' | 'dealer' | 'private';
+
+export interface ImportOffer {
+  id: string;
+  partner_name: string;
+  source_country: string;
+  source_type: ImportSourceType;
+  external_ref: string | null;
+  external_url: string | null;
+  lot_number: string | null;
+  status: ImportOfferStatus;
+  headline: string;
+  make: string;
+  model: string;
+  year: number;
+  mileage_km: number | null;
+  fuel_type: FuelType | null;
+  transmission: TransmissionType | null;
+  color: string | null;
+  vin_last6: string | null;
+  title_status: string | null;
+  condition_summary: string | null;
+  damage_summary: string | null;
+  vehicle_price: number;
+  auction_fee: number;
+  inland_transport_fee: number;
+  shipping_fee: number;
+  insurance_fee: number;
+  documentation_fee: number;
+  motopayee_fee: number;
+  estimated_customs_fee: number;
+  estimated_port_fee: number;
+  total_estimated_xaf: number;
+  cover_image_url: string | null;
+  media_json: Array<Record<string, unknown>>;
+  auction_end_at: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// --------------- Import Quote ---------------
+export type ImportQuoteStatus =
+  | 'draft'
+  | 'sent'
+  | 'superseded'
+  | 'expired'
+  | 'accepted'
+  | 'rejected';
+
+export interface ImportQuote {
+  id: string;
+  request_id: string;
+  partner_name: string;
+  currency: string;
+  fx_rate_to_xaf: number | null;
+  vehicle_price: number;
+  auction_fee: number;
+  inland_transport_fee: number;
+  shipping_fee: number;
+  insurance_fee: number;
+  documentation_fee: number;
+  motopayee_fee: number;
+  estimated_customs_fee: number;
+  estimated_port_fee: number;
+  total_estimated_xaf: number;
+  reservation_deposit_amount: number;
+  quote_terms: string | null;
+  expires_at: string;
+  quote_version: number;
+  status: ImportQuoteStatus;
+  created_by: string;
+  created_at: string;
+}
+
+// --------------- Import Order ---------------
+export type ClearingMode = 'self_clear' | 'broker_assist';
+export type ImportOrderStatus =
+  | 'quote_sent'
+  | 'deposit_pending'
+  | 'deposit_paid'
+  | 'purchase_authorized'
+  | 'purchased'
+  | 'docs_pending'
+  | 'shipping_booked'
+  | 'in_transit'
+  | 'arrived_cameroon'
+  | 'ready_for_clearing'
+  | 'clearing_in_progress'
+  | 'completed'
+  | 'cancelled'
+  | 'refund_pending'
+  | 'refunded'
+  | 'disputed';
+
+export interface ImportOrder {
+  id: string;
+  buyer_id: string;
+  request_id: string;
+  accepted_quote_id: string;
+  partner_name: string;
+  status: ImportOrderStatus;
+  clearing_mode: ClearingMode;
+  destination_port: string | null;
+  destination_city: string | null;
+  reservation_deposit_amount: number | null;
+  purchase_amount_due: number | null;
+  shipping_amount_due: number | null;
+  final_amount_due: number | null;
+  currency: string;
+  fx_rate_locked: number | null;
+  buyer_acknowledged_terms: boolean;
+  purchased_at: string | null;
+  arrived_at: string | null;
+  completed_at: string | null;
+  cancelled_at: string | null;
+  cancellation_reason: string | null;
+  created_at: string;
+  updated_at: string;
+  accepted_quote?: ImportQuote;
+  buyer?: Profile;
+  request?: ImportRequest;
+  shipments?: ImportShipment[];
+  documents?: ImportDocument[];
+}
+
+// --------------- Import Payment ---------------
+export type ImportPaymentType =
+  | 'reservation_deposit'
+  | 'purchase_balance'
+  | 'shipping_fee'
+  | 'service_fee'
+  | 'refund';
+
+export interface ImportPayment {
+  id: string;
+  order_id: string;
+  buyer_id: string;
+  amount: number;
+  currency: string;
+  payment_type: ImportPaymentType;
+  provider: PaymentProvider | 'cash' | 'bank_transfer';
+  phone: string;
+  external_ref: string | null;
+  status: PaymentStatus;
+  initiated_at: string;
+  completed_at: string | null;
+  meta: Record<string, unknown>;
+  created_at: string;
+}
+
+// --------------- Import Shipment ---------------
+export type ImportShipmentStatus = 'draft' | 'booked' | 'departed' | 'arrived' | 'released' | 'closed';
+
+export interface ImportShipment {
+  id: string;
+  order_id: string;
+  carrier_name: string;
+  container_type: string | null;
+  container_no: string | null;
+  booking_ref: string | null;
+  bill_of_lading_no: string | null;
+  port_of_loading: string | null;
+  port_of_discharge: string | null;
+  etd: string | null;
+  eta: string | null;
+  actual_departure_at: string | null;
+  actual_arrival_at: string | null;
+  status: ImportShipmentStatus;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// --------------- Import Document ---------------
+export type ImportDocumentType =
+  | 'auction_invoice'
+  | 'bill_of_sale'
+  | 'title'
+  | 'partner_condition_report'
+  | 'export_certificate'
+  | 'insurance_certificate'
+  | 'bill_of_lading'
+  | 'ectn'
+  | 'fimex_record'
+  | 'customs_notice'
+  | 'delivery_note'
+  | 'other';
+
+export interface ImportDocument {
+  id: string;
+  order_id: string;
+  shipment_id: string | null;
+  uploader_id: string;
+  doc_type: ImportDocumentType;
+  storage_path: string;
+  bucket: string;
+  filename: string;
+  content_type: string;
+  file_size_bytes: number | null;
+  verified: boolean;
+  verified_by: string | null;
+  verified_at: string | null;
+  created_at: string;
+}
+
 // --------------- Audit Log ---------------
 export interface AuditLog {
   id: string;

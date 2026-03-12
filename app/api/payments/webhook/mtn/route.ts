@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/auth/server';
 import { notifyDisbursed } from '@/lib/notifications';
+import { updateImportPaymentStatus } from '@/lib/import-payments';
 
 const STATUS_MAP: Record<string, string> = {
   SUCCESSFUL: 'successful',
@@ -24,32 +25,33 @@ export async function POST(request: Request) {
   const newStatus = STATUS_MAP[momoStatus];
   if (!newStatus) return new Response('OK', { status: 200 });
 
-  await supabaseAdmin.from('payments').update({
+  const { data: standardPayment } = await supabaseAdmin.from('payments').update({
     status: newStatus,
     completed_at: newStatus === 'successful' ? new Date().toISOString() : null,
     meta: body.financialTransactionId
       ? { financialTransactionId: body.financialTransactionId }
       : {},
-  }).eq('id', referenceId);
+  }).eq('id', referenceId).select('buyer_id, amount').maybeSingle();
+
+  if (!standardPayment) {
+    await updateImportPaymentStatus(
+      referenceId,
+      newStatus as 'successful' | 'failed' | 'cancelled',
+      body.financialTransactionId ? { financialTransactionId: body.financialTransactionId } : {}
+    );
+    return new Response('OK', { status: 200 });
+  }
 
   // On success, notify buyer
   if (newStatus === 'successful') {
-    const { data: payment } = await supabaseAdmin
-      .from('payments')
-      .select('buyer_id, amount')
-      .eq('id', referenceId)
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('phone')
+      .eq('id', standardPayment.buyer_id)
       .single();
 
-    if (payment) {
-      const { data: profile } = await supabaseAdmin
-        .from('profiles')
-        .select('phone')
-        .eq('id', (payment as { buyer_id: string }).buyer_id)
-        .single();
-
-      if (profile) {
-        notifyDisbursed((profile as { phone: string | null }).phone).catch(console.error);
-      }
+    if (profile) {
+      notifyDisbursed((profile as { phone: string | null }).phone).catch(console.error);
     }
   }
 

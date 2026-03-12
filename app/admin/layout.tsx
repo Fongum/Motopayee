@@ -6,6 +6,7 @@ import Link from 'next/link';
 const NAV = [
   { href: '/admin/dashboard', label: 'Vue d\'ensemble' },
   { href: '/admin/listings', label: 'Annonces' },
+  { href: '/admin/imports/requests', label: 'Imports' },
   { href: '/admin/applications', label: 'Demandes' },
   { href: '/admin/rules', label: 'Règles de zone' },
   { href: '/admin/users', label: 'Utilisateurs' },
