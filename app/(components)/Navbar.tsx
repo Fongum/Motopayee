@@ -45,6 +45,9 @@ export default function Navbar() {
             <Link href="/imports" className="text-sm font-medium text-gray-700 hover:text-[#1a3a6b] transition-colors">
               Import US
             </Link>
+            <Link href="/hire" className="text-sm font-medium text-gray-700 hover:text-[#1a3a6b] transition-colors">
+              Location
+            </Link>
             <Link href="/sell" className="text-sm font-medium text-gray-700 hover:text-[#1a3a6b] transition-colors">
               Vendre
             </Link>
@@ -110,6 +113,7 @@ export default function Navbar() {
         <div className="md:hidden border-t border-gray-100 bg-white px-4 py-5 space-y-4">
           <Link href="/listings" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Véhicules</Link>
           <Link href="/imports" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Import US</Link>
+          <Link href="/hire" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Location</Link>
           <Link href="/sell" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Vendre</Link>
           <Link href="/apply" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Financement</Link>
           <Link href="/calculator" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Simulateur</Link>

@@ -21,9 +21,19 @@ export default async function MeLayout({ children }: { children: React.ReactNode
         { href: '/me/applications', label: 'Mes demandes' },
         { href: '/me/import-requests', label: 'Mes imports' },
         { href: '/me/import-orders', label: 'Commandes import' },
+        { href: '/me/hire-bookings', label: 'Mes locations' },
         { href: '/me/favourites', label: 'Mes favoris' },
+        { href: '/me/saved-searches', label: 'Recherches sauvées' },
+        { href: '/me/reviews', label: 'Mes avis' },
       ]
-    : sellerLinks;
+    : [
+        ...sellerLinks,
+        { href: '/me/hire-listings', label: 'Mes véhicules en location' },
+        { href: '/me/hire-listings/new', label: 'Nouvelle location' },
+        { href: '/me/hire-bookings', label: 'Réservations' },
+        { href: '/me/saved-searches', label: 'Recherches sauvées' },
+        { href: '/me/reviews', label: 'Mes avis' },
+      ];
 
   return (
     <div className="min-h-screen bg-gray-50">

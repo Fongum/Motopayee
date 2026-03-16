@@ -8,6 +8,7 @@ const NAV = [
   { href: '/admin/listings', label: 'Annonces' },
   { href: '/admin/imports/requests', label: 'Imports' },
   { href: '/admin/applications', label: 'Demandes' },
+  { href: '/admin/hire', label: 'Location' },
   { href: '/admin/rules', label: 'Règles de zone' },
   { href: '/admin/users', label: 'Utilisateurs' },
 ];

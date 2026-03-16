@@ -1,6 +1,10 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import './globals.css';
+import WhatsAppFloatingSupport from './(components)/WhatsAppFloatingSupport';
+import ComparisonBar from './(components)/ComparisonBar';
+import InstallPrompt from './(components)/InstallPrompt';
+import ServiceWorkerRegistration from './(components)/ServiceWorkerRegistration';
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -44,8 +48,20 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="fr">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#1a3a6b" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="MotoPayee" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-gray-900`}>
         {children}
+        <WhatsAppFloatingSupport />
+        <ComparisonBar />
+        <InstallPrompt />
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );

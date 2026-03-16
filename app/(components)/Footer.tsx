@@ -15,7 +15,7 @@ export default function Footer() {
               Marketplace Auto · Cameroun
             </p>
             <p className="text-sm leading-relaxed text-blue-300 max-w-xs">
-              La référence pour acheter, vendre et financer votre véhicule au Cameroun.
+              La référence pour acheter, vendre, louer et financer votre véhicule au Cameroun.
               Transparence, inspection et financement — tout en un seul endroit.
             </p>
             <div className="mt-6 flex gap-3">
@@ -40,16 +40,18 @@ export default function Footer() {
           <div>
             <p className="text-white text-xs font-bold mb-5 uppercase tracking-widest">Marketplace</p>
             <ul className="space-y-3 text-sm">
-              <li><Link href="/listings" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Parcourir les véhicules</Link></li>
+              <li><Link href="/listings" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Acheter un véhicule</Link></li>
+              <li><Link href="/hire" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Louer un véhicule</Link></li>
               <li><Link href="/sell" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Vendre un véhicule</Link></li>
-              <li><Link href="/dealers" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Concessionnaires</Link></li>
+              <li><Link href="/imports" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Importer des USA</Link></li>
             </ul>
           </div>
 
           <div>
-            <p className="text-white text-xs font-bold mb-5 uppercase tracking-widest">Financement</p>
+            <p className="text-white text-xs font-bold mb-5 uppercase tracking-widest">Services</p>
             <ul className="space-y-3 text-sm">
-              <li><Link href="/apply" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Demander un financement</Link></li>
+              <li><Link href="/apply" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Financement</Link></li>
+              <li><Link href="/calculator" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Simulateur MVE</Link></li>
               <li><Link href="/register" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Créer un compte</Link></li>
               <li><Link href="/login" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Se connecter</Link></li>
             </ul>

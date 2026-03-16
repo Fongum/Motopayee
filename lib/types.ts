@@ -29,6 +29,8 @@ export interface Profile {
   status: 'active' | 'inactive' | 'suspended';
   is_verified: boolean;
   mfi_institution_id: string | null;
+  avg_rating: number | null;
+  total_reviews: number;
   last_login_at: string | null;
   created_at: string;
   updated_at: string;
@@ -543,3 +545,161 @@ export interface MVEResult {
 }
 
 export type PriceBand = 'green' | 'yellow' | 'red';
+
+// --------------- Hire Feature ---------------
+export type HireType = 'self_drive' | 'with_driver' | 'both';
+export type HireListingStatus = 'draft' | 'pending_review' | 'published' | 'suspended' | 'withdrawn';
+export type HireAvailability = 'available' | 'hired_out' | 'maintenance' | 'unavailable';
+export type HireBookingStatus = 'pending' | 'confirmed' | 'active' | 'completed' | 'cancelled' | 'disputed';
+export type HirePaymentStatus = 'unpaid' | 'deposit_paid' | 'fully_paid' | 'refunded';
+
+export interface HireListing {
+  id: string;
+  owner_id: string;
+  dealer_id: string | null;
+  // Vehicle
+  make: string;
+  model: string;
+  year: number;
+  fuel_type: FuelType;
+  transmission: TransmissionType;
+  color: string | null;
+  seats: number;
+  engine_cc: number | null;
+  plate_number: string | null;
+  // Hire config
+  hire_type: HireType;
+  daily_rate: number;
+  weekly_rate: number | null;
+  monthly_rate: number | null;
+  deposit_amount: number;
+  driver_daily_rate: number | null;
+  mileage_limit_per_day_km: number | null;
+  extra_km_charge: number | null;
+  min_hire_days: number;
+  max_hire_days: number | null;
+  // Location
+  city: string;
+  zone: string;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  // Details
+  description: string | null;
+  conditions: string | null;
+  features: string[];
+  insurance_included: boolean;
+  // Status
+  status: HireListingStatus;
+  availability: HireAvailability;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+  // Joined
+  owner?: Profile;
+  media?: HireListingMedia[];
+}
+
+export interface HireListingMedia {
+  id: string;
+  hire_listing_id: string;
+  asset_type: MediaAssetType;
+  storage_path: string;
+  bucket: string;
+  display_order: number;
+  caption: string | null;
+  uploaded_by: string;
+  created_at: string;
+}
+
+export interface HireBooking {
+  id: string;
+  hire_listing_id: string;
+  renter_id: string;
+  owner_id: string;
+  start_date: string;
+  end_date: string;
+  total_days: number;
+  hire_type: 'self_drive' | 'with_driver';
+  daily_rate: number;
+  driver_daily_rate: number | null;
+  deposit_amount: number;
+  total_amount: number;
+  pickup_location: string | null;
+  dropoff_location: string | null;
+  status: HireBookingStatus;
+  renter_notes: string | null;
+  owner_notes: string | null;
+  cancellation_reason: string | null;
+  payment_status: HirePaymentStatus;
+  payment_provider: string | null;
+  payment_phone: string | null;
+  confirmed_at: string | null;
+  completed_at: string | null;
+  cancelled_at: string | null;
+  created_at: string;
+  updated_at: string;
+  // Joined
+  hire_listing?: HireListing;
+  renter?: Profile;
+  owner?: Profile;
+}
+
+// --------------- Reviews ---------------
+export type ReviewEntityType = 'listing' | 'hire_listing' | 'hire_booking';
+export type ReviewStatus = 'published' | 'hidden' | 'flagged';
+
+export interface Review {
+  id: string;
+  reviewer_id: string;
+  reviewed_id: string;
+  entity_type: ReviewEntityType;
+  entity_id: string;
+  rating: number;
+  title: string | null;
+  comment: string | null;
+  status: ReviewStatus;
+  created_at: string;
+  updated_at: string;
+  reviewer?: Profile;
+  reviewed?: Profile;
+  response?: ReviewResponse | null;
+}
+
+export interface ReviewResponse {
+  id: string;
+  review_id: string;
+  responder_id: string;
+  comment: string;
+  created_at: string;
+  responder?: Profile;
+}
+
+// --------------- Saved Searches ---------------
+export type NotifyVia = 'sms' | 'whatsapp' | 'none';
+
+export interface SavedSearch {
+  id: string;
+  user_id: string;
+  search_type: 'listing' | 'hire';
+  label: string;
+  filters: Record<string, string>;
+  notify_via: NotifyVia;
+  active: boolean;
+  last_notified_at: string | null;
+  last_match_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// --------------- Price Alerts ---------------
+export interface PriceAlert {
+  id: string;
+  user_id: string;
+  listing_id: string;
+  threshold_price: number;
+  active: boolean;
+  last_notified_at: string | null;
+  created_at: string;
+  listing?: Listing;
+}

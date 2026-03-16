@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import SaveSearchButton from '../(components)/SaveSearchButton';
 
 const MAKES = ['Toyota', 'Honda', 'Nissan', 'Hyundai', 'Mercedes', 'BMW', 'Peugeot', 'Renault', 'Mitsubishi', 'Kia', 'Volkswagen', 'Ford', 'Suzuki', 'Mazda'];
 const FUEL_TYPES = [
@@ -142,6 +143,7 @@ export default function SearchFilters({ total }: { total: number }) {
             )}
           </button>
           <div className="flex items-center gap-4">
+            <SaveSearchButton searchType="listing" />
             <p className="text-sm text-gray-500">
               <span className="font-bold text-[#1a3a6b]">{total}</span> véhicule{total !== 1 ? 's' : ''}
             </p>

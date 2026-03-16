@@ -10,15 +10,45 @@ import ViewTracker from '../../(components)/ViewTracker';
 import { supabaseAdmin, getCurrentUser } from '@/lib/auth/server';
 import type { Listing } from '@/lib/types';
 import FinancingCalculator from '../../(components)/FinancingCalculator';
+import WhatsAppContactButton from '../../(components)/WhatsAppContactButton';
+import WhatsAppShareButton from '../../(components)/WhatsAppShareButton';
+import CompareButton from '../../(components)/CompareButton';
+import SellerTrustBadge from '../../(components)/SellerTrustBadge';
+import ReviewCard from '../../(components)/ReviewCard';
+import ReviewForm from '../../(components)/ReviewForm';
 
 async function getListing(id: string): Promise<Listing | null> {
   const { data } = await supabaseAdmin
     .from('listings')
-    .select('*, vehicle:vehicles(*), media:media_assets(*), seller:profiles!seller_id(is_verified, full_name)')
+    .select('*, vehicle:vehicles(*), media:media_assets(*), seller:profiles!seller_id(is_verified, full_name, phone, avg_rating, total_reviews)')
     .eq('id', id)
     .eq('status', 'published')
     .single();
   return data as unknown as Listing | null;
+}
+
+interface ReviewData {
+  id: string;
+  rating: number;
+  title: string | null;
+  comment: string | null;
+  created_at: string;
+  reviewer?: { full_name: string | null };
+  response?: { comment: string; created_at: string; responder?: { full_name: string | null } } | null;
+}
+
+async function getReviews(sellerId: string): Promise<ReviewData[]> {
+  const { data } = await supabaseAdmin
+    .from('reviews')
+    .select('*, reviewer:profiles!reviewer_id(full_name), response:review_responses(comment, created_at, responder:profiles!responder_id(full_name))')
+    .eq('reviewed_id', sellerId)
+    .eq('status', 'published')
+    .order('created_at', { ascending: false })
+    .limit(10);
+  return ((data ?? []) as unknown as (ReviewData & { response: ReviewData['response'][] | ReviewData['response'] })[]).map((r) => ({
+    ...r,
+    response: Array.isArray(r.response) && r.response.length > 0 ? r.response[0] : null,
+  }));
 }
 
 // ─── Dynamic SEO metadata ──────────────────────────────────────────────────────
@@ -87,6 +117,8 @@ export default async function ListingDetailPage({
   ]);
   if (!listing) notFound();
 
+  const reviews = await getReviews(listing.seller_id);
+
   // Check if buyer has saved this listing
   let isFavourited = false;
   if (user?.role === 'buyer') {
@@ -140,6 +172,7 @@ export default async function ListingDetailPage({
                 {v ? `${v.year} ${v.make} ${v.model}` : 'Véhicule'}
               </h1>
               <div className="flex items-center gap-2 flex-shrink-0">
+                <CompareButton item={{ id: listing.id, type: 'listing', label: v ? `${v.year} ${v.make} ${v.model}` : 'Véhicule', image: listing.media?.[0] ? `/api/files/thumb/${listing.media[0].id}` : undefined }} />
                 <ZoneBadge zone={listing.zone} />
                 <FavouriteButton
                   listingId={listing.id}
@@ -149,15 +182,12 @@ export default async function ListingDetailPage({
               </div>
             </div>
 
-            {/* Verified seller badge */}
-            {listing.seller?.is_verified && (
-              <div className="flex items-center gap-1.5 text-blue-700">
-                <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span className="text-xs font-semibold">Vendeur vérifié MotoPayee</span>
-              </div>
-            )}
+            {/* Seller trust badge */}
+            <SellerTrustBadge
+              isVerified={listing.seller?.is_verified ?? false}
+              avgRating={(listing.seller as unknown as { avg_rating: number | null })?.avg_rating ?? null}
+              totalReviews={(listing.seller as unknown as { total_reviews: number })?.total_reviews ?? 0}
+            />
 
             {/* Price */}
             <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
@@ -216,12 +246,25 @@ export default async function ListingDetailPage({
               >
                 Demander un financement
               </Link>
-              <Link
-                href="/login"
-                className="block w-full text-center border border-gray-300 text-gray-700 font-medium py-3 rounded-xl hover:bg-gray-50 transition"
-              >
-                Contacter le vendeur
-              </Link>
+              {listing.seller?.phone && (
+                <WhatsAppContactButton
+                  phone={listing.seller.phone}
+                  message={`Bonjour, je suis intéressé par votre ${v ? `${v.year} ${v.make} ${v.model}` : 'véhicule'} sur MotoPayee.`}
+                  label="Contacter via WhatsApp"
+                  className="block w-full text-center bg-[#25D366] text-white font-semibold py-3 rounded-xl hover:bg-[#1da851] transition flex items-center justify-center gap-2"
+                />
+              )}
+              <div className="flex gap-2">
+                <WhatsAppShareButton
+                  text={`Regardez ce ${v ? `${v.year} ${v.make} ${v.model}` : 'véhicule'} sur MotoPayee ! ${process.env.NEXT_PUBLIC_APP_URL}/listings/${listing.id}`}
+                />
+                <Link
+                  href="/login"
+                  className="flex-1 text-center border border-gray-300 text-gray-700 font-medium py-2.5 rounded-xl hover:bg-gray-50 transition text-sm"
+                >
+                  Contacter le vendeur
+                </Link>
+              </div>
             </div>
 
             {/* Financing calculator */}
@@ -237,6 +280,29 @@ export default async function ListingDetailPage({
               </div>
             )}
           </div>
+        </div>
+
+        {/* Reviews section */}
+        <div className="mt-10">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">
+            Avis sur le vendeur ({reviews.length})
+          </h2>
+          {reviews.length > 0 ? (
+            <div className="space-y-3 mb-6">
+              {reviews.map((r) => (
+                <ReviewCard key={r.id} review={r} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400 mb-6">Aucun avis pour ce vendeur.</p>
+          )}
+          {user && user.id !== listing.seller_id && (
+            <ReviewForm
+              entityType="listing"
+              entityId={listing.id}
+              reviewedId={listing.seller_id}
+            />
+          )}
         </div>
       </main>
       <Footer />
