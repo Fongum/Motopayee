@@ -94,8 +94,14 @@ CREATE TABLE IF NOT EXISTS browsing_history (
 );
 
 CREATE INDEX idx_browsing_history_user ON browsing_history(user_id, viewed_at DESC);
--- Prevent duplicate rapid views
-CREATE UNIQUE INDEX idx_browsing_unique_daily ON browsing_history(user_id, entity_type, entity_id, (viewed_at::date));
+-- Prevent duplicate rapid views (one row per user/entity/day).
+--
+-- `viewed_at::date` cannot be used here: casting a timestamptz to date depends
+-- on the session TimeZone, so Postgres treats it as STABLE and rejects it in an
+-- index expression (42P17). Pinning the zone makes the expression IMMUTABLE.
+-- Africa/Douala (WAT, UTC+1, no DST) also gives the day boundary users expect.
+CREATE UNIQUE INDEX idx_browsing_unique_daily
+  ON browsing_history(user_id, entity_type, entity_id, ((viewed_at AT TIME ZONE 'Africa/Douala')::date));
 
 -- ═══════════ RLS ═══════════
 
