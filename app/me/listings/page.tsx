@@ -59,7 +59,7 @@ export default async function SellerListingsPage() {
           )}
           <Link
             href="/me/listings/new"
-            className="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700"
+            className="bg-[#3d9e3d] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#2d8a2d] transition shadow-sm"
           >
             + Nouvelle annonce
           </Link>
@@ -69,7 +69,7 @@ export default async function SellerListingsPage() {
       {items.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center">
           <p className="text-gray-500 mb-4">Vous n&apos;avez pas encore d&apos;annonce.</p>
-          <Link href="/me/listings/new" className="text-blue-600 hover:underline text-sm">
+          <Link href="/me/listings/new" className="text-[#1a3a6b] hover:text-[#3d9e3d] text-sm">
             Créer ma première annonce →
           </Link>
         </div>

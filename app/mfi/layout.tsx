@@ -32,8 +32,14 @@ export default async function MFILayout({ children }: { children: React.ReactNod
         <aside className="w-48 flex-shrink-0 hidden md:block">
           <nav className="space-y-1">
             <Link
+              href="/mfi"
+              className="block px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-[#3d9e3d]/10 hover:text-[#1a3a6b] transition-colors"
+            >
+              Tableau de bord
+            </Link>
+            <Link
               href="/mfi/applications"
-              className="block px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+              className="block px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-[#3d9e3d]/10 hover:text-[#1a3a6b] transition-colors"
             >
               Demandes
             </Link>

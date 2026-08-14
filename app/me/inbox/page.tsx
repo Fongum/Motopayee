@@ -1,0 +1,62 @@
+import { redirect } from 'next/navigation';
+import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
+import type { Metadata } from 'next';
+import InboxClient from './InboxClient';
+
+export const metadata: Metadata = { title: 'Messages — MotoPayee' };
+
+export default async function InboxPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
+
+  const { data } = await supabaseAdmin
+    .from('conversations')
+    .select(`
+      *,
+      participant_a_profile:profiles!participant_a(id, full_name),
+      participant_b_profile:profiles!participant_b(id, full_name),
+      listing:listings(id, asking_price, vehicle:vehicles(make, model, year)),
+      hire_listing:hire_listings(id, make, model, year)
+    `)
+    .or(`participant_a.eq.${user.id},participant_b.eq.${user.id}`)
+    .order('last_message_at', { ascending: false });
+
+  // Get unread counts
+  const convIds = (data ?? []).map((c: Record<string, unknown>) => c.id as string);
+  const { data: unreadData } = convIds.length > 0
+    ? await supabaseAdmin
+        .from('messages')
+        .select('conversation_id')
+        .in('conversation_id', convIds)
+        .neq('sender_id', user.id)
+        .is('read_at', null)
+    : { data: [] };
+
+  const unreadMap: Record<string, number> = {};
+  for (const m of unreadData ?? []) {
+    const cid = (m as Record<string, unknown>).conversation_id as string;
+    unreadMap[cid] = (unreadMap[cid] ?? 0) + 1;
+  }
+
+  const conversations = (data ?? []).map((c: Record<string, unknown>) => {
+    const otherUser = (c.participant_a as string) === user.id
+      ? c.participant_b_profile as unknown as { id: string; full_name: string | null }
+      : c.participant_a_profile as unknown as { id: string; full_name: string | null };
+    const listing = c.listing as unknown as { id: string; asking_price: number; vehicle: { make: string; model: string; year: number } | null } | null;
+    const hireListing = c.hire_listing as unknown as { id: string; make: string; model: string; year: number } | null;
+
+    let subject = 'Conversation';
+    if (listing?.vehicle) subject = `${listing.vehicle.year} ${listing.vehicle.make} ${listing.vehicle.model}`;
+    else if (hireListing) subject = `${hireListing.year} ${hireListing.make} ${hireListing.model}`;
+
+    return {
+      id: c.id as string,
+      other_name: otherUser?.full_name ?? 'Utilisateur',
+      subject,
+      last_message_at: c.last_message_at as string,
+      unread: unreadMap[c.id as string] ?? 0,
+    };
+  });
+
+  return <InboxClient conversations={conversations} currentUserId={user.id} />;
+}

@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { requireBuyer } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
+import { parseBody } from '@/lib/validation';
+
+const toggleSchema = z.object({ listing_id: z.string().uuid() });
 
 export async function POST(request: Request) {
   const auth = await requireBuyer(request);
@@ -8,10 +12,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const { listing_id } = await request.json().catch(() => ({}));
-  if (!listing_id) {
-    return NextResponse.json({ error: 'listing_id required.' }, { status: 400 });
-  }
+  const parsed = await parseBody(toggleSchema, request, 'Annonce invalide.');
+  if (!parsed.success) return parsed.response;
+
+  const { listing_id } = parsed.data;
 
   // Check if already saved
   const { data: existing } = await supabaseAdmin

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAuth, requireSeller } from '@/lib/auth/middleware';
+import { parseBody } from '@/lib/validation';
+import { createHireListingSchema } from '@/lib/hire-schemas';
 import type { HireListing } from '@/lib/types';
 
 // GET /api/hire — Browse published hire listings (public)
@@ -62,56 +64,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: authAny.error }, { status: authAny.status });
     }
     // Any authenticated user can create a hire listing
-    const user = authAny.user;
-    const body = await request.json();
-    return createHireListing(user.id, body);
+    return createHireListing(authAny.user.id, request);
   }
 
-  const body = await request.json();
-  return createHireListing(auth.user.id, body);
+  return createHireListing(auth.user.id, request);
 }
 
-async function createHireListing(ownerId: string, body: Record<string, unknown>) {
-  const required = ['make', 'model', 'year', 'daily_rate', 'city'];
-  for (const field of required) {
-    if (!body[field]) {
-      return NextResponse.json({ error: `${field} is required` }, { status: 400 });
-    }
-  }
+async function createHireListing(ownerId: string, request: NextRequest) {
+  const parsed = await parseBody(createHireListingSchema, request, 'Annonce de location invalide.');
+  if (!parsed.success) return parsed.response;
 
+  // The schema supplies every default, so the payload can be written straight
+  // through — null-coalescing per field is no longer needed.
   const { data, error } = await supabaseAdmin
     .from('hire_listings')
     .insert({
+      ...parsed.data,
       owner_id: ownerId,
-      dealer_id: body.dealer_id ?? null,
-      make: body.make,
-      model: body.model,
-      year: body.year,
-      fuel_type: body.fuel_type ?? 'petrol',
-      transmission: body.transmission ?? 'automatic',
-      color: body.color ?? null,
-      seats: body.seats ?? 5,
-      engine_cc: body.engine_cc ?? null,
-      plate_number: body.plate_number ?? null,
-      hire_type: body.hire_type ?? 'self_drive',
-      daily_rate: body.daily_rate,
-      weekly_rate: body.weekly_rate ?? null,
-      monthly_rate: body.monthly_rate ?? null,
-      deposit_amount: body.deposit_amount ?? 0,
-      driver_daily_rate: body.driver_daily_rate ?? null,
-      mileage_limit_per_day_km: body.mileage_limit_per_day_km ?? null,
-      extra_km_charge: body.extra_km_charge ?? null,
-      min_hire_days: body.min_hire_days ?? 1,
-      max_hire_days: body.max_hire_days ?? null,
-      city: body.city,
-      zone: body.zone ?? 'A',
-      address: body.address ?? null,
-      latitude: body.latitude ?? null,
-      longitude: body.longitude ?? null,
-      description: body.description ?? null,
-      conditions: body.conditions ?? null,
-      features: body.features ?? [],
-      insurance_included: body.insurance_included ?? false,
       status: 'pending_review',
     })
     .select()

@@ -108,10 +108,14 @@ export default async function ListingsPage({ searchParams }: { searchParams: Sea
       <Navbar />
       <main className="bg-gray-50 min-h-screen">
         {/* Header */}
-        <div className="bg-[#1a3a6b] py-10 px-4">
+        <div className="bg-gradient-to-r from-[#1a3a6b] to-[#0d1f3c] py-10 px-4">
           <div className="max-w-7xl mx-auto">
             <h1 className="text-2xl md:text-3xl font-extrabold text-white mb-1">Véhicules disponibles</h1>
-            <p className="text-blue-300 text-sm">Tous nos véhicules sont inspectés, vérifiés et prêts à financer</p>
+            <p className="text-blue-300/80 text-sm">
+              {total > 0
+                ? `${total} véhicule${total > 1 ? 's' : ''} inspecté${total > 1 ? 's' : ''}, vérifié${total > 1 ? 's' : ''} et prêt${total > 1 ? 's' : ''} à financer`
+                : 'Tous nos véhicules sont inspectés, vérifiés et prêts à financer'}
+            </p>
           </div>
         </div>
 
@@ -144,8 +148,8 @@ export default async function ListingsPage({ searchParams }: { searchParams: Sea
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <p className="text-gray-500 font-semibold mb-1">Aucun véhicule trouvé</p>
-              <p className="text-gray-400 text-sm">Essayez de modifier vos critères de recherche.</p>
+              <p className="text-gray-700 font-semibold mb-1">Aucun véhicule trouvé</p>
+              <p className="text-gray-500 text-sm">Essayez de modifier vos critères de recherche.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">

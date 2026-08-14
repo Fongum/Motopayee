@@ -10,7 +10,7 @@ export default async function BulkUploadPage() {
   return (
     <div>
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/me/listings" className="text-sm text-blue-600 hover:underline">
+        <Link href="/me/listings" className="text-sm text-[#1a3a6b] hover:text-[#3d9e3d]">
           ← Mes annonces
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Import en lot</h1>

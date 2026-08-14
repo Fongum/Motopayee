@@ -1,8 +1,17 @@
 import Link from 'next/link';
 import Navbar from '../(components)/Navbar';
 import Footer from '../(components)/Footer';
+import LeadCaptureForm from '../(components)/LeadCaptureForm';
+import { campaignNameFromSearch, leadSourceFromSearch, type AcquisitionSearchParams } from '@/lib/campaigns';
 
-export default function DealersPage() {
+export default function DealersPage({
+  searchParams,
+}: {
+  searchParams?: AcquisitionSearchParams;
+}) {
+  const campaignName = campaignNameFromSearch(searchParams, 'Dealer pilot page');
+  const source = leadSourceFromSearch(searchParams);
+
   return (
     <>
       <Navbar />
@@ -37,10 +46,23 @@ export default function DealersPage() {
           </p>
           <Link
             href="/register?role=seller_dealer"
-            className="inline-block bg-blue-600 text-white font-semibold px-8 py-3 rounded-xl hover:bg-blue-700"
+            className="inline-block bg-[#3d9e3d] text-white font-semibold px-8 py-3 rounded-xl hover:bg-[#2d8a2d] transition shadow-sm"
           >
             Soumettre une candidature
           </Link>
+        </div>
+
+        <div className="mt-8 bg-white border border-gray-200 rounded-2xl p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Demander un appel MotoPayee</h2>
+          <p className="text-sm text-gray-500 mb-6">
+            Pour le pilote gratuit, laissez vos informations et notre equipe vous contactera.
+          </p>
+          <LeadCaptureForm
+            leadType="dealer"
+            source={source}
+            campaignName={campaignName}
+            defaultInterest="Je veux rejoindre le pilote concessionnaire MotoPayee."
+          />
         </div>
       </main>
       <Footer />

@@ -76,7 +76,7 @@ export default async function ImportRequestDetailPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/me/import-requests" className="text-sm font-medium text-blue-600 hover:underline">
+        <Link href="/me/import-requests" className="text-sm font-medium text-[#1a3a6b] hover:text-[#3d9e3d]">
           Back to import requests
         </Link>
         <div className="mt-3 flex flex-wrap items-center gap-3">

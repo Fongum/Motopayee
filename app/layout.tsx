@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     siteName: 'MotoPayee',
     title: 'MotoPayee — Marketplace automobile du Cameroun',
     description: 'Achetez, vendez et financez votre véhicule. Véhicules inspectés, prix transparents, financement sous 72h.',
-    images: [{ url: '/logo2.png', width: 1024, height: 1024, alt: 'MotoPayee Logo' }],
+    images: [{ url: '/og.jpg', width: 1200, height: 630, alt: 'MotoPayee — Marketplace automobile du Cameroun' }],
   },
   twitter: {
     card: 'summary_large_image',

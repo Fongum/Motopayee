@@ -108,7 +108,7 @@ export default function ImportPaymentRequestForm({
                   <button
                     onClick={() => checkStatus(payment.id)}
                     disabled={checkingId === payment.id}
-                    className="text-xs font-medium text-blue-600 hover:underline disabled:opacity-60"
+                    className="text-xs font-medium text-[#1a3a6b] hover:text-[#3d9e3d] disabled:opacity-60"
                   >
                     {checkingId === payment.id ? 'Checking...' : 'Check'}
                   </button>

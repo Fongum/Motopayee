@@ -32,7 +32,7 @@ export default function InspectorPage({ params }: { params: { id: string } }) {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch(`/api/listings/${params.id}`)
+    fetch(`/api/inspector/listings/${params.id}`)
       .then((r) => r.ok ? r.json() : null)
       .then((d) => setListing(d?.listing ?? null))
       .catch(() => {});
@@ -118,7 +118,7 @@ export default function InspectorPage({ params }: { params: { id: string } }) {
                   />
                   <div className={`text-center py-3 rounded-xl border-2 text-sm font-bold transition ${
                     conditionGrade === g
-                      ? 'border-blue-600 bg-blue-50 text-blue-700'
+                      ? 'border-[#3d9e3d] bg-[#3d9e3d]/10 text-[#2d8a2d]'
                       : 'border-gray-200 text-gray-500 hover:border-gray-400'
                   }`}>
                     {g}
@@ -183,7 +183,7 @@ export default function InspectorPage({ params }: { params: { id: string } }) {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 disabled:opacity-50"
+            className="w-full bg-[#3d9e3d] text-white font-semibold py-3 rounded-xl hover:bg-[#2d8a2d] disabled:opacity-50 transition shadow-sm"
           >
             {submitting ? 'Soumission...' : 'Soumettre le rapport d\'inspection'}
           </button>

@@ -53,8 +53,8 @@ export default function OnboardingForm() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Complétez votre profil</h1>
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-card p-8">
+        <h1 className="text-2xl font-bold text-[#1a3a6b] mb-2">Complétez votre profil</h1>
         <p className="text-gray-500 text-sm mb-8">
           Quelques informations supplémentaires pour personnaliser votre expérience.
         </p>
@@ -66,7 +66,7 @@ export default function OnboardingForm() {
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d9e3d]/40 focus:border-[#3d9e3d] transition"
               placeholder="+237 6XX XXX XXX"
             />
           </div>
@@ -78,7 +78,7 @@ export default function OnboardingForm() {
                 setZone(e.target.value as 'A' | 'B' | 'C');
                 setCity('');
               }}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d9e3d]/40 focus:border-[#3d9e3d] transition"
             >
               <option value="A">Zone A — Douala / Yaoundé</option>
               <option value="B">Zone B — Villes secondaires</option>
@@ -90,7 +90,7 @@ export default function OnboardingForm() {
             <select
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d9e3d]/40 focus:border-[#3d9e3d] transition"
             >
               <option value="">Sélectionner une ville</option>
               {cities.map((c) => (
@@ -108,7 +108,7 @@ export default function OnboardingForm() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 disabled:opacity-50 transition"
+            className="w-full bg-[#3d9e3d] text-white font-semibold py-3 rounded-xl hover:bg-[#2d8a2d] disabled:opacity-50 transition shadow-sm"
           >
             {submitting ? 'Enregistrement...' : 'Continuer'}
           </button>

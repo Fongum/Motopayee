@@ -3,6 +3,7 @@ import type { HireListing } from '@/lib/types';
 import WhatsAppShareButton from './WhatsAppShareButton';
 import CompareButton from './CompareButton';
 import StarRating from './StarRating';
+import { HireTrustBadges } from './TrustLabelBadges';
 
 interface Props {
   listing: HireListing;
@@ -37,7 +38,7 @@ export default function HireCard({ listing }: Props) {
   return (
     <Link
       href={`/hire/${listing.id}`}
-      className="group block bg-white rounded-2xl border border-gray-200 hover:border-[#3d9e3d] hover:shadow-lg transition-all overflow-hidden"
+      className="group block bg-white rounded-2xl border border-gray-200 shadow-card hover:border-[#3d9e3d]/40 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
     >
       {/* Photo */}
       <div className="relative h-44 bg-gray-100 overflow-hidden">
@@ -47,6 +48,8 @@ export default function HireCard({ listing }: Props) {
             src={`/api/files/signed-url?path=${encodeURIComponent(listing.media![0].storage_path)}&bucket=${listing.media![0].bucket}`}
             alt={`${listing.make} ${listing.model}`}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 gap-2">
@@ -100,12 +103,12 @@ export default function HireCard({ listing }: Props) {
           {listing.year} {listing.make} {listing.model}
         </h3>
 
-        <p className="text-xs text-gray-400 mb-2">
+        <p className="text-xs text-gray-500 mb-2">
           {FUEL_FR[listing.fuel_type] ?? listing.fuel_type} · {listing.transmission === 'automatic' ? 'Auto' : 'Manuel'} · {listing.seats} places
         </p>
 
         {listing.city && (
-          <p className="text-[11px] text-gray-400 flex items-center gap-1 mb-3">
+          <p className="text-[11px] text-gray-500 flex items-center gap-1 mb-3">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -116,9 +119,9 @@ export default function HireCard({ listing }: Props) {
 
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-base font-extrabold text-gray-900">{formatXAF(listing.daily_rate)}<span className="text-xs font-normal text-gray-400">/jour</span></p>
+            <p className="text-base font-extrabold text-gray-900">{formatXAF(listing.daily_rate)}<span className="text-xs font-normal text-gray-500">/jour</span></p>
             {listing.weekly_rate && (
-              <p className="text-[11px] text-gray-400">{formatXAF(listing.weekly_rate)}/sem</p>
+              <p className="text-[11px] text-gray-500">{formatXAF(listing.weekly_rate)}/sem</p>
             )}
           </div>
           {listing.insurance_included && (
@@ -127,6 +130,8 @@ export default function HireCard({ listing }: Props) {
             </span>
           )}
         </div>
+
+        <HireTrustBadges listing={listing} />
 
         <div className="flex items-center gap-2 mt-2 flex-wrap">
           {listing.owner?.is_verified && (

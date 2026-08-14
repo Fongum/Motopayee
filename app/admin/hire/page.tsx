@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/auth/server';
 import type { HireListing } from '@/lib/types';
 import AdminHireActions from './AdminHireActions';
+import Link from 'next/link';
 
 function formatXAF(amount: number): string {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
@@ -32,7 +33,15 @@ export default async function AdminHirePage() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-gray-900 mb-6">Gestion des locations</h1>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Gestion des locations</h1>
+          <p className="mt-1 text-sm text-gray-500">Validation des vehicules proposes a la location.</p>
+        </div>
+        <Link href="/admin/hire/bookings" className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+          Voir les reservations
+        </Link>
+      </div>
 
       {/* Pending review */}
       <section className="mb-10">

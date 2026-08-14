@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireBuyer } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { notifyApplicationSubmitted } from '@/lib/notifications';
+import { logFailure } from '@/lib/logger';
 
 interface RouteParams { params: { id: string } }
 
@@ -54,7 +55,9 @@ export async function POST(request: Request, { params }: RouteParams) {
     .select('phone')
     .eq('id', auth.user.id)
     .single();
-  notifyApplicationSubmitted(profile?.phone ?? null, params.id).catch(console.error);
+  notifyApplicationSubmitted(profile?.phone ?? null, params.id).catch(
+    logFailure('Application submitted SMS failed', { applicationId: params.id })
+  );
 
   return NextResponse.json({ application: data });
 }

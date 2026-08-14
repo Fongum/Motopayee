@@ -8,13 +8,39 @@
  *
  * Cameroon numbers: MTN (+237 6XX), Orange (+237 6XX)
  * All functions are fire-and-forget safe — they swallow errors so they
- * never block a response. Call with `.catch(console.error)` if you want logging.
+ * never block a response. Call with `.catch(logFailure(...))` from lib/logger
+ * if you want the failure recorded.
  */
+
+import { logger } from './logger';
 
 const AT_SMS_URL = 'https://api.africastalking.com/version1/messaging';
 const AT_USERNAME = process.env.AFRICASTALKING_USERNAME ?? '';
 const AT_API_KEY  = process.env.AFRICASTALKING_API_KEY ?? '';
 const AT_SENDER   = process.env.AFRICASTALKING_SENDER_ID ?? 'MotoPayee';
+
+const FETCH_TIMEOUT_MS = 10_000;
+
+/**
+ * fetch() with an abort-based timeout, mirroring lib/mobilemoney.ts. Without it
+ * a hung Africa's Talking endpoint would keep a serverless invocation alive for
+ * its whole execution budget.
+ */
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs = FETCH_TIMEOUT_MS
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Normalise to international format (+237XXXXXXXXX) */
 function normalise(phone: string): string {
@@ -25,11 +51,18 @@ function normalise(phone: string): string {
   return `+${digits}`;
 }
 
-/** Core send function — never throws */
+/**
+ * Core send function — never throws.
+ *
+ * Retries once on a network error or 5xx. Africa's Talking has no idempotency
+ * key, so a retry can in principle double-send; that risk is accepted only for
+ * failures where the first attempt almost certainly never reached them. A 4xx
+ * is a caller error (bad number, no credit) and is never retried.
+ */
 export async function sendSMS(phone: string | null | undefined, message: string): Promise<void> {
   if (!phone) return;
   if (!AT_API_KEY || !AT_USERNAME) {
-    console.warn('[SMS] Africa\'s Talking credentials not set — skipping notification');
+    logger.warn('SMS skipped: Africa\'s Talking credentials not set');
     return;
   }
 
@@ -40,21 +73,26 @@ export async function sendSMS(phone: string | null | undefined, message: string)
     from: AT_SENDER,
   });
 
-  try {
-    const res = await fetch(AT_SMS_URL, {
-      method: 'POST',
-      headers: {
-        apiKey: AT_API_KEY,
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Accept: 'application/json',
-      },
-      body: body.toString(),
-    });
-    if (!res.ok) {
-      console.error('[SMS] Africa\'s Talking error:', await res.text());
+  const init: RequestInit = {
+    method: 'POST',
+    headers: {
+      apiKey: AT_API_KEY,
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Accept: 'application/json',
+    },
+    body: body.toString(),
+  };
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetchWithTimeout(AT_SMS_URL, init);
+      if (res.ok) return;
+      logger.error('SMS send failed', { status: res.status, body: await res.text(), attempt });
+      if (res.status < 500) return; // 4xx won't fix itself
+    } catch (err) {
+      logger.error('SMS network error', { err, attempt });
     }
-  } catch (err) {
-    console.error('[SMS] Network error:', err);
+    if (attempt === 0) await sleep(500);
   }
 }
 

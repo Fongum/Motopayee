@@ -36,7 +36,7 @@ export default async function SellerListingDetailPage({ params }: { params: { id
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4">
-          <Link href="/me/listings" className="text-sm text-blue-600 hover:underline">← Mes annonces</Link>
+          <Link href="/me/listings" className="text-sm text-[#1a3a6b] hover:text-[#3d9e3d]">← Mes annonces</Link>
           <h1 className="text-2xl font-bold text-gray-900">
             {v ? `${v.year} ${v.make} ${v.model}` : 'Annonce'}
           </h1>
@@ -126,7 +126,7 @@ function OwnershipUploadForm({ listingId }: { listingId: string }) {
       </p>
       <button
         type="submit"
-        className="bg-blue-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-blue-700"
+        className="bg-[#3d9e3d] text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-[#2d8a2d] transition shadow-sm"
       >
         Soumettre pour vérification
       </button>

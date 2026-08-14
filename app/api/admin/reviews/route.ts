@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAdmin } from '@/lib/auth/middleware';
+import { parseBody } from '@/lib/validation';
+
+const moderateSchema = z.object({
+  review_id: z.string().uuid(),
+  status: z.enum(['published', 'hidden', 'flagged']),
+});
 
 // GET /api/admin/reviews — list all reviews (admin moderation)
 export async function GET(request: Request) {
@@ -33,12 +40,10 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const body = await request.json();
-  const { review_id, status } = body;
+  const parsed = await parseBody(moderateSchema, request, 'Modération invalide.');
+  if (!parsed.success) return parsed.response;
 
-  if (!review_id || !['published', 'hidden', 'flagged'].includes(status)) {
-    return NextResponse.json({ error: 'review_id and valid status required.' }, { status: 400 });
-  }
+  const { review_id, status } = parsed.data;
 
   const { data: review } = await supabaseAdmin
     .from('reviews')

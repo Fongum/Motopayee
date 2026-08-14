@@ -15,11 +15,13 @@ export default function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const defaultRole = (searchParams.get('role') as Role | null) ?? 'buyer';
+  const refCode = searchParams.get('ref') ?? '';
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<Role>(defaultRole);
+  const [referralCode, setReferralCode] = useState(refCode);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -41,14 +43,23 @@ export default function RegisterForm() {
       return;
     }
 
+    // Apply referral code if provided
+    if (referralCode.trim()) {
+      await fetch('/api/referrals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referral_code: referralCode.trim() }),
+      }).catch(() => {});
+    }
+
     router.push('/onboarding');
     router.refresh();
   }
 
   return (
     <div className="w-full max-w-md">
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Créer un compte</h1>
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-card p-8">
+        <h1 className="text-2xl font-bold text-[#1a3a6b] mb-2">Créer un compte</h1>
         <p className="text-gray-500 text-sm mb-8">Rejoignez MotoPayee gratuitement</p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -59,7 +70,7 @@ export default function RegisterForm() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d9e3d]/40 focus:border-[#3d9e3d] transition"
               placeholder="Jean Dupont"
             />
           </div>
@@ -70,7 +81,7 @@ export default function RegisterForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d9e3d]/40 focus:border-[#3d9e3d] transition"
               placeholder="votre@email.com"
             />
           </div>
@@ -82,7 +93,7 @@ export default function RegisterForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={8}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d9e3d]/40 focus:border-[#3d9e3d] transition"
               placeholder="Minimum 8 caractères"
             />
           </div>
@@ -97,12 +108,23 @@ export default function RegisterForm() {
                     value={r.value}
                     checked={role === r.value}
                     onChange={() => setRole(r.value)}
-                    className="mt-0.5"
+                    className="mt-0.5 accent-[#3d9e3d]"
                   />
                   <span className="text-sm text-gray-700">{r.label}</span>
                 </label>
               ))}
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Code de parrainage <span className="text-gray-400 font-normal">(optionnel)</span></label>
+            <input
+              type="text"
+              value={referralCode}
+              onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d9e3d]/40 focus:border-[#3d9e3d] transition uppercase tracking-wider"
+              placeholder="MP-XXXXXX"
+            />
           </div>
 
           {error && (
@@ -114,7 +136,7 @@ export default function RegisterForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 disabled:opacity-50 transition"
+            className="w-full bg-[#3d9e3d] text-white font-semibold py-3 rounded-xl hover:bg-[#2d8a2d] disabled:opacity-50 transition shadow-sm"
           >
             {loading ? 'Création...' : 'Créer mon compte'}
           </button>
@@ -122,7 +144,7 @@ export default function RegisterForm() {
 
         <p className="text-sm text-gray-500 text-center mt-6">
           Déjà un compte ?{' '}
-          <Link href="/login" className="text-blue-600 hover:underline font-medium">
+          <Link href="/login" className="text-[#1a3a6b] hover:text-[#3d9e3d] font-semibold transition-colors">
             Se connecter
           </Link>
         </p>

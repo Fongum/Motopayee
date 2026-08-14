@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 const TABS = [
   { key: 'buy', label: 'Acheter', action: '/listings' },
   { key: 'hire', label: 'Louer', action: '/hire' },
+  { key: 'finance', label: 'Financer', action: '/apply' },
+  { key: 'import', label: 'Importer', action: '/imports' },
   { key: 'sell', label: 'Vendre', action: '/sell' },
 ] as const;
 
@@ -48,15 +50,15 @@ export default function HeroSearch({ makes }: { makes: string[] }) {
   const selectCls = inputCls + ' appearance-none';
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-3xl mx-auto">
       {/* Tabs */}
-      <div className="flex justify-center gap-1 mb-4">
+      <div className="flex flex-wrap justify-center gap-1.5 mb-4">
         {TABS.map((t) => (
           <button
             key={t.key}
             type="button"
             onClick={() => setTab(t.key)}
-            className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${
+            className={`px-4 sm:px-5 py-2 rounded-full text-sm font-semibold transition-all ${
               tab === t.key
                 ? 'bg-white text-[#1a3a6b] shadow-md'
                 : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'
@@ -148,6 +150,50 @@ export default function HeroSearch({ makes }: { makes: string[] }) {
                 className="bg-[#f5a623] text-[#1a3a6b] font-bold px-6 py-3 rounded-xl hover:bg-[#e6951c] transition text-sm"
               >
                 Mettre en location
+              </button>
+            </div>
+          </div>
+        )}
+
+        {tab === 'finance' && (
+          <div className="text-center py-4">
+            <p className="text-white/70 text-sm mb-4">Simulez votre mensualité et envoyez une demande de financement en ligne</p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                type="button"
+                onClick={() => router.push('/apply')}
+                className="bg-[#3d9e3d] text-white font-bold px-6 py-3 rounded-xl hover:bg-[#2d8a2d] transition text-sm"
+              >
+                Demander un financement
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/calculator')}
+                className="bg-white/10 border border-white/20 text-white font-bold px-6 py-3 rounded-xl hover:bg-white/20 transition text-sm"
+              >
+                Simuler mes mensualités
+              </button>
+            </div>
+          </div>
+        )}
+
+        {tab === 'import' && (
+          <div className="text-center py-4">
+            <p className="text-white/70 text-sm mb-4">Recevez un devis d&apos;import assisté avec suivi, logistique et dédouanement</p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                type="button"
+                onClick={() => router.push('/imports')}
+                className="bg-[#f5a623] text-[#1a3a6b] font-bold px-6 py-3 rounded-xl hover:bg-[#e6951c] transition text-sm"
+              >
+                Voir les offres d&apos;import
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/imports/request')}
+                className="bg-white/10 border border-white/20 text-white font-bold px-6 py-3 rounded-xl hover:bg-white/20 transition text-sm"
+              >
+                Demander un devis
               </button>
             </div>
           </div>

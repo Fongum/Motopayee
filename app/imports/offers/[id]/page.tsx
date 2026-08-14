@@ -51,7 +51,7 @@ export default async function ImportOfferDetailPage({
       <Navbar />
       <main className="min-h-screen bg-gray-50 py-10">
         <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
-          <Link href="/imports" className="inline-flex text-sm font-medium text-blue-600 hover:underline">
+          <Link href="/imports" className="inline-flex text-sm font-medium text-[#1a3a6b] hover:text-[#3d9e3d] transition-colors">
             Back to import offers
           </Link>
 

@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { requireSeller } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
+import { parseBody } from '@/lib/validation';
+
+// 100 rows is the documented cap; 512KB of CSV is a generous ceiling for that
+// and keeps an oversized upload from being parsed at all.
+const bulkSchema = z.object({
+  csv: z.string().min(1).max(512 * 1024),
+});
 
 const REQUIRED = ['make', 'model', 'year', 'mileage_km', 'fuel_type', 'transmission', 'asking_price', 'zone'] as const;
 const VALID_FUEL = ['petrol', 'diesel', 'electric', 'hybrid', 'other'];
@@ -26,12 +34,10 @@ export async function POST(request: Request) {
   }
 
   // Accept JSON body with { csv: string }
-  const body = await request.json().catch(() => ({})) as { csv?: string };
-  if (!body.csv) {
-    return NextResponse.json({ error: 'csv field is required.' }, { status: 400 });
-  }
+  const parsed = await parseBody(bulkSchema, request, 'Import CSV invalide.');
+  if (!parsed.success) return parsed.response;
 
-  const rows = parseCSV(body.csv);
+  const rows = parseCSV(parsed.data.csv);
   if (rows.length === 0) {
     return NextResponse.json({ error: 'No rows found. Include a header row.' }, { status: 400 });
   }

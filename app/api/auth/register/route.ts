@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { signUp, signIn } from '@/lib/auth/server';
+import { guardRateLimit, getClientId } from '@/lib/rate-limit';
 import { z } from 'zod';
 import type { Role } from '@/lib/types';
 
@@ -19,6 +20,10 @@ const COOKIE_OPTIONS = {
 };
 
 export async function POST(request: Request) {
+  // Throttle sign-ups per client to limit automated account creation.
+  const limited = await guardRateLimit(`register:${getClientId(request)}`, 5, 60_000);
+  if (limited) return limited;
+
   const body = await request.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {

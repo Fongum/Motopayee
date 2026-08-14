@@ -85,7 +85,7 @@ export default async function AdminImportRequestsPage({
             href={status ? `/admin/imports/requests?status=${status}` : '/admin/imports/requests'}
             className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
               (searchParams.status ?? '') === status
-                ? 'border-blue-600 bg-blue-600 text-white'
+                ? 'border-[#1a3a6b] bg-[#1a3a6b] text-white'
                 : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
             }`}
           >
@@ -138,7 +138,7 @@ export default async function AdminImportRequestsPage({
                     {new Date(request.created_at).toLocaleDateString('fr-FR')}
                   </td>
                   <td className="px-4 py-4 text-right">
-                    <Link href={`/admin/imports/requests/${request.id}`} className="text-xs font-semibold text-blue-600 hover:underline">
+                    <Link href={`/admin/imports/requests/${request.id}`} className="text-xs font-semibold text-[#1a3a6b] hover:text-[#3d9e3d]">
                       Review request
                     </Link>
                   </td>

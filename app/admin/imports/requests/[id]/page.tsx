@@ -78,7 +78,7 @@ export default async function AdminImportRequestDetailPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <Link href="/admin/imports/requests" className="text-sm font-medium text-blue-600 hover:underline">
+          <Link href="/admin/imports/requests" className="text-sm font-medium text-[#1a3a6b] hover:text-[#3d9e3d]">
             Back to requests
           </Link>
           <h1 className="mt-2 text-2xl font-bold text-gray-900">

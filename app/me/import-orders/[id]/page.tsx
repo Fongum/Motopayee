@@ -85,7 +85,7 @@ export default async function ImportOrderDetailPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/me/import-orders" className="text-sm font-medium text-blue-600 hover:underline">
+        <Link href="/me/import-orders" className="text-sm font-medium text-[#1a3a6b] hover:text-[#3d9e3d]">
           Back to import orders
         </Link>
         <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -110,10 +110,10 @@ export default async function ImportOrderDetailPage({
                 const current = idx === currentStepIdx;
                 return (
                   <div key={step} className="flex items-center gap-2 flex-shrink-0">
-                    {idx > 0 && <div className={`h-0.5 w-8 ${done || current ? 'bg-blue-500' : 'bg-gray-200'}`} />}
+                    {idx > 0 && <div className={`h-0.5 w-8 ${done || current ? 'bg-[#3d9e3d]' : 'bg-gray-200'}`} />}
                     <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${
-                      done ? 'bg-blue-500 text-white' :
-                      current ? 'bg-blue-600 text-white ring-2 ring-blue-200' :
+                      done ? 'bg-[#3d9e3d] text-white' :
+                      current ? 'bg-[#2d8a2d] text-white ring-2 ring-[#3d9e3d]/30' :
                       'bg-gray-100 text-gray-400'
                     }`}>
                       {done ? '✓' : idx + 1}
@@ -250,7 +250,7 @@ export default async function ImportOrderDetailPage({
                     </div>
                     <Link
                       href={`/api/import-documents/${document.id}/signed-url`}
-                      className="text-sm font-semibold text-blue-600 hover:underline"
+                      className="text-sm font-semibold text-[#1a3a6b] hover:text-[#3d9e3d]"
                     >
                       Open document
                     </Link>

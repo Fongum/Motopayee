@@ -9,6 +9,8 @@ import {
   notifyRejected,
   notifyDisbursed,
 } from '@/lib/notifications';
+import { ensureFinanceCommission } from '@/lib/finance-commissions';
+import { logFailure } from '@/lib/logger';
 
 interface RouteParams { params: { id: string } }
 
@@ -100,6 +102,10 @@ export async function POST(request: Request, { params }: RouteParams) {
     meta: { from: app.status, to: parsed.data.status, income_grade: parsed.data.income_grade },
   });
 
+  if (parsed.data.status === 'disbursed') {
+    await ensureFinanceCommission(params.id, auth.user.id);
+  }
+
   // SMS notification (fire-and-forget)
   void (async () => {
     const { data: buyerProfile } = await supabaseAdmin
@@ -109,11 +115,16 @@ export async function POST(request: Request, { params }: RouteParams) {
       .single();
     const phone = buyerProfile?.phone ?? null;
     const newStatus = parsed.data.status;
-    if (newStatus === 'docs_pending')   notifyDocsRequired(phone, params.id).catch(console.error);
-    else if (newStatus === 'under_review') notifyUnderReview(phone).catch(console.error);
-    else if (newStatus === 'approved')     notifyApproved(phone).catch(console.error);
-    else if (newStatus === 'rejected')     notifyRejected(phone).catch(console.error);
-    else if (newStatus === 'disbursed')    notifyDisbursed(phone).catch(console.error);
+    const onFailure = logFailure('Application status SMS failed', {
+      applicationId: params.id,
+      status: newStatus,
+    });
+
+    if (newStatus === 'docs_pending')   notifyDocsRequired(phone, params.id).catch(onFailure);
+    else if (newStatus === 'under_review') notifyUnderReview(phone).catch(onFailure);
+    else if (newStatus === 'approved')     notifyApproved(phone).catch(onFailure);
+    else if (newStatus === 'rejected')     notifyRejected(phone).catch(onFailure);
+    else if (newStatus === 'disbursed')    notifyDisbursed(phone).catch(onFailure);
   })();
 
   if (request.headers.get('accept')?.includes('text/html')) {

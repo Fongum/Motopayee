@@ -38,6 +38,21 @@ export default async function ApplicationsPage() {
     .order('created_at', { ascending: false });
 
   const applications = (apps ?? []) as unknown as FinancingApplication[];
+  const applicationIds = applications.map((app) => app.id);
+  const { data: offerRows } = applicationIds.length > 0
+    ? await supabaseAdmin
+      .from('mfi_application_offers')
+      .select('application_id, status')
+      .in('application_id', applicationIds)
+      .in('status', ['submitted', 'shortlisted', 'accepted'])
+    : { data: [] };
+  const offerCounts = new Map<string, { total: number; accepted: boolean }>();
+  ((offerRows ?? []) as Array<{ application_id: string; status: string }>).forEach((offer) => {
+    const current = offerCounts.get(offer.application_id) ?? { total: 0, accepted: false };
+    current.total += 1;
+    current.accepted = current.accepted || offer.status === 'accepted';
+    offerCounts.set(offer.application_id, current);
+  });
 
   return (
     <div>
@@ -48,7 +63,7 @@ export default async function ApplicationsPage() {
         </div>
         <Link
           href="/listings"
-          className="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700"
+          className="bg-[#3d9e3d] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#2d8a2d] transition shadow-sm"
         >
           Trouver un véhicule
         </Link>
@@ -57,7 +72,7 @@ export default async function ApplicationsPage() {
       {applications.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center">
           <p className="text-gray-500 mb-4">Vous n&apos;avez pas encore de demande de financement.</p>
-          <Link href="/listings" className="text-blue-600 hover:underline text-sm">
+          <Link href="/listings" className="text-[#1a3a6b] hover:text-[#3d9e3d] font-medium text-sm">
             Parcourir les véhicules financables →
           </Link>
         </div>
@@ -66,6 +81,7 @@ export default async function ApplicationsPage() {
           {applications.map((app) => {
             const listing = app.listing as { id: string; asking_price: number; zone: string; vehicle?: { make: string; model: string; year: number } } | undefined;
             const vehicle = listing?.vehicle;
+            const offers = offerCounts.get(app.id);
             return (
               <Link
                 key={app.id}
@@ -81,6 +97,16 @@ export default async function ApplicationsPage() {
                       <p className="text-sm text-gray-500 mt-0.5">
                         {new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(listing.asking_price)}
                         {' · Zone '}{listing.zone}
+                      </p>
+                    )}
+                    {offers && (
+                      <p className="text-xs text-[#1a3a6b] mt-1">
+                        {offers.accepted ? 'Offre IMF retenue' : `${offers.total} offre${offers.total > 1 ? 's' : ''} IMF recue${offers.total > 1 ? 's' : ''}`}
+                      </p>
+                    )}
+                    {app.status === 'disbursed' && app.disbursed_at && (
+                      <p className="text-xs text-green-700 mt-1">
+                        Finance le {new Date(app.disbursed_at).toLocaleDateString('fr-FR')}
                       </p>
                     )}
                     <p className="text-xs text-gray-400 mt-1">

@@ -69,8 +69,9 @@ export async function POST(request: Request, { params }: RouteParams) {
     .eq('id', vehicle?.id ?? '');
 
   // Compute MVE and price band
+  const nextListingStatus = listing.status === 'published' ? 'published' : 'inspected';
   let listingUpdates: Record<string, unknown> = {
-    status: 'inspected',
+    status: nextListingStatus,
     financeable: parsed.data.financeable,
   };
 
@@ -98,6 +99,29 @@ export async function POST(request: Request, { params }: RouteParams) {
     .update(listingUpdates)
     .eq('id', params.listingId);
 
+  const completedRequestNote = [
+    `Inspection completed by ${auth.user.email} on ${new Date().toISOString()}.`,
+    `Grade: ${parsed.data.condition_grade}.`,
+    `Finance eligible: ${parsed.data.financeable ? 'yes' : 'no'}.`,
+  ].join(' ');
+
+  const { data: openRequests } = await supabaseAdmin
+    .from('inspection_requests')
+    .select('id, notes')
+    .eq('listing_id', params.listingId)
+    .in('status', ['paid', 'scheduled']);
+
+  const completedRequestIds = (openRequests ?? []).map((row) => row.id as string);
+  await Promise.all((openRequests ?? []).map((row) => (
+    supabaseAdmin
+      .from('inspection_requests')
+      .update({
+        status: 'completed',
+        notes: [row.notes, completedRequestNote].filter(Boolean).join('\n'),
+      })
+      .eq('id', row.id)
+  )));
+
   await supabaseAdmin.from('audit_logs').insert({
     actor_id: auth.user.id,
     actor_email: auth.user.email,
@@ -109,9 +133,14 @@ export async function POST(request: Request, { params }: RouteParams) {
       condition_grade: parsed.data.condition_grade,
       financeable: parsed.data.financeable,
       from: listing.status,
-      to: 'inspected',
+      to: nextListingStatus,
+      completed_inspection_request_ids: completedRequestIds,
     },
   });
 
-  return NextResponse.json({ inspection, listing_updated: true }, { status: 201 });
+  return NextResponse.json({
+    inspection,
+    listing_updated: true,
+    completed_inspection_request_ids: completedRequestIds,
+  }, { status: 201 });
 }

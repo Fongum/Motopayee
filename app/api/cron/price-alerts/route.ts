@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/auth/server';
+import { logger } from '@/lib/logger';
 
 // POST /api/cron/price-alerts — daily cron: check for price drops
 export async function POST(request: Request) {
@@ -31,7 +32,13 @@ export async function POST(request: Request) {
       const v = listing.vehicle;
       const label = v ? `${v.year} ${v.make} ${v.model}` : 'Véhicule';
       const price = listing.asking_price.toLocaleString('fr-FR');
-      console.log(`[price-alert] → ${user.phone ?? user.email}: ${label} est maintenant à ${price} XAF (seuil: ${alert.threshold_price.toLocaleString('fr-FR')} XAF)`);
+      logger.info('Price alert triggered', {
+        phone: user.phone ?? undefined,
+        email: user.phone ? undefined : user.email,
+        vehicle: label,
+        price,
+        threshold: alert.threshold_price,
+      });
       notified++;
 
       // Mark as notified

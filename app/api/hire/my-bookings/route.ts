@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAuth } from '@/lib/auth/middleware';
+import { parseBody, optionalText } from '@/lib/validation';
 import type { HireBooking } from '@/lib/types';
+
+const patchSchema = z.object({
+  booking_id: z.string().uuid(),
+  action: z.enum(['confirm', 'start', 'complete', 'cancel']),
+  reason: optionalText(500),
+  owner_notes: optionalText(1000),
+  renter_notes: optionalText(1000),
+});
 
 // GET /api/hire/my-bookings — Get current user's bookings (as renter or owner)
 export async function GET(request: NextRequest) {
@@ -31,12 +41,10 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const body = await request.json();
-  const { booking_id, action, reason } = body;
+  const parsed = await parseBody(patchSchema, request, 'Mise à jour de réservation invalide.');
+  if (!parsed.success) return parsed.response;
 
-  if (!booking_id || !action) {
-    return NextResponse.json({ error: 'booking_id and action are required' }, { status: 400 });
-  }
+  const { booking_id, action, reason } = parsed.data;
 
   const { data: booking } = await supabaseAdmin
     .from('hire_bookings')
@@ -104,8 +112,8 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   }
 
-  if (body.owner_notes && isOwner) updates.owner_notes = body.owner_notes;
-  if (body.renter_notes && isRenter) updates.renter_notes = body.renter_notes;
+  if (parsed.data.owner_notes && isOwner) updates.owner_notes = parsed.data.owner_notes;
+  if (parsed.data.renter_notes && isRenter) updates.renter_notes = parsed.data.renter_notes;
 
   const { data, error } = await supabaseAdmin
     .from('hire_bookings')

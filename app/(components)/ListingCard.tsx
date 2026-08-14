@@ -3,6 +3,7 @@ import type { Listing } from '@/lib/types';
 import WhatsAppShareButton from './WhatsAppShareButton';
 import CompareButton from './CompareButton';
 import StarRating from './StarRating';
+import { ListingTrustBadges } from './TrustLabelBadges';
 
 interface Props {
   listing: Listing;
@@ -31,7 +32,7 @@ export default function ListingCard({ listing }: Props) {
   return (
     <Link
       href={`/listings/${listing.id}`}
-      className="group block bg-white rounded-2xl border border-gray-200 hover:border-[#3d9e3d] hover:shadow-lg transition-all overflow-hidden"
+      className="group block bg-white rounded-2xl border border-gray-200 shadow-card hover:border-[#3d9e3d]/40 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
     >
       {/* Photo */}
       <div className="relative h-44 bg-gray-100 overflow-hidden">
@@ -41,6 +42,8 @@ export default function ListingCard({ listing }: Props) {
             src={`/api/files/thumb/${listing.media![0].id}`}
             alt={v ? `${v.make} ${v.model}` : 'Véhicule'}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 gap-2">
@@ -91,7 +94,7 @@ export default function ListingCard({ listing }: Props) {
         </h3>
 
         {v && (
-          <p className="text-xs text-gray-400 mb-3">
+          <p className="text-xs text-gray-500 mb-3">
             {(v.mileage_km).toLocaleString('fr-FR')} km
             {v.fuel_type ? ` · ${FUEL_FR[v.fuel_type] ?? v.fuel_type}` : ''}
             {v.condition_grade ? ` · Grade ${v.condition_grade}` : ''}
@@ -99,7 +102,7 @@ export default function ListingCard({ listing }: Props) {
         )}
 
         {listing.city && (
-          <p className="text-[11px] text-gray-400 flex items-center gap-1 mb-3">
+          <p className="text-[11px] text-gray-500 flex items-center gap-1 mb-3">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -116,6 +119,8 @@ export default function ListingCard({ listing }: Props) {
             </span>
           )}
         </div>
+
+        <ListingTrustBadges listing={listing} />
 
         <div className="flex items-center gap-2 mt-2 flex-wrap">
           {listing.seller?.is_verified && (

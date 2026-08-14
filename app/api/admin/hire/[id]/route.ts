@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAdmin } from '@/lib/auth/middleware';
+import { parseBody } from '@/lib/validation';
+
+// Both enums mirror the hire_listings check constraints (migration 010).
+// `availability` was previously written through unchecked.
+const patchSchema = z
+  .object({
+    status: z.enum(['draft', 'pending_review', 'published', 'suspended', 'withdrawn']).optional(),
+    availability: z.enum(['available', 'hired_out', 'maintenance', 'unavailable']).optional(),
+  })
+  .refine((v) => v.status !== undefined || v.availability !== undefined, {
+    message: 'Nothing to update',
+  });
 
 // PATCH /api/admin/hire/[id] — Admin update hire listing status
 export async function PATCH(
@@ -12,26 +25,21 @@ export async function PATCH(
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const body = await request.json();
+  const parsed = await parseBody(patchSchema, request, 'Mise à jour invalide.');
+  if (!parsed.success) return parsed.response;
+
+  const { status, availability } = parsed.data;
   const updates: Record<string, unknown> = {};
 
-  if (body.status) {
-    const validStatuses = ['draft', 'pending_review', 'published', 'suspended', 'withdrawn'];
-    if (!validStatuses.includes(body.status)) {
-      return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
-    }
-    updates.status = body.status;
-    if (body.status === 'published') {
+  if (status) {
+    updates.status = status;
+    if (status === 'published') {
       updates.published_at = new Date().toISOString();
     }
   }
 
-  if (body.availability) {
-    updates.availability = body.availability;
-  }
-
-  if (Object.keys(updates).length === 0) {
-    return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
+  if (availability) {
+    updates.availability = availability;
   }
 
   const { data, error } = await supabaseAdmin
@@ -51,7 +59,7 @@ export async function PATCH(
     action: 'hire_listing_status_change',
     entity_type: 'hire_listing',
     entity_id: params.id,
-    meta: { new_status: body.status, new_availability: body.availability },
+    meta: { new_status: status, new_availability: availability },
   });
 
   return NextResponse.json(data);
