@@ -13,6 +13,7 @@
  */
 
 import { logger } from './logger';
+import { SITE_HOST } from './site';
 
 const AT_SMS_URL = 'https://api.africastalking.com/version1/messaging';
 const AT_USERNAME = process.env.AFRICASTALKING_USERNAME ?? '';
@@ -110,7 +111,7 @@ export async function notifyApplicationSubmitted(phone: string | null | undefine
 export async function notifyDocsRequired(phone: string | null | undefined, appId: string) {
   const ref = appId.slice(0, 8).toUpperCase();
   await sendSMS(phone,
-    `Action requise — déposez vos pièces justificatives pour votre demande ${ref} sur motopayee.vercel.app/me/applications`
+    `Action requise — déposez vos pièces justificatives pour votre demande ${ref} sur ${SITE_HOST}/me/applications`
   );
 }
 
@@ -149,7 +150,7 @@ export async function notifyListingPublished(
   model: string
 ) {
   await sendSMS(phone,
-    `Votre annonce ${make} ${model} est maintenant publiée sur MotoPayee. Les acheteurs peuvent la consulter sur motopayee.vercel.app/listings`
+    `Votre annonce ${make} ${model} est maintenant publiée sur MotoPayee. Les acheteurs peuvent la consulter sur ${SITE_HOST}/listings`
   );
 }
 

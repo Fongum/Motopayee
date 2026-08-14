@@ -5,6 +5,7 @@ import WhatsAppFloatingSupport from './(components)/WhatsAppFloatingSupport';
 import ComparisonBar from './(components)/ComparisonBar';
 import InstallPrompt from './(components)/InstallPrompt';
 import ServiceWorkerRegistration from './(components)/ServiceWorkerRegistration';
+import { SITE_URL } from '@/lib/site';
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
   keywords: ['voiture Cameroun', 'achat véhicule Douala', 'financement auto Yaoundé', 'marketplace automobile', 'MotoPayee'],
   authors: [{ name: 'MotoPayee' }],
   creator: 'MotoPayee',
-  metadataBase: new URL('https://motopayee.vercel.app'),
+  metadataBase: new URL(SITE_URL),
   openGraph: {
     type: 'website',
     locale: 'fr_CM',

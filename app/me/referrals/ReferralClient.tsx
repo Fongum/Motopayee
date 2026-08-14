@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { SITE_URL } from '@/lib/site';
 
 interface ReferralCode {
   id: string;
@@ -43,7 +44,7 @@ export default function ReferralClient() {
 
   function shareWhatsApp() {
     if (!code) return;
-    const text = `Rejoins MotoPayee, la plateforme auto #1 au Cameroun ! Utilise mon code de parrainage ${code.code} pour t'inscrire. ${process.env.NEXT_PUBLIC_APP_URL ?? 'https://motopayee.com'}/register?ref=${code.code}`;
+    const text = `Rejoins MotoPayee, la plateforme auto #1 au Cameroun ! Utilise mon code de parrainage ${code.code} pour t'inscrire. ${SITE_URL}/register?ref=${code.code}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   }
 

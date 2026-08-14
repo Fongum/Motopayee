@@ -1,8 +1,9 @@
 import type { MetadataRoute } from 'next';
 import { supabaseAdmin } from '@/lib/auth/server';
+import { SITE_URL } from '@/lib/site';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://motopayee.vercel.app';
+  const baseUrl = SITE_URL;
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
