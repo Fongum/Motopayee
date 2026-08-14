@@ -18,6 +18,7 @@ export default async function MeLayout({ children }: { children: React.ReactNode
 
   const navLinks = user.role === 'buyer'
     ? [
+        { href: '/me/inbox', label: 'Messages' },
         { href: '/me/applications', label: 'Mes demandes' },
         { href: '/me/import-requests', label: 'Mes imports' },
         { href: '/me/import-orders', label: 'Commandes import' },
@@ -25,14 +26,18 @@ export default async function MeLayout({ children }: { children: React.ReactNode
         { href: '/me/favourites', label: 'Mes favoris' },
         { href: '/me/saved-searches', label: 'Recherches sauvées' },
         { href: '/me/reviews', label: 'Mes avis' },
+        { href: '/me/referrals', label: 'Parrainage' },
       ]
     : [
+        { href: '/me/inbox', label: 'Messages' },
         ...sellerLinks,
         { href: '/me/hire-listings', label: 'Mes véhicules en location' },
         { href: '/me/hire-listings/new', label: 'Nouvelle location' },
         { href: '/me/hire-bookings', label: 'Réservations' },
         { href: '/me/saved-searches', label: 'Recherches sauvées' },
         { href: '/me/reviews', label: 'Mes avis' },
+        { href: '/me/referrals', label: 'Parrainage' },
+        ...(user.role === 'seller_dealer' ? [{ href: '/me/dealer', label: 'Tableau de bord' }] : []),
       ];
 
   return (
@@ -58,7 +63,7 @@ export default async function MeLayout({ children }: { children: React.ReactNode
               <Link
                 key={link.href}
                 href={link.href}
-                className="block px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                className="block px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-[#3d9e3d]/10 hover:text-[#1a3a6b] transition-colors"
               >
                 {link.label}
               </Link>

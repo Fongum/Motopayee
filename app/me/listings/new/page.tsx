@@ -48,14 +48,14 @@ export default function NewListingPage() {
     router.push(`/me/listings/${data.listing.id}`);
   }
 
-  const inputClass = 'w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
+  const inputClass = 'w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d9e3d]/40 focus:border-[#3d9e3d] transition';
   const labelClass = 'block text-sm font-medium text-gray-700 mb-1.5';
 
   return (
     <div>
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/me/listings" className="text-sm text-blue-600 hover:underline">← Mes annonces</Link>
-        <h1 className="text-2xl font-bold text-gray-900">Nouvelle annonce</h1>
+        <Link href="/me/listings" className="text-sm font-medium text-[#1a3a6b] hover:text-[#3d9e3d] transition-colors">← Mes annonces</Link>
+        <h1 className="text-2xl font-bold text-[#1a3a6b]">Nouvelle annonce</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -148,7 +148,7 @@ export default function NewListingPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 disabled:opacity-50"
+          className="w-full bg-[#3d9e3d] text-white font-semibold py-3 rounded-xl hover:bg-[#2d8a2d] disabled:opacity-50 transition shadow-sm"
         >
           {submitting ? 'Création...' : 'Créer l\'annonce'}
         </button>

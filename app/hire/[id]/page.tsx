@@ -11,6 +11,12 @@ import CompareButton from '../../(components)/CompareButton';
 import SellerTrustBadge from '../../(components)/SellerTrustBadge';
 import ReviewCard from '../../(components)/ReviewCard';
 import ReviewForm from '../../(components)/ReviewForm';
+import ChatWidget from '../../(components)/ChatWidget';
+import InsuranceQuoteWidget from '../../(components)/InsuranceQuoteWidget';
+import ViewTracker from '../../(components)/ViewTracker';
+import PhotoGallery from '../../(components)/PhotoGallery';
+import JsonLd from '../../(components)/JsonLd';
+import { HireTrustBadges } from '../../(components)/TrustLabelBadges';
 
 type Props = { params: { id: string } };
 
@@ -84,7 +90,22 @@ export default async function HireDetailPage({ params }: Props) {
 
   return (
     <>
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: `${listing.year} ${listing.make} ${listing.model} — Location`,
+        description: listing.description ?? `Louez ${listing.year} ${listing.make} ${listing.model} à ${listing.city}`,
+        brand: { '@type': 'Brand', name: listing.make },
+        offers: {
+          '@type': 'Offer',
+          price: listing.daily_rate,
+          priceCurrency: 'XAF',
+          unitCode: 'DAY',
+          availability: listing.availability === 'available' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        },
+      }} />
       <Navbar />
+      <ViewTracker listingId={listing.id} entityType="hire_listing" />
       <main className="bg-gray-50 min-h-screen">
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Breadcrumb */}
@@ -98,37 +119,14 @@ export default async function HireDetailPage({ params }: Props) {
             {/* Left — Photos + Details */}
             <div className="lg:col-span-2 space-y-6">
               {/* Photo gallery */}
-              <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-                {listing.media && listing.media.length > 0 ? (
-                  <div>
-                    {/* Main photo */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={`/api/files/signed-url?path=${encodeURIComponent(listing.media[0].storage_path)}&bucket=${listing.media[0].bucket}`}
-                      alt={`${listing.make} ${listing.model}`}
-                      className="w-full h-72 md:h-96 object-cover"
-                    />
-                    {listing.media.length > 1 && (
-                      <div className="flex gap-2 p-3 overflow-x-auto">
-                        {listing.media.slice(1).map((m) => (
-                          /* eslint-disable-next-line @next/next/no-img-element */
-                          <img
-                            key={m.id}
-                            src={`/api/files/signed-url?path=${encodeURIComponent(m.storage_path)}&bucket=${m.bucket}`}
-                            alt=""
-                            className="w-24 h-20 object-cover rounded-lg flex-shrink-0 border border-gray-100"
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="h-72 flex items-center justify-center text-gray-300">
-                    <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                )}
+              <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden p-3">
+                <PhotoGallery
+                  photos={(listing.media ?? []).map((m) => ({
+                    id: m.id,
+                    src: `/api/files/signed-url?path=${encodeURIComponent(m.storage_path)}&bucket=${m.bucket}`,
+                    alt: `${listing.make} ${listing.model}`,
+                  }))}
+                />
               </div>
 
               {/* Vehicle details */}
@@ -153,8 +151,10 @@ export default async function HireDetailPage({ params }: Props) {
                   {listing.address ? `${listing.address}, ` : ''}{listing.city} — Zone {listing.zone}
                 </p>
 
+                <HireTrustBadges listing={listing} />
+
                 {/* Specs grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-6">
                   <div className="bg-gray-50 rounded-xl p-3 text-center">
                     <p className="text-[10px] text-gray-400 uppercase font-semibold">Carburant</p>
                     <p className="text-sm font-bold text-gray-800">{FUEL_FR[listing.fuel_type]}</p>
@@ -247,6 +247,13 @@ export default async function HireDetailPage({ params }: Props) {
                     </a>
                   </div>
                 )}
+                <div className="mt-3">
+                  <ChatWidget
+                    otherUserId={listing.owner_id}
+                    otherUserName={listing.owner?.full_name ?? 'Propriétaire'}
+                    hireListingId={listing.id}
+                  />
+                </div>
               </div>
 
               {/* Reviews section */}
@@ -317,6 +324,12 @@ export default async function HireDetailPage({ params }: Props) {
                     <p className="text-xs text-green-600 font-semibold">Assurance incluse</p>
                   )}
                 </div>
+
+                {/* Insurance */}
+                <InsuranceQuoteWidget
+                  vehicleValueXaf={listing.daily_rate * 30}
+                  hireListingId={listing.id}
+                />
 
                 {/* Booking form */}
                 <BookingForm listing={listing} />

@@ -11,6 +11,8 @@ interface Props {
   existingPayments?: Payment[];
 }
 
+type PaymentType = 'down_payment' | 'monthly' | 'fee';
+
 const PROVIDER_LABELS: Record<string, string> = {
   mtn_momo: 'MTN MoMo',
   orange_money: 'Orange Money',
@@ -40,7 +42,9 @@ export default function PaymentRequestForm({
   const [provider, setProvider] = useState<'mtn_momo' | 'orange_money'>('mtn_momo');
   const [phone, setPhone] = useState(buyerPhone ?? '');
   const [amount, setAmount] = useState(askingPrice);
-  const [paymentType, setPaymentType] = useState<'down_payment' | 'full_payment' | 'installment'>('down_payment');
+  // Must match the API enum in /api/payments/request, which in turn tracks the
+  // payments_payment_type_check constraint (migration 016).
+  const [paymentType, setPaymentType] = useState<PaymentType>('down_payment');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [payments, setPayments] = useState<Payment[]>(existingPayments);
@@ -130,7 +134,7 @@ export default function PaymentRequestForm({
                     <button
                       onClick={() => checkStatus(p.id)}
                       disabled={checkingId === p.id}
-                      className="text-xs text-blue-600 hover:underline disabled:opacity-50"
+                      className="text-xs text-[#1a3a6b] hover:text-[#3d9e3d] font-medium disabled:opacity-50"
                     >
                       {checkingId === p.id ? '...' : 'Vérifier'}
                     </button>
@@ -163,14 +167,12 @@ export default function PaymentRequestForm({
               <label className="block text-xs text-gray-500 mb-1">Type</label>
               <select
                 value={paymentType}
-                onChange={e =>
-                  setPaymentType(e.target.value as 'down_payment' | 'full_payment' | 'installment')
-                }
+                onChange={e => setPaymentType(e.target.value as PaymentType)}
                 className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2"
               >
                 <option value="down_payment">Apport initial</option>
-                <option value="full_payment">Paiement complet</option>
-                <option value="installment">Mensualité</option>
+                <option value="monthly">Mensualité</option>
+                <option value="fee">Frais</option>
               </select>
             </div>
           </div>

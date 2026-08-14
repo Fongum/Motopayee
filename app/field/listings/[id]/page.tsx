@@ -90,7 +90,7 @@ export default function FieldMediaPage({ params }: { params: { id: string } }) {
         <div className="space-y-4">
           <div className="bg-white border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center">
             <p className="text-gray-500 mb-4">Téléversez les photos du véhicule</p>
-            <label className="cursor-pointer bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl hover:bg-blue-700">
+            <label className="cursor-pointer bg-[#3d9e3d] text-white font-semibold px-6 py-3 rounded-xl hover:bg-[#2d8a2d] transition">
               Choisir des photos
               <input
                 type="file"
@@ -118,7 +118,7 @@ export default function FieldMediaPage({ params }: { params: { id: string } }) {
             </label>
           </div>
 
-          {uploading && <p className="text-center text-blue-600 text-sm">Téléversement en cours...</p>}
+          {uploading && <p className="text-center text-[#3d9e3d] text-sm">Téléversement en cours...</p>}
           {error && <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">{error}</div>}
           {success && <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-700 text-sm">Médias téléversés avec succès !</div>}
         </div>

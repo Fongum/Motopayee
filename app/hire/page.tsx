@@ -6,6 +6,8 @@ import HireCard from '../(components)/HireCard';
 import HireSearchFilters from './SearchFilters';
 import { supabaseAdmin } from '@/lib/auth/server';
 import type { HireListing } from '@/lib/types';
+import LeadCaptureForm from '../(components)/LeadCaptureForm';
+import { campaignNameFromSearch, leadSourceFromSearch } from '@/lib/campaigns';
 
 export const metadata: Metadata = {
   title: 'Location de véhicules — MotoPayee',
@@ -27,6 +29,11 @@ interface SearchParams {
   fuel_type?: string;
   sort?: string;
   page?: string;
+  campaign?: string;
+  campaign_name?: string;
+  source?: string;
+  utm_source?: string;
+  utm_campaign?: string;
 }
 
 const PAGE_SIZE = 20;
@@ -62,6 +69,8 @@ export default async function HirePage({ searchParams }: { searchParams: SearchP
   const page = Math.max(1, parseInt(searchParams.page ?? '1', 10));
   const { listings, total } = await getHireListings(searchParams);
   const totalPages = Math.ceil(total / PAGE_SIZE);
+  const campaignName = campaignNameFromSearch(searchParams, 'Rental owner page');
+  const source = leadSourceFromSearch(searchParams);
 
   function pageHref(p: number) {
     const sp = new URLSearchParams(searchParams as Record<string, string>);
@@ -82,6 +91,29 @@ export default async function HirePage({ searchParams }: { searchParams: SearchP
         </div>
 
         <div className="max-w-7xl mx-auto px-4 py-6">
+          <section className="mb-6 grid gap-4 lg:grid-cols-[1fr_420px]">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5">
+              <h2 className="text-lg font-bold text-[#1a3a6b]">Vous avez un vehicule a mettre en location?</h2>
+              <p className="mt-1 text-sm text-gray-500">
+                MotoPayee onboarde des proprietaires et partenaires de location au Cameroun pour le pic Octobre-Decembre.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2 text-xs text-gray-600">
+                <span className="rounded-full bg-green-50 px-3 py-1 font-medium text-green-700">Verification staff</span>
+                <span className="rounded-full bg-blue-50 px-3 py-1 font-medium text-blue-700">Reservations suivies</span>
+                <span className="rounded-full bg-amber-50 px-3 py-1 font-medium text-amber-700">Frais transparents</span>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-gray-200 bg-white p-5">
+              <LeadCaptureForm
+                leadType="rental_owner"
+                source={source}
+                compact
+                campaignName={campaignName}
+                defaultInterest="Je veux mettre mon vehicule en location sur MotoPayee."
+              />
+            </div>
+          </section>
+
           {/* Filters */}
           <Suspense fallback={<div className="h-24 bg-white rounded-2xl animate-pulse mb-6" />}>
             <div className="mb-6">

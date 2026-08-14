@@ -63,7 +63,7 @@ export default async function AdminImportOrderDetailPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <Link href="/admin/imports/orders" className="text-sm font-medium text-blue-600 hover:underline">
+          <Link href="/admin/imports/orders" className="text-sm font-medium text-[#1a3a6b] hover:text-[#3d9e3d]">
             Back to orders
           </Link>
           <h1 className="mt-2 text-2xl font-bold text-gray-900">Import order operations</h1>
@@ -203,7 +203,7 @@ export default async function AdminImportOrderDetailPage({
                     </div>
                     <Link
                       href={`/api/import-documents/${document.id}/signed-url`}
-                      className="text-sm font-semibold text-blue-600 hover:underline"
+                      className="text-sm font-semibold text-[#1a3a6b] hover:text-[#3d9e3d]"
                     >
                       Open document
                     </Link>

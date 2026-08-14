@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { notifyListingPublished } from '@/lib/notifications';
+import { logFailure } from '@/lib/logger';
 
 interface RouteParams { params: { id: string } }
 
@@ -88,7 +89,7 @@ export async function POST(request: Request, { params }: RouteParams) {
         sellerRes.data?.phone ?? null,
         vehicleRes.data?.make ?? '',
         vehicleRes.data?.model ?? ''
-      ).catch(console.error);
+      ).catch(logFailure('Listing published SMS failed', { listingId: params.id }));
     })();
   }
 

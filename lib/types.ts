@@ -167,6 +167,34 @@ export interface Inspection {
   created_at: string;
 }
 
+export type InspectionRequestType = 'buyer_requested' | 'seller_package' | 'finance_check';
+export type InspectionRequestStatus =
+  | 'submitted'
+  | 'contacted'
+  | 'quoted'
+  | 'paid'
+  | 'scheduled'
+  | 'completed'
+  | 'cancelled';
+
+export interface InspectionRequest {
+  id: string;
+  listing_id: string;
+  requester_id: string | null;
+  requester_name: string;
+  requester_phone: string;
+  requester_email: string | null;
+  request_type: InspectionRequestType;
+  status: InspectionRequestStatus;
+  fee_xaf: number;
+  preferred_window: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  listing?: Listing;
+  requester?: Profile;
+}
+
 // --------------- Financing Application Status ---------------
 export type ApplicationStatus =
   | 'draft'
@@ -196,6 +224,11 @@ export interface FinancingApplication {
   notes: string | null;
   submitted_at: string | null;
   mfi_institution_id: string | null;
+  follow_up_status: 'none' | 'call_needed' | 'contacted' | 'waiting_buyer' | 'waiting_mfi' | 'closed';
+  follow_up_notes: string | null;
+  next_follow_up_at: string | null;
+  follow_up_actor_id: string | null;
+  follow_up_updated_at: string | null;
   decided_at: string | null;
   disbursed_at: string | null;
   created_at: string;
@@ -204,6 +237,48 @@ export interface FinancingApplication {
   listing?: Listing;
   buyer?: Profile;
   documents?: Document[];
+}
+
+export type MFIOfferStatus = 'submitted' | 'shortlisted' | 'accepted' | 'declined' | 'withdrawn';
+export type MFIOfferBuyerResponse = 'interested' | 'not_interested';
+
+export interface MFIApplicationOffer {
+  id: string;
+  application_id: string;
+  mfi_institution_id: string;
+  responder_id: string | null;
+  status: MFIOfferStatus;
+  proposed_down_payment_percent: number | null;
+  proposed_tenor_months: number | null;
+  proposed_interest_rate_percent: number | null;
+  buyer_response: MFIOfferBuyerResponse | null;
+  buyer_responded_at: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  application?: FinancingApplication;
+  institution?: MFIInstitution;
+  responder?: Profile;
+}
+
+export type FinanceCommissionStatus = 'expected' | 'invoiced' | 'paid' | 'waived';
+
+export interface FinanceCommission {
+  id: string;
+  application_id: string;
+  listing_id: string | null;
+  buyer_id: string | null;
+  mfi_institution_id: string | null;
+  vehicle_value_xaf: number;
+  commission_rate_percent: number;
+  commission_amount_xaf: number;
+  status: FinanceCommissionStatus;
+  due_at: string | null;
+  paid_at: string | null;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 // --------------- Document ---------------
@@ -252,13 +327,14 @@ export interface ZoneRule {
 
 // --------------- Payment ---------------
 export type PaymentStatus = 'pending' | 'processing' | 'successful' | 'failed' | 'cancelled';
-export type PaymentProvider = 'mtn_momo' | 'orange_money';
-export type PaymentType = 'down_payment' | 'full_payment' | 'installment';
+export type PaymentProvider = 'mtn_momo' | 'orange_money' | 'cash' | 'bank_transfer';
+export type PaymentType = 'down_payment' | 'monthly' | 'fee' | 'inspection_fee';
 
 export interface Payment {
   id: string;
-  application_id: string;
-  buyer_id: string;
+  application_id: string | null;
+  inspection_request_id: string | null;
+  buyer_id: string | null;
   amount: number;
   currency: string;
   payment_type: PaymentType;
@@ -645,6 +721,25 @@ export interface HireBooking {
   owner?: Profile;
 }
 
+export type HireServiceFeeStatus = 'expected' | 'invoiced' | 'paid' | 'waived' | 'refunded';
+
+export interface HireServiceFee {
+  id: string;
+  hire_booking_id: string;
+  hire_listing_id: string | null;
+  renter_id: string | null;
+  owner_id: string | null;
+  booking_value_xaf: number;
+  fee_rate_percent: number;
+  fee_amount_xaf: number;
+  status: HireServiceFeeStatus;
+  paid_at: string | null;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // --------------- Reviews ---------------
 export type ReviewEntityType = 'listing' | 'hire_listing' | 'hire_booking';
 export type ReviewStatus = 'published' | 'hidden' | 'flagged';
@@ -702,4 +797,80 @@ export interface PriceAlert {
   last_notified_at: string | null;
   created_at: string;
   listing?: Listing;
+}
+
+// --------------- Messaging ---------------
+export interface Conversation {
+  id: string;
+  participant_a: string;
+  participant_b: string;
+  listing_id: string | null;
+  hire_listing_id: string | null;
+  last_message_at: string;
+  created_at: string;
+}
+
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  body: string;
+  read_at: string | null;
+  created_at: string;
+  sender?: Profile;
+}
+
+// --------------- Referral Program ---------------
+export interface ReferralCode {
+  id: string;
+  user_id: string;
+  code: string;
+  total_uses: number;
+  reward_balance_xaf: number;
+  created_at: string;
+}
+
+export interface ReferralUse {
+  id: string;
+  code_id: string;
+  referred_user_id: string;
+  reward_xaf: number;
+  rewarded: boolean;
+  created_at: string;
+}
+
+// --------------- Insurance ---------------
+export interface InsurancePartner {
+  id: string;
+  name: string;
+  code: string;
+  logo_url: string | null;
+  products: { type: string; label: string }[];
+  active: boolean;
+  created_at: string;
+}
+
+export type InsuranceQuoteStatus = 'pending' | 'quoted' | 'accepted' | 'expired';
+
+export interface InsuranceQuote {
+  id: string;
+  partner_id: string;
+  user_id: string;
+  product_type: string;
+  vehicle_value_xaf: number;
+  annual_premium_xaf: number;
+  listing_id: string | null;
+  hire_listing_id: string | null;
+  status: InsuranceQuoteStatus;
+  created_at: string;
+  partner?: InsurancePartner;
+}
+
+// --------------- Browsing History ---------------
+export interface BrowsingHistory {
+  id: string;
+  user_id: string;
+  entity_type: 'listing' | 'hire_listing';
+  entity_id: string;
+  viewed_at: string;
 }

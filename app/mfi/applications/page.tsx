@@ -26,7 +26,11 @@ function formatXAF(n: number) {
   }).format(n);
 }
 
-export default async function MFIApplicationsPage() {
+export default async function MFIApplicationsPage({
+  searchParams,
+}: {
+  searchParams: { filter?: string };
+}) {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
   if (user.role !== 'mfi_partner' && user.role !== 'admin') redirect('/');
@@ -65,30 +69,68 @@ export default async function MFIApplicationsPage() {
     .from('financing_applications')
     .select(`
       id, status, created_at, income_grade,
-      listing:listings(asking_price, zone, vehicle:vehicles(make, model, year)),
+      disbursed_at,
+      listing:listings(asking_price, zone, financeable, vehicle:vehicles(make, model, year)),
       buyer:profiles!buyer_id(full_name, city)
     `)
     .order('created_at', { ascending: false });
 
   if (institutionId) {
-    query = query.eq('mfi_institution_id', institutionId);
+    query = query
+      .in('status', ['submitted', 'docs_received', 'under_review', 'approved', 'disbursed'])
+      .eq('listing.financeable', true);
   } else {
     // Admin sees all applications that have an MFI assigned
     query = query.not('mfi_institution_id', 'is', null);
   }
 
   const { data } = await query;
+  const appIds = (data ?? []).map((app: { id: string }) => app.id);
+  const { data: offerRows } = institutionId && appIds.length > 0
+    ? await supabaseAdmin
+      .from('mfi_application_offers')
+      .select('application_id, status, buyer_response, buyer_responded_at')
+      .eq('mfi_institution_id', institutionId)
+      .in('application_id', appIds)
+    : { data: [] };
+  const offersByApplication = new Map<string, { status: string; buyer_response: string | null; buyer_responded_at: string | null }>(
+    ((offerRows ?? []) as Array<{
+      application_id: string;
+      status: string;
+      buyer_response: string | null;
+      buyer_responded_at: string | null;
+    }>).map((offer) => [offer.application_id, {
+      status: offer.status,
+      buyer_response: offer.buyer_response,
+      buyer_responded_at: offer.buyer_responded_at,
+    }])
+  );
 
-  const items = (data ?? []) as unknown as Array<
+  const allItems = (data ?? []) as unknown as Array<
     FinancingApplication & {
       listing?: {
         asking_price: number;
         zone: string;
+        financeable?: boolean;
         vehicle?: { make: string; model: string; year: number };
       };
       buyer?: { full_name?: string; city?: string };
     }
   >;
+  const items = searchParams.filter === 'buyer_interested'
+    ? allItems.filter((app) => offersByApplication.get(app.id)?.buyer_response === 'interested')
+    : searchParams.filter === 'my_offers'
+      ? allItems.filter((app) => {
+        const offer = offersByApplication.get(app.id);
+        return offer ? ['submitted', 'shortlisted', 'accepted'].includes(offer.status) : false;
+      })
+    : searchParams.filter === 'accepted'
+      ? allItems.filter((app) => offersByApplication.get(app.id)?.status === 'accepted')
+    : searchParams.filter === 'ready_to_disburse'
+      ? allItems.filter((app) => offersByApplication.get(app.id)?.status === 'accepted' && app.status === 'approved')
+    : searchParams.filter === 'disbursed'
+      ? allItems.filter((app) => offersByApplication.get(app.id)?.status === 'accepted' && app.status === 'disbursed')
+    : allItems;
 
   return (
     <div>
@@ -102,15 +144,53 @@ export default async function MFIApplicationsPage() {
         </p>
       </div>
 
+      {institutionId && (
+        <div className="mb-6 flex flex-wrap gap-2">
+          {[
+            { value: '', label: 'Toutes' },
+            { value: 'my_offers', label: 'Mes offres actives' },
+            { value: 'buyer_interested', label: 'Acheteurs interesses' },
+            { value: 'accepted', label: 'Offres retenues' },
+            { value: 'ready_to_disburse', label: 'A decaisser' },
+            { value: 'disbursed', label: 'Financees' },
+          ].map((filter) => (
+            <Link
+              key={filter.value}
+              href={filter.value ? `/mfi/applications?filter=${filter.value}` : '/mfi/applications'}
+              className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                (searchParams.filter ?? '') === filter.value
+                  ? 'border-[#1a3a6b] bg-[#1a3a6b] text-white'
+                  : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {filter.label}
+            </Link>
+          ))}
+        </div>
+      )}
+
       {items.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center">
-          <p className="text-gray-500">Aucune demande assignée pour le moment.</p>
+          <p className="text-gray-500">
+            {searchParams.filter === 'buyer_interested'
+              ? 'Aucun acheteur interesse par votre offre pour le moment.'
+              : searchParams.filter === 'my_offers'
+                ? 'Aucune offre active pour le moment.'
+              : searchParams.filter === 'accepted'
+                ? 'Aucune offre retenue pour le moment.'
+              : searchParams.filter === 'ready_to_disburse'
+                ? 'Aucun dossier pret au decaissement pour le moment.'
+              : searchParams.filter === 'disbursed'
+                ? 'Aucun dossier finance pour le moment.'
+              : 'Aucune demande assignee pour le moment.'}
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
           {items.map(app => {
             const v = app.listing?.vehicle;
             const buyer = app.buyer;
+            const offer = offersByApplication.get(app.id);
             return (
               <Link
                 key={app.id}
@@ -131,11 +211,21 @@ export default async function MFIApplicationsPage() {
                         ? ` · ${formatXAF(app.listing.asking_price)}`
                         : ''}
                     </p>
+                    {offer?.buyer_response === 'interested' && (
+                      <p className="mt-2 inline-flex rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+                        Acheteur interesse par votre offre
+                      </p>
+                    )}
+                    {app.status === 'disbursed' && app.disbursed_at && (
+                      <p className="mt-2 inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                        Finance le {new Date(app.disbursed_at).toLocaleDateString('fr-FR')}
+                      </p>
+                    )}
                   </div>
                   <span
                     className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${STATUS_COLORS[app.status] ?? 'bg-gray-100 text-gray-600'}`}
                   >
-                    {STATUS_LABELS[app.status] ?? app.status}
+                    {offer ? `Offre: ${offer.status}` : STATUS_LABELS[app.status] ?? app.status}
                   </span>
                 </div>
               </Link>

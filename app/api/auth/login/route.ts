@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { signIn } from '@/lib/auth/server';
+import { guardRateLimit, getClientId } from '@/lib/rate-limit';
 import { z } from 'zod';
 
 const schema = z.object({
@@ -16,6 +17,10 @@ const COOKIE_OPTIONS = {
 };
 
 export async function POST(request: Request) {
+  // Throttle credential attempts to blunt brute-force / credential stuffing.
+  const limited = await guardRateLimit(`login:${getClientId(request)}`, 5, 60_000);
+  if (limited) return limited;
+
   const body = await request.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {

@@ -8,7 +8,7 @@ import ZoneBadge from '../../(components)/ZoneBadge';
 import FavouriteButton from '../../(components)/FavouriteButton';
 import ViewTracker from '../../(components)/ViewTracker';
 import { supabaseAdmin, getCurrentUser } from '@/lib/auth/server';
-import type { Listing } from '@/lib/types';
+import type { Inspection, Listing } from '@/lib/types';
 import FinancingCalculator from '../../(components)/FinancingCalculator';
 import WhatsAppContactButton from '../../(components)/WhatsAppContactButton';
 import WhatsAppShareButton from '../../(components)/WhatsAppShareButton';
@@ -16,15 +16,26 @@ import CompareButton from '../../(components)/CompareButton';
 import SellerTrustBadge from '../../(components)/SellerTrustBadge';
 import ReviewCard from '../../(components)/ReviewCard';
 import ReviewForm from '../../(components)/ReviewForm';
+import ChatWidget from '../../(components)/ChatWidget';
+import InsuranceQuoteWidget from '../../(components)/InsuranceQuoteWidget';
+import PhotoGallery from '../../(components)/PhotoGallery';
+import JsonLd from '../../(components)/JsonLd';
+import SocialShareButtons from '../../(components)/SocialShareButtons';
+import { ListingTrustBadges } from '../../(components)/TrustLabelBadges';
+import InspectionRequestForm from '../../(components)/InspectionRequestForm';
 
-async function getListing(id: string): Promise<Listing | null> {
+type PublicListing = Listing & {
+  inspections?: Inspection[];
+};
+
+async function getListing(id: string): Promise<PublicListing | null> {
   const { data } = await supabaseAdmin
     .from('listings')
-    .select('*, vehicle:vehicles(*), media:media_assets(*), seller:profiles!seller_id(is_verified, full_name, phone, avg_rating, total_reviews)')
+    .select('*, vehicle:vehicles(*), media:media_assets(*), seller:profiles!seller_id(is_verified, full_name, phone, avg_rating, total_reviews), inspections(*)')
     .eq('id', id)
     .eq('status', 'published')
     .single();
-  return data as unknown as Listing | null;
+  return data as unknown as PublicListing | null;
 }
 
 interface ReviewData {
@@ -74,7 +85,7 @@ export async function generateMetadata(
     `Zone ${listing.zone} au Cameroun`,
     `Prix: ${priceStr}`,
     listing.financeable ? 'Financement disponible via MotoPayee.' : null,
-    'Véhicule inspecté et vérifié.',
+    'Annonce revue par MotoPayee.',
   ].filter(Boolean).join(' · ');
 
   const imageUrl = listing.media && listing.media.length > 0
@@ -106,6 +117,14 @@ function formatXAF(amount: number): string {
   }).format(amount);
 }
 
+function getLatestInspection(listing: PublicListing): Inspection | null {
+  const inspections = listing.inspections ?? [];
+  if (inspections.length === 0) return null;
+  return [...inspections].sort((a, b) => (
+    new Date(b.inspected_at ?? b.created_at).getTime() - new Date(a.inspected_at ?? a.created_at).getTime()
+  ))[0];
+}
+
 export default async function ListingDetailPage({
   params,
 }: {
@@ -132,37 +151,52 @@ export default async function ListingDetailPage({
   }
 
   const v = listing.vehicle;
+  const vehicleLabel = v ? `${v.year} ${v.make} ${v.model}` : 'ce vehicule';
+  const hasInspection = Boolean(v?.condition_grade);
+  const latestInspection = getLatestInspection(listing);
 
   return (
     <>
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'Vehicle',
+        name: v ? `${v.year} ${v.make} ${v.model}` : 'Véhicule',
+        brand: { '@type': 'Brand', name: v?.make ?? '' },
+        model: v?.model ?? '',
+        modelDate: String(v?.year ?? ''),
+        mileageFromOdometer: v ? { '@type': 'QuantitativeValue', value: v.mileage_km, unitCode: 'KMT' } : undefined,
+        fuelType: v?.fuel_type ?? undefined,
+        vehicleTransmission: v?.transmission ?? undefined,
+        color: v?.color ?? undefined,
+        offers: {
+          '@type': 'Offer',
+          price: listing.asking_price,
+          priceCurrency: 'XAF',
+          availability: 'https://schema.org/InStock',
+          seller: {
+            '@type': 'Organization',
+            name: listing.seller?.full_name ?? 'MotoPayee',
+          },
+        },
+        image: listing.media?.[0] ? `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/api/files/thumb/${listing.media[0].id}` : undefined,
+      }} />
       <Navbar />
       <ViewTracker listingId={listing.id} />
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <Link href="/listings" className="text-sm text-blue-600 hover:underline mb-6 inline-block">
+        <Link href="/listings" className="text-sm font-medium text-[#1a3a6b] hover:text-[#3d9e3d] transition-colors mb-6 inline-block">
           ← Retour aux annonces
         </Link>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           {/* Media */}
           <div>
-            <div className="bg-gray-100 rounded-2xl h-64 md:h-96 flex items-center justify-center text-gray-400">
-              {listing.media && listing.media.length > 0 ? (
-                <img
-                  src={`/api/files/thumb/${listing.media[0].id}`}
-                  alt="Vehicle"
-                  className="w-full h-full object-cover rounded-2xl"
-                />
-              ) : (
-                <span>Pas de photo disponible</span>
-              )}
-            </div>
-            {listing.media && listing.media.length > 1 && (
-              <div className="flex gap-2 mt-2 overflow-x-auto">
-                {listing.media.slice(1, 6).map((m) => (
-                  <div key={m.id} className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0" />
-                ))}
-              </div>
-            )}
+            <PhotoGallery
+              photos={(listing.media ?? []).map((m) => ({
+                id: m.id,
+                src: `/api/files/thumb/${m.id}`,
+                alt: v ? `${v.make} ${v.model}` : 'Véhicule',
+              }))}
+            />
           </div>
 
           {/* Info */}
@@ -189,6 +223,8 @@ export default async function ListingDetailPage({
               totalReviews={(listing.seller as unknown as { total_reviews: number })?.total_reviews ?? 0}
             />
 
+            <ListingTrustBadges listing={listing} />
+
             {/* Price */}
             <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
               <div className="flex items-center justify-between mb-2">
@@ -207,7 +243,15 @@ export default async function ListingDetailPage({
               <div className="bg-green-50 border border-green-200 rounded-xl p-4">
                 <p className="text-green-800 font-semibold text-sm">Ce véhicule est éligible au financement</p>
                 <p className="text-green-600 text-xs mt-1">
-                  Sous réserve de vérification de votre dossier par notre équipe.
+                  Sous réserve de vérification et d&apos;approbation par un partenaire de financement.
+                </p>
+              </div>
+            )}
+            {!listing.financeable && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                <p className="text-amber-800 font-semibold text-sm">Financement non disponible pour cette annonce</p>
+                <p className="text-amber-700 text-xs mt-1">
+                  Seules les annonces Finance eligible peuvent recevoir une demande de financement via MotoPayee.
                 </p>
               </div>
             )}
@@ -240,12 +284,18 @@ export default async function ListingDetailPage({
 
             {/* CTA */}
             <div className="pt-2 space-y-3">
-              <Link
-                href={`/me/applications/new?listing=${listing.id}`}
-                className="block w-full text-center bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 transition"
-              >
-                Demander un financement
-              </Link>
+              {listing.financeable ? (
+                <Link
+                  href={`/me/applications/new?listing=${listing.id}`}
+                  className="block w-full text-center bg-[#3d9e3d] text-white font-semibold py-3 rounded-xl hover:bg-[#2d8a2d] transition shadow-sm"
+                >
+                  Demander un financement
+                </Link>
+              ) : (
+                <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-center text-sm font-medium text-gray-600">
+                  Financement disponible uniquement sur les vehicules Finance eligible.
+                </div>
+              )}
               {listing.seller?.phone && (
                 <WhatsAppContactButton
                   phone={listing.seller.phone}
@@ -254,18 +304,35 @@ export default async function ListingDetailPage({
                   className="block w-full text-center bg-[#25D366] text-white font-semibold py-3 rounded-xl hover:bg-[#1da851] transition flex items-center justify-center gap-2"
                 />
               )}
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <WhatsAppShareButton
                   text={`Regardez ce ${v ? `${v.year} ${v.make} ${v.model}` : 'véhicule'} sur MotoPayee ! ${process.env.NEXT_PUBLIC_APP_URL}/listings/${listing.id}`}
                 />
-                <Link
-                  href="/login"
-                  className="flex-1 text-center border border-gray-300 text-gray-700 font-medium py-2.5 rounded-xl hover:bg-gray-50 transition text-sm"
-                >
-                  Contacter le vendeur
-                </Link>
+                <SocialShareButtons
+                  url={`${process.env.NEXT_PUBLIC_APP_URL ?? ''}/listings/${listing.id}`}
+                  title={v ? `${v.year} ${v.make} ${v.model} sur MotoPayee` : 'Véhicule sur MotoPayee'}
+                  compact
+                />
               </div>
+              <ChatWidget
+                otherUserId={listing.seller_id}
+                otherUserName={listing.seller?.full_name ?? 'Vendeur'}
+                listingId={listing.id}
+              />
+              {!hasInspection && (
+                <InspectionRequestForm
+                  listingId={listing.id}
+                  vehicleLabel={vehicleLabel}
+                  defaultName={user?.name ?? ''}
+                />
+              )}
             </div>
+
+            {/* Insurance */}
+            <InsuranceQuoteWidget
+              vehicleValueXaf={listing.asking_price}
+              listingId={listing.id}
+            />
 
             {/* Financing calculator */}
             {listing.financeable && (
@@ -281,6 +348,50 @@ export default async function ListingDetailPage({
             )}
           </div>
         </div>
+
+        {latestInspection && (
+          <section className="mt-10 rounded-2xl border border-gray-200 bg-white p-6">
+            <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Resume inspection MotoPayee</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Rapport effectue le {new Date(latestInspection.inspected_at).toLocaleDateString('fr-FR')}.
+                </p>
+              </div>
+              <span className="inline-flex w-fit rounded-full bg-purple-50 px-3 py-1 text-sm font-semibold text-purple-700">
+                Grade {latestInspection.condition_grade}
+              </span>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <p className="text-xs text-gray-500">Condition</p>
+                <p className="mt-1 text-lg font-bold text-gray-900">Grade {latestInspection.condition_grade}</p>
+              </div>
+              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <p className="text-xs text-gray-500">Financement</p>
+                <p className={`mt-1 text-lg font-bold ${latestInspection.financeable ? 'text-green-700' : 'text-amber-700'}`}>
+                  {latestInspection.financeable ? 'Eligible' : 'Non eligible'}
+                </p>
+              </div>
+              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <p className="text-xs text-gray-500">Reparations estimees</p>
+                <p className="mt-1 text-lg font-bold text-gray-900">
+                  {latestInspection.repair_estimate_low || latestInspection.repair_estimate_high
+                    ? `${formatXAF(latestInspection.repair_estimate_low ?? 0)} - ${formatXAF(latestInspection.repair_estimate_high ?? latestInspection.repair_estimate_low ?? 0)}`
+                    : 'Non indique'}
+                </p>
+              </div>
+            </div>
+
+            {latestInspection.notes && (
+              <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <p className="text-xs font-medium text-gray-500">Notes inspecteur</p>
+                <p className="mt-1 text-sm leading-relaxed text-gray-700">{latestInspection.notes}</p>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Reviews section */}
         <div className="mt-10">

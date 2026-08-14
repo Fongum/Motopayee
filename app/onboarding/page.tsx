@@ -6,7 +6,7 @@ export default function OnboardingPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-[80vh] flex items-center justify-center px-4 py-16">
+      <main className="min-h-[80vh] flex items-center justify-center px-4 py-16 bg-gray-50">
         <OnboardingForm />
       </main>
       <Footer />

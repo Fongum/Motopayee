@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAuth } from '@/lib/auth/middleware';
+import { parseBody, amountXaf } from '@/lib/validation';
+
+const createSchema = z.object({
+  listing_id: z.string().uuid(),
+  threshold_price: amountXaf,
+});
 
 // GET /api/price-alerts
 export async function GET(request: Request) {
@@ -22,12 +29,10 @@ export async function POST(request: Request) {
   const auth = await requireAuth(request);
   if (!auth.authenticated) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
-  const body = await request.json();
-  const { listing_id, threshold_price } = body;
+  const parsed = await parseBody(createSchema, request, 'Alerte de prix invalide.');
+  if (!parsed.success) return parsed.response;
 
-  if (!listing_id || !threshold_price) {
-    return NextResponse.json({ error: 'listing_id and threshold_price required.' }, { status: 400 });
-  }
+  const { listing_id, threshold_price } = parsed.data;
 
   const { data, error } = await supabaseAdmin
     .from('price_alerts')

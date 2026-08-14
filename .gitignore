@@ -111,3 +111,9 @@ Desktop.ini
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vercel
+
+# Generated launch documents — rebuilt from docs/*.md by scripts/generate-*-pdf.mjs
+output/
+
+# Scratch screenshots
+check.png

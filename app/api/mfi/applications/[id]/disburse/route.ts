@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, getCurrentUser } from '@/lib/auth/server';
 import { notifyDisbursed } from '@/lib/notifications';
+import { logFailure } from '@/lib/logger';
+import { ensureFinanceCommission } from '@/lib/finance-commissions';
 
 interface RouteParams { params: { id: string } }
 
@@ -67,10 +69,18 @@ export async function POST(request: Request, { params }: RouteParams) {
     meta: { from: 'approved', to: 'disbursed' },
   });
 
+  await ensureFinanceCommission(params.id, user.id);
+
   // Notify buyer
   const { data: buyerProfile } = await supabaseAdmin
     .from('profiles').select('phone').eq('id', a.buyer_id).single();
-  notifyDisbursed((buyerProfile as { phone: string | null } | null)?.phone ?? null).catch(console.error);
+  notifyDisbursed((buyerProfile as { phone: string | null } | null)?.phone ?? null).catch(
+    logFailure('Disbursement SMS failed', { applicationId: params.id })
+  );
+
+  if (request.headers.get('accept')?.includes('text/html')) {
+    return NextResponse.redirect(new URL(`/mfi/applications/${params.id}`, request.url));
+  }
 
   return NextResponse.json({ application: data });
 }

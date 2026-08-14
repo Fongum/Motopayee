@@ -22,12 +22,15 @@ export async function POST(request: Request) {
   // Verify listing exists and is published
   const { data: listing } = await supabaseAdmin
     .from('listings')
-    .select('id, status')
+    .select('id, status, financeable')
     .eq('id', parsed.data.listing_id)
     .single();
 
   if (!listing || listing.status !== 'published') {
     return NextResponse.json({ error: 'Listing not available.' }, { status: 404 });
+  }
+  if (!listing.financeable) {
+    return NextResponse.json({ error: 'Only Finance eligible listings can receive financing requests.' }, { status: 400 });
   }
 
   // Prevent duplicate application

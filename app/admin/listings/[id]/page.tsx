@@ -1,7 +1,7 @@
 import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
-import type { Listing } from '@/lib/types';
+import type { Inspection, Listing } from '@/lib/types';
 import { isAdminRole } from '@/lib/auth/roles';
 
 function formatXAF(amount: number) {
@@ -34,15 +34,20 @@ export default async function AdminListingDetailPage({ params }: { params: { id:
     field_agent?: { id: string; email: string; full_name?: string } | null;
     inspector?: { id: string; email: string; full_name?: string } | null;
     verifier?: { id: string; email: string; full_name?: string } | null;
-    inspections?: Array<Record<string, unknown>>;
+    inspections?: Inspection[];
     documents?: Array<{ id: string; filename: string; doc_type: string }>;
   };
   const v = listing.vehicle;
+  const latestInspection = (listing.inspections ?? []).length > 0
+    ? [...(listing.inspections ?? [])].sort((a, b) => (
+      new Date(b.inspected_at ?? b.created_at).getTime() - new Date(a.inspected_at ?? a.created_at).getTime()
+    ))[0]
+    : null;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/admin/listings" className="text-sm text-blue-600 hover:underline">← Annonces</Link>
+        <Link href="/admin/listings" className="text-sm text-[#1a3a6b] hover:text-[#3d9e3d]">← Annonces</Link>
         <h1 className="text-2xl font-bold text-gray-900">
           {v ? `${v.year} ${v.make} ${v.model}` : 'Annonce'}
         </h1>
@@ -104,6 +109,52 @@ export default async function AdminListingDetailPage({ params }: { params: { id:
         </div>
       </div>
 
+      {latestInspection && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-6">
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div>
+              <h2 className="font-semibold text-gray-900">Dernier rapport d&apos;inspection</h2>
+              <p className="mt-1 text-xs text-gray-500">
+                Soumis le {new Date(latestInspection.inspected_at).toLocaleDateString('fr-FR')}
+              </p>
+            </div>
+            <span className="rounded-full bg-purple-50 px-3 py-1 text-sm font-semibold text-purple-700">
+              Grade {latestInspection.condition_grade}
+            </span>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-4">
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+              <p className="text-xs text-gray-500">Financable</p>
+              <p className="mt-1 font-semibold text-gray-900">{latestInspection.financeable ? 'Oui' : 'Non'}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+              <p className="text-xs text-gray-500">Reparations min.</p>
+              <p className="mt-1 font-semibold text-gray-900">
+                {latestInspection.repair_estimate_low ? formatXAF(latestInspection.repair_estimate_low) : 'Non indique'}
+              </p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+              <p className="text-xs text-gray-500">Reparations max.</p>
+              <p className="mt-1 font-semibold text-gray-900">
+                {latestInspection.repair_estimate_high ? formatXAF(latestInspection.repair_estimate_high) : 'Non indique'}
+              </p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+              <p className="text-xs text-gray-500">Rapports</p>
+              <p className="mt-1 font-semibold text-gray-900">{listing.inspections?.length ?? 0}</p>
+            </div>
+          </div>
+
+          {latestInspection.notes && (
+            <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-4">
+              <p className="text-xs font-medium text-gray-500">Notes</p>
+              <p className="mt-1 text-sm leading-relaxed text-gray-700">{latestInspection.notes}</p>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Documents */}
       {listing.documents && listing.documents.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl p-6">
@@ -131,7 +182,7 @@ export default async function AdminListingDetailPage({ params }: { params: { id:
               listingId={listing.id}
               targetStatus="ownership_verified"
               label="Valider la propriété"
-              className="bg-blue-600 text-white hover:bg-blue-700"
+              className="bg-[#3d9e3d] text-white hover:bg-[#2d8a2d]"
             />
           )}
           {listing.status === 'ownership_verified' && (
@@ -161,7 +212,7 @@ function SignedUrlButton({ docId }: { docId: string }) {
       href={`/api/files/signed-url?doc=${docId}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-xs text-blue-600 hover:underline"
+      className="text-xs text-[#1a3a6b] hover:text-[#3d9e3d]"
     >
       Télécharger
     </a>

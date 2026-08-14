@@ -63,7 +63,7 @@ export default async function UsersPage({
             href={r ? `/admin/users?role=${r}` : '/admin/users'}
             className={`text-xs px-3 py-1.5 rounded-full border transition ${
               searchParams.role === r || (!searchParams.role && !r)
-                ? 'bg-blue-600 text-white border-blue-600'
+                ? 'bg-[#1a3a6b] text-white border-[#1a3a6b]'
                 : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
             }`}
           >

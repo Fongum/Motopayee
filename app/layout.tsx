@@ -5,6 +5,7 @@ import WhatsAppFloatingSupport from './(components)/WhatsAppFloatingSupport';
 import ComparisonBar from './(components)/ComparisonBar';
 import InstallPrompt from './(components)/InstallPrompt';
 import ServiceWorkerRegistration from './(components)/ServiceWorkerRegistration';
+import { SITE_URL } from '@/lib/site';
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -26,14 +27,14 @@ export const metadata: Metadata = {
   keywords: ['voiture Cameroun', 'achat véhicule Douala', 'financement auto Yaoundé', 'marketplace automobile', 'MotoPayee'],
   authors: [{ name: 'MotoPayee' }],
   creator: 'MotoPayee',
-  metadataBase: new URL('https://motopayee.vercel.app'),
+  metadataBase: new URL(SITE_URL),
   openGraph: {
     type: 'website',
     locale: 'fr_CM',
     siteName: 'MotoPayee',
     title: 'MotoPayee — Marketplace automobile du Cameroun',
     description: 'Achetez, vendez et financez votre véhicule. Véhicules inspectés, prix transparents, financement sous 72h.',
-    images: [{ url: '/logo2.png', width: 1024, height: 1024, alt: 'MotoPayee Logo' }],
+    images: [{ url: '/og.jpg', width: 1200, height: 630, alt: 'MotoPayee — Marketplace automobile du Cameroun' }],
   },
   twitter: {
     card: 'summary_large_image',

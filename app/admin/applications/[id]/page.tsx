@@ -2,9 +2,10 @@ import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { isAdminRole, isVerifierRole } from '@/lib/auth/roles';
-import type { FinancingApplication, MFIInstitution, Payment } from '@/lib/types';
+import type { FinancingApplication, MFIApplicationOffer, MFIInstitution, Payment } from '@/lib/types';
 import PaymentRequestForm from '@/app/(components)/PaymentRequestForm';
 import AssignMFIForm from '@/app/(components)/AssignMFIForm';
+import MFIOfferActions from './MFIOfferActions';
 
 function formatXAF(amount: number) {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
@@ -18,6 +19,15 @@ const STATUS_TRANSITIONS: Record<string, string[]> = {
   approved: ['disbursed'],
 };
 
+const FOLLOW_UP_LABELS: Record<string, string> = {
+  none: 'Aucun suivi',
+  call_needed: 'Appel requis',
+  contacted: 'Contacte',
+  waiting_buyer: 'Attente acheteur',
+  waiting_mfi: 'Attente IMF',
+  closed: 'Suivi clos',
+};
+
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Brouillon', submitted: 'Soumis', docs_pending: 'Docs requis',
   docs_received: 'Docs reçus', under_review: 'En examen',
@@ -28,7 +38,7 @@ export default async function AdminApplicationDetailPage({ params }: { params: {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  const [appResult, paymentsResult, institutionsResult] = await Promise.all([
+  const [appResult, paymentsResult, institutionsResult, offersResult] = await Promise.all([
     supabaseAdmin
       .from('financing_applications')
       .select(`
@@ -36,6 +46,7 @@ export default async function AdminApplicationDetailPage({ params }: { params: {
         listing:listings(*, vehicle:vehicles(*)),
         buyer:profiles!buyer_id(id, email, full_name, phone, city, zone),
         verifier:profiles!verifier_id(id, email, full_name),
+        follow_up_actor:profiles!follow_up_actor_id(id, email, full_name),
         documents(*)
       `)
       .eq('id', params.id)
@@ -52,6 +63,11 @@ export default async function AdminApplicationDetailPage({ params }: { params: {
           .eq('active', true)
           .order('name')
       : Promise.resolve({ data: [] }),
+    supabaseAdmin
+      .from('mfi_application_offers')
+      .select('*, institution:mfi_institutions(name, code), responder:profiles!responder_id(full_name, email)')
+      .eq('application_id', params.id)
+      .order('created_at', { ascending: false }),
   ]);
 
   const { data, error } = appResult;
@@ -62,10 +78,15 @@ export default async function AdminApplicationDetailPage({ params }: { params: {
     mfi_institution_id?: string | null;
     buyer?: { id: string; email: string; full_name?: string; phone?: string; city?: string; zone?: string };
     verifier?: { id: string; email: string; full_name?: string } | null;
+    follow_up_actor?: { id: string; email: string; full_name?: string } | null;
   };
 
   const payments = (paymentsResult.data ?? []) as Payment[];
   const institutions = (institutionsResult.data ?? []) as Pick<MFIInstitution, 'id' | 'name' | 'code'>[];
+  const offers = (offersResult.data ?? []) as unknown as Array<MFIApplicationOffer & {
+    institution?: { name: string; code: string } | null;
+    responder?: { full_name: string | null; email: string | null } | null;
+  }>;
 
   const canAct = isAdminRole(user.role) || isVerifierRole(user.role);
   const transitions = STATUS_TRANSITIONS[app.status] ?? [];
@@ -75,7 +96,7 @@ export default async function AdminApplicationDetailPage({ params }: { params: {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/admin/applications" className="text-sm text-blue-600 hover:underline">← Demandes</Link>
+        <Link href="/admin/applications" className="text-sm text-[#1a3a6b] hover:text-[#3d9e3d]">← Demandes</Link>
         <h1 className="text-xl font-bold text-gray-900">
           Demande — {v ? `${v.year} ${v.make} ${v.model}` : 'Véhicule'}
         </h1>
@@ -114,6 +135,7 @@ export default async function AdminApplicationDetailPage({ params }: { params: {
               ['Apport initial', app.down_payment_percent ? `${app.down_payment_percent}%` : '—'],
               ['Durée max', app.max_tenor ? `${app.max_tenor} mois` : '—'],
               ['Revue manuelle', app.manual_review_required ? 'Oui' : 'Non'],
+              ['Decaisse le', app.disbursed_at ? new Date(app.disbursed_at).toLocaleDateString('fr-FR') : 'â€”'],
             ].map(([l, v]) => (
               <div key={l} className="flex justify-between border-b border-gray-50 py-1">
                 <dt className="text-gray-500">{l}</dt>
@@ -123,6 +145,129 @@ export default async function AdminApplicationDetailPage({ params }: { params: {
           </dl>
         </div>
       </div>
+
+      {offers.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-6">
+          <h2 className="font-semibold text-gray-900 mb-4">Offres IMF ({offers.length})</h2>
+          <div className="space-y-3">
+            {offers.map((offer) => (
+              <div key={offer.id} className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-gray-900">
+                      {offer.institution?.name ?? 'IMF'}
+                      {offer.institution?.code ? ` (${offer.institution.code})` : ''}
+                    </p>
+                    <p className="mt-0.5 text-xs text-gray-500">
+                      Repondu par {offer.responder?.full_name ?? offer.responder?.email ?? 'partenaire'} le {new Date(offer.created_at).toLocaleDateString('fr-FR')}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                    {offer.status}
+                  </span>
+                </div>
+                {offer.buyer_response && (
+                  <div className={`mb-3 rounded-lg border px-3 py-2 text-xs font-medium ${
+                    offer.buyer_response === 'interested'
+                      ? 'border-green-100 bg-green-50 text-green-700'
+                      : 'border-gray-200 bg-white text-gray-600'
+                  }`}>
+                    Reponse acheteur: {offer.buyer_response === 'interested' ? 'interesse' : 'pas interesse'}
+                    {offer.buyer_responded_at ? ` le ${new Date(offer.buyer_responded_at).toLocaleDateString('fr-FR')}` : ''}
+                  </div>
+                )}
+                <div className="grid gap-3 text-sm md:grid-cols-3">
+                  <div>
+                    <p className="text-xs text-gray-500">Apport propose</p>
+                    <p className="font-semibold text-gray-900">
+                      {offer.proposed_down_payment_percent != null ? `${offer.proposed_down_payment_percent}%` : 'Non indique'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Duree proposee</p>
+                    <p className="font-semibold text-gray-900">
+                      {offer.proposed_tenor_months != null ? `${offer.proposed_tenor_months} mois` : 'Non indique'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Taux propose</p>
+                    <p className="font-semibold text-gray-900">
+                      {offer.proposed_interest_rate_percent != null ? `${offer.proposed_interest_rate_percent}%` : 'Non indique'}
+                    </p>
+                  </div>
+                </div>
+                {offer.notes && <p className="mt-3 text-sm leading-relaxed text-gray-600">{offer.notes}</p>}
+                {canAct && (
+                  <MFIOfferActions offerId={offer.id} currentStatus={offer.status} />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {canAct && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-6">
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div>
+              <h2 className="font-semibold text-gray-900">Suivi operationnel</h2>
+              <p className="text-sm text-gray-500 mt-1">Notes internes pour relancer l&apos;acheteur ou l&apos;IMF.</p>
+              {app.follow_up_actor && (
+                <p className="text-xs text-gray-400 mt-1">
+                  Dernier suivi par {app.follow_up_actor.full_name ?? app.follow_up_actor.email}
+                  {app.follow_up_updated_at ? ` le ${new Date(app.follow_up_updated_at).toLocaleDateString('fr-FR')}` : ''}
+                </p>
+              )}
+            </div>
+            {app.follow_up_status && app.follow_up_status !== 'none' && (
+              <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+                {FOLLOW_UP_LABELS[app.follow_up_status] ?? app.follow_up_status}
+              </span>
+            )}
+          </div>
+          <form action={`/api/admin/applications/${params.id}/follow-up`} method="POST" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="block">
+                <span className="text-xs font-medium text-gray-500">Statut de suivi</span>
+                <select
+                  name="follow_up_status"
+                  defaultValue={app.follow_up_status ?? 'none'}
+                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                >
+                  {Object.entries(FOLLOW_UP_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-xs font-medium text-gray-500">Prochaine relance</span>
+                <input
+                  type="datetime-local"
+                  name="next_follow_up_at"
+                  defaultValue={app.next_follow_up_at ? app.next_follow_up_at.slice(0, 16) : ''}
+                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                />
+              </label>
+            </div>
+            <label className="block">
+              <span className="text-xs font-medium text-gray-500">Notes de suivi</span>
+              <textarea
+                name="follow_up_notes"
+                defaultValue={app.follow_up_notes ?? ''}
+                rows={4}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                placeholder="Ex: Acheteur interesse par l'offre IMF, appeler pour confirmer apport et documents."
+              />
+            </label>
+            <button
+              type="submit"
+              className="rounded-lg bg-[#1a3a6b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#132a4d]"
+            >
+              Enregistrer le suivi
+            </button>
+          </form>
+        </div>
+      )}
 
       {/* Documents */}
       {app.documents && app.documents.length > 0 && (
@@ -140,7 +285,7 @@ export default async function AdminApplicationDetailPage({ params }: { params: {
                   href={`/api/files/signed-url?doc=${doc.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:underline"
+                  className="text-xs text-[#1a3a6b] hover:text-[#3d9e3d]"
                 >
                   Télécharger
                 </a>

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAuth } from '@/lib/auth/middleware';
+import { parseBody } from '@/lib/validation';
+import { updateHireListingSchema } from '@/lib/hire-schemas';
 import type { HireListing } from '@/lib/types';
 
 // GET /api/hire/[id] — Get hire listing detail (public for published)
@@ -48,30 +50,17 @@ export async function PATCH(
     return NextResponse.json({ error: 'Not found or unauthorized' }, { status: 404 });
   }
 
-  const body = await request.json();
-
   // Only allow edits on draft/pending_review/published
   if (['withdrawn', 'suspended'].includes(existing.status)) {
     return NextResponse.json({ error: 'Cannot edit in current status' }, { status: 400 });
   }
 
-  const allowedFields = [
-    'make', 'model', 'year', 'fuel_type', 'transmission', 'color', 'seats',
-    'engine_cc', 'plate_number', 'hire_type', 'daily_rate', 'weekly_rate',
-    'monthly_rate', 'deposit_amount', 'driver_daily_rate', 'mileage_limit_per_day_km',
-    'extra_km_charge', 'min_hire_days', 'max_hire_days', 'city', 'zone', 'address',
-    'latitude', 'longitude', 'description', 'conditions', 'features',
-    'insurance_included', 'availability',
-  ];
+  // The schema is the field allowlist: unknown keys are stripped by zod, so
+  // status/owner_id can't be smuggled in through a PATCH.
+  const parsed = await parseBody(updateHireListingSchema, request, 'Mise à jour invalide.');
+  if (!parsed.success) return parsed.response;
 
-  const updates: Record<string, unknown> = {};
-  for (const field of allowedFields) {
-    if (body[field] !== undefined) updates[field] = body[field];
-  }
-
-  if (Object.keys(updates).length === 0) {
-    return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
-  }
+  const updates = parsed.data;
 
   const { data, error } = await supabaseAdmin
     .from('hire_listings')

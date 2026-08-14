@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { matchListings, matchHireListings } from '@/lib/search-matcher';
+import { logger } from '@/lib/logger';
 
 // POST /api/cron/search-alerts — daily cron: check saved searches for new matches
 export async function POST(request: Request) {
@@ -38,11 +39,20 @@ export async function POST(request: Request) {
         const msg = `MotoPayee: ${newCount - search.last_match_count} nouveau(x) résultat(s) pour "${search.label}". Voir: ${process.env.NEXT_PUBLIC_APP_URL}/${search.search_type === 'hire' ? 'hire' : 'listings'}`;
         // In production, send via WhatsApp Business API
         // For now, log the notification
-        console.log(`[search-alert] WhatsApp → ${user.phone}: ${msg}`);
+        logger.info('Search alert (WhatsApp)', {
+          phone: user.phone,
+          label: search.label,
+          newMatches: newCount - search.last_match_count,
+          message: msg,
+        });
       }
 
       if (search.notify_via === 'sms' && user.phone) {
-        console.log(`[search-alert] SMS → ${user.phone}: ${newCount - search.last_match_count} new matches for "${search.label}"`);
+        logger.info('Search alert (SMS)', {
+          phone: user.phone,
+          label: search.label,
+          newMatches: newCount - search.last_match_count,
+        });
       }
 
       notified++;

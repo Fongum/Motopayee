@@ -2,6 +2,7 @@ import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { FinancingApplication, Payment } from '@/lib/types';
+import MFIOfferForm from './MFIOfferForm';
 
 function formatXAF(n: number) {
   return new Intl.NumberFormat('fr-CM', {
@@ -68,15 +69,17 @@ export default async function MFIApplicationDetailPage({
     };
   };
 
-  // MFI partner can only access applications assigned to their institution
-  if (institutionId && app.mfi_institution_id !== institutionId) notFound();
-
   const listing = app.listing as {
     asking_price: number;
     zone: string;
+    financeable?: boolean;
     vehicle?: { make: string; model: string; year: number };
   } | undefined;
   const v = listing?.vehicle;
+  const openToMFI = Boolean(listing?.financeable && ['submitted', 'docs_received', 'under_review', 'approved'].includes(app.status));
+
+  // MFI partner can access assigned applications or open Finance eligible applications.
+  if (institutionId && app.mfi_institution_id !== institutionId && !openToMFI) notFound();
 
   const { data: paymentsData } = await supabaseAdmin
     .from('payments')
@@ -85,13 +88,30 @@ export default async function MFIApplicationDetailPage({
     .order('initiated_at', { ascending: false });
 
   const payments = (paymentsData ?? []) as Payment[];
+  const { data: offerRows } = institutionId
+    ? await supabaseAdmin
+      .from('mfi_application_offers')
+      .select('*')
+      .eq('application_id', params.id)
+      .eq('mfi_institution_id', institutionId)
+      .limit(1)
+    : { data: [] };
+  const existingOffer = ((offerRows ?? [])[0] ?? null) as {
+    status: string;
+    buyer_response: string | null;
+    buyer_responded_at: string | null;
+    proposed_down_payment_percent: number | null;
+    proposed_tenor_months: number | null;
+    proposed_interest_rate_percent: number | null;
+    notes: string | null;
+  } | null;
 
-  const canDisburse = app.status === 'approved';
+  const canDisburse = app.status === 'approved' && existingOffer?.status === 'accepted';
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 flex-wrap">
-        <Link href="/mfi/applications" className="text-sm text-blue-600 hover:underline">
+        <Link href="/mfi/applications" className="text-sm text-[#1a3a6b] hover:text-[#3d9e3d]">
           ← Demandes
         </Link>
         <h1 className="text-xl font-bold text-gray-900">
@@ -147,6 +167,28 @@ export default async function MFIApplicationDetailPage({
           </dl>
         </div>
       </div>
+
+      {institutionId && openToMFI && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-6">
+          <h2 className="font-semibold text-gray-900 mb-2">Reponse de votre IMF</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Soumettez les conditions que votre institution peut proposer pour ce dossier.
+          </p>
+          {existingOffer?.buyer_response && (
+            <div className={`mb-4 rounded-xl border px-4 py-3 text-sm ${
+              existingOffer.buyer_response === 'interested'
+                ? 'border-green-100 bg-green-50 text-green-700'
+                : 'border-gray-200 bg-gray-50 text-gray-600'
+            }`}>
+              Reponse acheteur: {existingOffer.buyer_response === 'interested' ? 'interesse par votre offre' : 'pas interesse'}
+              {existingOffer.buyer_responded_at
+                ? ` le ${new Date(existingOffer.buyer_responded_at).toLocaleDateString('fr-FR')}`
+                : ''}
+            </div>
+          )}
+          <MFIOfferForm applicationId={params.id} existingOffer={existingOffer} />
+        </div>
+      )}
 
       {/* Payments */}
       {payments.length > 0 && (

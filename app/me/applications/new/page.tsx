@@ -74,7 +74,7 @@ export default function NewApplicationPage() {
               <p className="font-semibold text-gray-900">
                 {listing.vehicle ? `${listing.vehicle.year} ${listing.vehicle.make} ${listing.vehicle.model}` : 'Véhicule'}
               </p>
-              <p className="text-blue-600 font-semibold mt-1">
+              <p className="text-[#1a3a6b] font-bold mt-1">
                 {new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(listing.asking_price)}
               </p>
               {!listing.financeable && (
@@ -91,7 +91,7 @@ export default function NewApplicationPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 disabled:opacity-50"
+              className="w-full bg-[#3d9e3d] text-white font-semibold py-3 rounded-xl hover:bg-[#2d8a2d] disabled:opacity-50 transition shadow-sm"
             >
               {submitting ? 'Création...' : 'Créer ma demande'}
             </button>

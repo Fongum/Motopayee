@@ -127,7 +127,7 @@ export default function ListingCarousel({
                 <p className="text-[11px] font-bold text-[#1a3a6b] uppercase leading-tight group-hover/card:text-[#3d9e3d] transition-colors">
                   {v?.make ?? '—'} {v?.model ?? ''}
                 </p>
-                <p className="text-[11px] text-gray-400 mt-0.5">
+                <p className="text-[11px] text-gray-500 mt-0.5">
                   {v?.year ?? ''}{v?.mileage_km ? ` · ${(v.mileage_km / 1000).toFixed(0)}k km` : ''}
                 </p>
                 <p className={`text-sm font-extrabold mt-1 ${bandColor}`}>

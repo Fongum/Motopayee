@@ -21,7 +21,10 @@ function emit() {
 export function getItems(): CompareItem[] {
   if (typeof window === 'undefined') return [];
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
+    // Valid JSON that isn't an array (a stale or hand-edited key) would other-
+    // wise blow up the callers below on .length / .some.
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }

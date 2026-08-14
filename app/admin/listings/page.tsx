@@ -56,7 +56,7 @@ export default async function AdminListingsPage({
             href={s ? `/admin/listings?status=${s}` : '/admin/listings'}
             className={`text-xs px-3 py-1.5 rounded-full border transition ${
               searchParams.status === s || (!searchParams.status && !s)
-                ? 'bg-blue-600 text-white border-blue-600'
+                ? 'bg-[#1a3a6b] text-white border-[#1a3a6b]'
                 : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
             }`}
           >
@@ -101,7 +101,7 @@ export default async function AdminListingsPage({
                     {new Date(l.created_at as string).toLocaleDateString('fr-FR')}
                   </td>
                   <td className="px-4 py-3">
-                    <Link href={`/admin/listings/${l.id}`} className="text-blue-600 hover:underline text-xs">
+                    <Link href={`/admin/listings/${l.id}`} className="text-[#1a3a6b] hover:text-[#3d9e3d] text-xs">
                       Voir →
                     </Link>
                   </td>

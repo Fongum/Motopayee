@@ -137,7 +137,7 @@ export default async function ListingAnalyticsPage({ params }: { params: { id: s
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href={`/me/listings/${params.id}`} className="text-sm text-blue-600 hover:underline">
+        <Link href={`/me/listings/${params.id}`} className="text-sm text-[#1a3a6b] hover:text-[#3d9e3d]">
           ← Mon annonce
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Statistiques</h1>

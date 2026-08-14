@@ -2,14 +2,28 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { logout, useUser } from '@/lib/auth/client';
 import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
   const { user, loading } = useUser();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const router = useRouter();
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchUnread = () => {
+      fetch('/api/messages/unread-count')
+        .then((r) => r.json())
+        .then((d) => setUnreadCount(d.count ?? 0))
+        .catch(() => {});
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   async function handleLogout() {
     await logout();
@@ -22,7 +36,8 @@ export default function Navbar() {
     if (user.role === 'buyer') return { href: '/me/applications', label: 'Mes demandes' };
     if (user.role === 'seller_individual' || user.role === 'seller_dealer') return { href: '/me/listings', label: 'Mes annonces' };
     if (user.role === 'mfi_partner') return { href: '/mfi/applications', label: 'Demandes IMF' };
-    if (['field_agent', 'inspector', 'verifier', 'admin'].includes(user.role)) return { href: '/admin/dashboard', label: 'Tableau de bord' };
+    if (user.role === 'inspector') return { href: '/inspector', label: 'Mes inspections' };
+    if (['field_agent', 'verifier', 'admin'].includes(user.role)) return { href: '/admin/dashboard', label: 'Tableau de bord' };
     return null;
   }
 
@@ -34,7 +49,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between py-3">
           {/* Logo */}
           <Link href="/" className="flex items-center">
-            <Image src="/logo2.png" alt="MotoPayee" width={160} height={52} className="h-12 w-auto" priority />
+            <Image src="/logo.png" alt="MotoPayee" width={180} height={72} className="h-11 w-auto" priority />
           </Link>
 
           {/* Desktop nav */}
@@ -57,10 +72,23 @@ export default function Navbar() {
             <Link href="/calculator" className="text-sm font-medium text-gray-700 hover:text-[#1a3a6b] transition-colors">
               Simulateur
             </Link>
+            <Link href="/finance-partners" className="text-sm font-medium text-gray-700 hover:text-[#1a3a6b] transition-colors">
+              Partenaires
+            </Link>
 
             {!loading && (
               user ? (
                 <div className="flex items-center gap-4">
+                  <Link href="/me/inbox" className="relative text-sm font-medium text-gray-700 hover:text-[#1a3a6b] transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 bg-[#3d9e3d] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </Link>
                   {portalLink && (
                     <Link href={portalLink.href} className="text-sm font-semibold text-[#1a3a6b] hover:text-[#3d9e3d] transition-colors">
                       {portalLink.label}
@@ -117,9 +145,16 @@ export default function Navbar() {
           <Link href="/sell" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Vendre</Link>
           <Link href="/apply" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Financement</Link>
           <Link href="/calculator" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Simulateur</Link>
+          <Link href="/finance-partners" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Partenaires</Link>
           <div className="pt-2 border-t border-gray-100">
             {user ? (
               <>
+                <Link href="/me/inbox" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 text-sm font-medium text-gray-700 py-1">
+                  Messages
+                  {unreadCount > 0 && (
+                    <span className="bg-[#3d9e3d] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                  )}
+                </Link>
                 {portalLink && (
                   <Link href={portalLink.href} onClick={() => setMenuOpen(false)} className="block text-sm font-semibold text-[#1a3a6b] py-1">{portalLink.label}</Link>
                 )}

@@ -1,6 +1,18 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAuth } from '@/lib/auth/middleware';
+import { parseBody, optionalText } from '@/lib/validation';
+
+// Mirrors the reviews_entity_type_check constraint (migration 011).
+const createSchema = z.object({
+  entity_type: z.enum(['listing', 'hire_listing', 'hire_booking']),
+  entity_id: z.string().uuid(),
+  reviewed_id: z.string().uuid(),
+  rating: z.number().int().min(1).max(5),
+  title: optionalText(120),
+  comment: optionalText(2000),
+});
 
 // GET /api/reviews?reviewed_id=X or ?entity_type=Y&entity_id=Z
 export async function GET(request: Request) {
@@ -9,11 +21,16 @@ export async function GET(request: Request) {
   const entityType = url.searchParams.get('entity_type');
   const entityId = url.searchParams.get('entity_id');
 
+  const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1'));
+  const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get('limit') ?? '20')));
+  const offset = (page - 1) * limit;
+
   let query = supabaseAdmin
     .from('reviews')
     .select('*, reviewer:profiles!reviewer_id(full_name), response:review_responses(comment, created_at, responder:profiles!responder_id(full_name))')
     .eq('status', 'published')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (reviewedId) {
     query = query.eq('reviewed_id', reviewedId);
@@ -42,15 +59,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const body = await request.json();
-  const { entity_type, entity_id, reviewed_id, rating, title, comment } = body;
+  const parsed = await parseBody(createSchema, request, 'Avis invalide.');
+  if (!parsed.success) return parsed.response;
 
-  if (!entity_type || !entity_id || !reviewed_id || !rating) {
-    return NextResponse.json({ error: 'entity_type, entity_id, reviewed_id, and rating are required.' }, { status: 400 });
-  }
-  if (rating < 1 || rating > 5) {
-    return NextResponse.json({ error: 'Rating must be 1-5.' }, { status: 400 });
-  }
+  const { entity_type, entity_id, reviewed_id, rating, title, comment } = parsed.data;
+
   if (auth.user.id === reviewed_id) {
     return NextResponse.json({ error: 'Vous ne pouvez pas vous noter vous-même.' }, { status: 400 });
   }

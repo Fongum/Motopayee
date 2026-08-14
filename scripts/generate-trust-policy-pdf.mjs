@@ -1,0 +1,233 @@
+import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+
+const sourcePath = resolve('docs/trust-verification-policy.md');
+const outPath = resolve('output/pdf/motopayee-trust-verification-policy.pdf');
+
+const PAGE_W = 595.28;
+const PAGE_H = 841.89;
+const M = 46;
+const BOTTOM = 46;
+const LINE = 13.5;
+
+function esc(text) {
+  return String(text).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+}
+
+function width(text, size) {
+  return String(text).length * size * 0.49;
+}
+
+function wrap(text, maxWidth, size = 9.5) {
+  const words = String(text).trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return [''];
+  const lines = [];
+  let line = '';
+  for (const word of words) {
+    const next = line ? `${line} ${word}` : word;
+    if (width(next, size) <= maxWidth || !line) line = next;
+    else {
+      lines.push(line);
+      line = word;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+class Page {
+  constructor(number) {
+    this.number = number;
+    this.ops = [];
+    this.y = PAGE_H - M;
+  }
+  raw(s) { this.ops.push(s); }
+  color(hex) {
+    const value = hex.replace('#', '');
+    const r = parseInt(value.slice(0, 2), 16) / 255;
+    const g = parseInt(value.slice(2, 4), 16) / 255;
+    const b = parseInt(value.slice(4, 6), 16) / 255;
+    this.raw(`${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)} rg`);
+    this.raw(`${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)} RG`);
+  }
+  rect(x, y, w, h, fill = false) {
+    this.raw(`${x.toFixed(2)} ${y.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re ${fill ? 'f' : 'S'}`);
+  }
+  text(x, y, text, size = 9.5, font = 'F1', color = '#172033') {
+    this.color(color);
+    this.raw(`BT /${font} ${size} Tf ${x.toFixed(2)} ${y.toFixed(2)} Td (${esc(text)}) Tj ET`);
+  }
+  line(x1, y1, x2, y2, color = '#d8e0ea') {
+    this.color(color);
+    this.raw(`${x1.toFixed(2)} ${y1.toFixed(2)} m ${x2.toFixed(2)} ${y2.toFixed(2)} l S`);
+  }
+}
+
+const pages = [];
+let page = new Page(1);
+pages.push(page);
+
+function header() {
+  page.text(M, PAGE_H - 28, 'MotoPayee Trust And Verification Policy', 8, 'F2', '#5c6978');
+  page.text(PAGE_W - M - 42, PAGE_H - 28, `Page ${page.number}`, 8, 'F1', '#5c6978');
+  page.line(M, PAGE_H - 36, PAGE_W - M, PAGE_H - 36, '#e1e7ef');
+  page.y = PAGE_H - 58;
+}
+
+function newPage() {
+  page = new Page(pages.length + 1);
+  pages.push(page);
+  header();
+}
+
+function ensure(space) {
+  if (page.y - space < BOTTOM) newPage();
+}
+
+function cover() {
+  page.color('#0d1f3c');
+  page.rect(M, PAGE_H - 220, PAGE_W - 2 * M, 170, true);
+  page.text(M + 24, PAGE_H - 94, 'MotoPayee', 12, 'F2', '#dcecff');
+  page.text(M + 24, PAGE_H - 126, 'Trust And Verification Policy', 24, 'F2', '#ffffff');
+  page.text(M + 24, PAGE_H - 154, 'Internal standard for honest trust labels and marketplace claims.', 11, 'F1', '#dcecff');
+  const badges = ['Reviewed', 'Seller verified', 'Documents checked', 'Inspected', 'Finance eligible'];
+  let bx = M + 24;
+  for (const badge of badges) {
+    const bw = width(badge, 8.2) + 17;
+    if (bx + bw > PAGE_W - M - 12) break;
+    page.color(badge.includes('Finance') ? '#f5a623' : '#1e6b3a');
+    page.rect(bx, PAGE_H - 186, bw, 20, true);
+    page.text(bx + 8, PAGE_H - 181, badge, 8.2, 'F2', badge.includes('Finance') ? '#172033' : '#ffffff');
+    bx += bw + 7;
+  }
+  page.y = PAGE_H - 248;
+}
+
+function h1(text) {
+  ensure(34);
+  page.text(M, page.y, text, 19, 'F2', '#143a63');
+  page.y -= 28;
+}
+
+function h2(text) {
+  ensure(30);
+  page.text(M, page.y, text, 13, 'F2', '#143a63');
+  page.y -= 7;
+  page.line(M, page.y, PAGE_W - M, page.y, '#d7e2ef');
+  page.y -= 13;
+}
+
+function para(text) {
+  const lines = wrap(text, PAGE_W - 2 * M, 9.5);
+  ensure(lines.length * LINE + 5);
+  for (const line of lines) {
+    page.text(M, page.y, line, 9.5);
+    page.y -= LINE;
+  }
+  page.y -= 4;
+}
+
+function bullet(text) {
+  const lines = wrap(text, PAGE_W - 2 * M - 18, 9.5);
+  ensure(lines.length * LINE + 2);
+  page.text(M + 4, page.y, '-', 9.5, 'F2', '#1e6b3a');
+  page.text(M + 18, page.y, lines[0], 9.5);
+  page.y -= LINE;
+  for (const line of lines.slice(1)) {
+    page.text(M + 18, page.y, line, 9.5);
+    page.y -= LINE;
+  }
+}
+
+function note(text, accent = '#1e6b3a') {
+  const lines = wrap(text, PAGE_W - 2 * M - 24, 9.5);
+  const h = lines.length * LINE + 14;
+  ensure(h + 8);
+  page.color(accent === '#f5a623' ? '#fff8ea' : '#f3faf5');
+  page.rect(M, page.y - h + 8, PAGE_W - 2 * M, h, true);
+  page.color(accent);
+  page.rect(M, page.y - h + 8, 4, h, true);
+  let y = page.y;
+  for (const line of lines) {
+    page.text(M + 14, y, line, 9.5);
+    y -= LINE;
+  }
+  page.y -= h + 8;
+}
+
+function parseMarkdown(md) {
+  cover();
+  const lines = md.split(/\r?\n/);
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    if (!line.trim()) {
+      page.y -= 3;
+      continue;
+    }
+    if (line.startsWith('# ')) {
+      h1(line.slice(2));
+      continue;
+    }
+    if (line.startsWith('## ')) {
+      h2(line.slice(3));
+      continue;
+    }
+    if (line.startsWith('- ')) {
+      bullet(line.slice(2));
+      continue;
+    }
+    if (line.endsWith(':') && line.length < 80) {
+      ensure(20);
+      page.text(M, page.y, line, 10.5, 'F2', '#143a63');
+      page.y -= 15;
+      continue;
+    }
+    if (line.includes('should not promise') || line.includes('does not guarantee') || line.includes('does not mean')) {
+      note(line, line.includes('does not') ? '#f5a623' : '#1e6b3a');
+      continue;
+    }
+    para(line);
+  }
+}
+
+parseMarkdown(readFileSync(sourcePath, 'utf8'));
+
+function pdfString() {
+  const objects = [];
+  const add = (body) => {
+    objects.push(body);
+    return objects.length;
+  };
+  const fontRegular = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
+  const fontBold = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>');
+  const pageRefs = [];
+  const contentRefs = [];
+  for (const p of pages) {
+    const stream = p.ops.join('\n');
+    contentRefs.push(add(`<< /Length ${Buffer.byteLength(stream, 'utf8')} >>\nstream\n${stream}\nendstream`));
+  }
+  const pagesRefPlaceholder = '__PAGES_REF__';
+  for (let i = 0; i < pages.length; i += 1) {
+    pageRefs.push(add(`<< /Type /Page /Parent ${pagesRefPlaceholder} 0 R /MediaBox [0 0 ${PAGE_W} ${PAGE_H}] /Resources << /Font << /F1 ${fontRegular} 0 R /F2 ${fontBold} 0 R >> >> /Contents ${contentRefs[i]} 0 R >>`));
+  }
+  const pagesRef = add(`<< /Type /Pages /Kids [${pageRefs.map((ref) => `${ref} 0 R`).join(' ')}] /Count ${pageRefs.length} >>`);
+  const catalogRef = add(`<< /Type /Catalog /Pages ${pagesRef} 0 R >>`);
+  const finalObjects = objects.map((body) => body.replaceAll(`${pagesRefPlaceholder} 0 R`, `${pagesRef} 0 R`));
+  let pdf = '%PDF-1.4\n%\xE2\xE3\xCF\xD3\n';
+  const offsets = [0];
+  finalObjects.forEach((body, i) => {
+    offsets.push(Buffer.byteLength(pdf, 'binary'));
+    pdf += `${i + 1} 0 obj\n${body}\nendobj\n`;
+  });
+  const xrefOffset = Buffer.byteLength(pdf, 'binary');
+  pdf += `xref\n0 ${finalObjects.length + 1}\n0000000000 65535 f \n`;
+  for (let i = 1; i < offsets.length; i += 1) {
+    pdf += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`;
+  }
+  pdf += `trailer\n<< /Size ${finalObjects.length + 1} /Root ${catalogRef} 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
+  return pdf;
+}
+
+mkdirSync(dirname(outPath), { recursive: true });
+writeFileSync(outPath, pdfString(), 'binary');
+console.log(outPath);

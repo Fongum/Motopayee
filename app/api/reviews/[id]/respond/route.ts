@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAuth } from '@/lib/auth/middleware';
+import { parseBody } from '@/lib/validation';
+
+const respondSchema = z.object({
+  comment: z.string().trim().min(1, 'Réponse vide.').max(2000),
+});
 
 // POST /api/reviews/[id]/respond — seller/owner replies to a review
 export async function POST(
@@ -12,11 +18,8 @@ export async function POST(
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const body = await request.json();
-  const { comment } = body;
-  if (!comment?.trim()) {
-    return NextResponse.json({ error: 'Comment is required.' }, { status: 400 });
-  }
+  const parsed = await parseBody(respondSchema, request, 'Réponse invalide.');
+  if (!parsed.success) return parsed.response;
 
   // Verify the review exists and the user is the reviewed party
   const { data: review } = await supabaseAdmin
@@ -37,7 +40,7 @@ export async function POST(
     .insert({
       review_id: params.id,
       responder_id: auth.user.id,
-      comment: comment.trim(),
+      comment: parsed.data.comment,
     })
     .select()
     .single();

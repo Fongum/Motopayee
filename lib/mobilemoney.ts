@@ -13,11 +13,31 @@
  *   MTN_MOMO_ENVIRONMENT       — "sandbox" | "production"
  */
 
+import { logger } from './logger';
+
 const MTN_BASE  = (process.env.MTN_MOMO_BASE_URL ?? 'https://sandbox.momodeveloper.mtn.com').replace(/\/$/, '');
 const MTN_SUBKEY = process.env.MTN_MOMO_SUBSCRIPTION_KEY ?? '';
 const MTN_USER   = process.env.MTN_MOMO_API_USER ?? '';
 const MTN_KEY    = process.env.MTN_MOMO_API_KEY ?? '';
 const MTN_ENV    = process.env.MTN_MOMO_ENVIRONMENT ?? 'sandbox';
+
+const FETCH_TIMEOUT_MS = 15_000;
+
+/**
+ * fetch() with an abort-based timeout so a hung MoMo endpoint can never block a
+ * serverless invocation indefinitely.
+ */
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Normalise Cameroonian phone to MSISDN (digits only, 237xxxxxxxxx) */
 function toMsisdn(phone: string): string {
@@ -31,24 +51,30 @@ function toMsisdn(phone: string): string {
 async function getMomoToken(): Promise<string | null> {
   if (!MTN_SUBKEY || !MTN_USER || !MTN_KEY) return null;
   const credentials = Buffer.from(`${MTN_USER}:${MTN_KEY}`).toString('base64');
-  try {
-    const res = await fetch(`${MTN_BASE}/collection/token/`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Basic ${credentials}`,
-        'Ocp-Apim-Subscription-Key': MTN_SUBKEY,
-      },
-    });
-    if (!res.ok) {
-      console.error('[MoMo] Token fetch failed:', res.status, await res.text());
-      return null;
+
+  // Token creation is safe to retry (no side effects). Retry transient
+  // network / 5xx failures with a short backoff.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetchWithTimeout(`${MTN_BASE}/collection/token/`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${credentials}`,
+          'Ocp-Apim-Subscription-Key': MTN_SUBKEY,
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return (data as { access_token: string }).access_token ?? null;
+      }
+      logger.error('MoMo token fetch failed', { status: res.status, body: await res.text(), attempt });
+      if (res.status < 500) return null; // 4xx won't fix itself
+    } catch (err) {
+      logger.error('MoMo token error', { err, attempt });
     }
-    const data = await res.json();
-    return (data as { access_token: string }).access_token ?? null;
-  } catch (err) {
-    console.error('[MoMo] Token error:', err);
-    return null;
+    if (attempt === 0) await sleep(500);
   }
+  return null;
 }
 
 export interface MomoRequestResult {
@@ -72,34 +98,50 @@ export async function requestMomoPayment(
   }
 
   const msisdn = toMsisdn(phone);
+  const init: RequestInit = {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      // X-Reference-Id is MTN's idempotency key: re-POSTing the same id never
+      // creates a second charge — MTN returns 409 Conflict instead. This makes
+      // retrying (below) safe and protects against duplicate prompts.
+      'X-Reference-Id': referenceId,
+      'X-Target-Environment': MTN_ENV,
+      'Ocp-Apim-Subscription-Key': MTN_SUBKEY,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      amount: String(amount),
+      currency: 'XAF',
+      externalId: referenceId,
+      payer: { partyIdType: 'MSISDN', partyId: msisdn },
+      payerMessage: description.slice(0, 160),
+      payeeNote: 'MotoPayee',
+    }),
+  };
 
-  try {
-    const res = await fetch(`${MTN_BASE}/collection/v1_0/requesttopay`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'X-Reference-Id': referenceId,
-        'X-Target-Environment': MTN_ENV,
-        'Ocp-Apim-Subscription-Key': MTN_SUBKEY,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        amount: String(amount),
-        currency: 'XAF',
-        externalId: referenceId,
-        payer: { partyIdType: 'MSISDN', partyId: msisdn },
-        payerMessage: description.slice(0, 160),
-        payeeNote: 'MotoPayee',
-      }),
-    });
+  let lastError = 'Unknown error';
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetchWithTimeout(`${MTN_BASE}/collection/v1_0/requesttopay`, init);
 
-    if (res.status === 202) return { ok: true };
-    const text = await res.text();
-    console.error('[MoMo] RequestToPay failed:', res.status, text);
-    return { ok: false, error: `MTN error ${res.status}: ${text}` };
-  } catch (err) {
-    return { ok: false, error: `Network error: ${err}` };
+      // 202 Accepted = push sent. 409 Conflict = this referenceId was already
+      // accepted by a prior call — treat as success (idempotent), do NOT retry
+      // or fail, otherwise we'd mark a live request as failed.
+      if (res.status === 202 || res.status === 409) return { ok: true };
+
+      const text = await res.text();
+      lastError = `MTN error ${res.status}: ${text}`;
+      logger.error('MoMo RequestToPay failed', { status: res.status, body: text, referenceId, attempt });
+      if (res.status < 500) return { ok: false, error: lastError }; // 4xx won't fix itself
+    } catch (err) {
+      // Timeout / network error. Safe to retry with the same referenceId.
+      lastError = `Network error: ${err}`;
+      logger.error('MoMo RequestToPay error', { err, referenceId, attempt });
+    }
+    if (attempt === 0) await sleep(500);
   }
+  return { ok: false, error: lastError };
 }
 
 export type MomoStatus = 'PENDING' | 'SUCCESSFUL' | 'FAILED' | 'CANCELLED';
@@ -115,22 +157,29 @@ export async function checkMomoPayment(referenceId: string): Promise<MomoStatusR
   const token = await getMomoToken();
   if (!token) return { status: null, error: 'MTN MoMo credentials not configured.' };
 
-  try {
-    const res = await fetch(`${MTN_BASE}/collection/v1_0/requesttopay/${referenceId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'X-Target-Environment': MTN_ENV,
-        'Ocp-Apim-Subscription-Key': MTN_SUBKEY,
-      },
-    });
-    if (!res.ok) {
-      return { status: null, error: `MTN error ${res.status}` };
+  // Status polling is a read — safe to retry transient failures.
+  let lastError = 'Unknown error';
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetchWithTimeout(`${MTN_BASE}/collection/v1_0/requesttopay/${referenceId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'X-Target-Environment': MTN_ENV,
+          'Ocp-Apim-Subscription-Key': MTN_SUBKEY,
+        },
+      });
+      if (res.ok) {
+        const data = await res.json() as { status: MomoStatus; financialTransactionId?: string };
+        return { status: data.status, financialTransactionId: data.financialTransactionId };
+      }
+      lastError = `MTN error ${res.status}`;
+      if (res.status < 500) return { status: null, error: lastError };
+    } catch (err) {
+      lastError = `Network error: ${err}`;
     }
-    const data = await res.json() as { status: MomoStatus; financialTransactionId?: string };
-    return { status: data.status, financialTransactionId: data.financialTransactionId };
-  } catch (err) {
-    return { status: null, error: `Network error: ${err}` };
+    if (attempt === 0) await sleep(500);
   }
+  return { status: null, error: lastError };
 }
 
 export interface OrangePaymentResult {

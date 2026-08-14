@@ -1,41 +1,58 @@
-<<<<<<< HEAD
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MotoPayee
+
+Vehicle marketplace and financing platform for MotoPayee. Built with Next.js, Supabase, and Vercel.
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies and run the development server:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command          | Description                          |
+| ---------------- | ------------------------------------ |
+| `npm run dev`    | Start the local development server   |
+| `npm run build`  | Production build                     |
+| `npm run start`  | Serve the production build           |
+| `npm run lint`   | Run ESLint                           |
+| `npm test`       | Run the Vitest unit suite once       |
+| `npm run test:watch` | Run Vitest in watch mode         |
 
-## Learn More
+## Environment
 
-To learn more about Next.js, take a look at the following resources:
+Copy your credentials into `.env.local`:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+NEXT_PUBLIC_APP_URL=
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Optional — distributed rate limiting (Upstash Redis).
+# When unset, rate limiting falls back to a per-instance in-memory store,
+# which is best-effort only. Set these in production for correct throttling
+# across serverless instances.
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+```
 
-## Deploy on Vercel
+## Rate limiting
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+All state-changing API requests are throttled per IP by `middleware.ts` (a global
+safety net), and sensitive routes such as `auth/login` and `auth/register` apply
+stricter per-IP limits on top. Throttling uses Upstash Redis when configured and
+falls back to an in-memory limiter otherwise. See `lib/rate-limit.ts`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-=======
-# Motopayee
-Vehicle marketplace and financing platform for MotoPayee. Built with Next.js, Supabase and Vercel.
->>>>>>> 87bb4d7340b538167d933e05411bc6a7c9d10015
+## Tech Stack
+
+- **Framework:** Next.js 14 (App Router)
+- **Database / Auth:** Supabase (Postgres + Auth + Storage)
+- **Validation:** Zod
+- **Testing:** Vitest
+- **Hosting:** Vercel

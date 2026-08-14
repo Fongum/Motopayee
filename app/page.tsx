@@ -5,6 +5,7 @@ import Footer from './(components)/Footer';
 import ListingCarousel from './(components)/ListingCarousel';
 import HireCarousel from './(components)/HireCarousel';
 import HeroSearch from './(components)/HeroSearch';
+import RecommendationCarousel from './(components)/RecommendationCarousel';
 import { supabaseAdmin } from '@/lib/auth/server';
 import type { HireListing } from '@/lib/types';
 
@@ -69,21 +70,6 @@ const MAKE_INITIALS: Record<string, string> = {
   Mitsubishi: 'Mi', Kia: 'K', Volkswagen: 'VW', Ford: 'F',
 };
 
-const MAKE_COLORS: Record<string, string> = {
-  Toyota: 'bg-red-50 text-red-700 border-red-100',
-  Honda: 'bg-gray-50 text-gray-700 border-gray-100',
-  Nissan: 'bg-red-50 text-red-800 border-red-100',
-  Hyundai: 'bg-blue-50 text-blue-700 border-blue-100',
-  Mercedes: 'bg-gray-50 text-gray-800 border-gray-200',
-  BMW: 'bg-blue-50 text-blue-800 border-blue-100',
-  Peugeot: 'bg-indigo-50 text-indigo-700 border-indigo-100',
-  Renault: 'bg-yellow-50 text-yellow-700 border-yellow-100',
-  Mitsubishi: 'bg-red-50 text-red-700 border-red-100',
-  Kia: 'bg-gray-50 text-gray-700 border-gray-100',
-  Volkswagen: 'bg-blue-50 text-blue-700 border-blue-100',
-  Ford: 'bg-blue-50 text-blue-800 border-blue-100',
-};
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
@@ -106,25 +92,34 @@ export default async function HomePage() {
         <section className="relative bg-[#0d1f3c] overflow-hidden">
           {/* Background image with overlay */}
           <div className="absolute inset-0 z-0">
-            <Image src="/car-hero.png" alt="" fill className="object-cover object-right opacity-30" priority />
+            <Image src="/car-hero.webp" alt="" fill className="object-cover object-right opacity-[0.28]" priority />
           </div>
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0d1f3c]/90 via-[#0d1f3c]/70 to-[#0d1f3c] z-[1]" />
+          {/* Vertical wash + a centered radial knock-down so the logo printed on the
+              car door doesn't read as a stray watermark behind the headline. */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0d1f3c]/92 via-[#0d1f3c]/82 to-[#0d1f3c] z-[1]" />
+          <div className="absolute inset-0 z-[1] [background:radial-gradient(65%_58%_at_50%_38%,rgba(13,31,60,0.72),transparent)]" />
 
-          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20">
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-20">
+            <div className="flex justify-center mb-6">
+              <div className="rounded-2xl bg-white/92 px-5 py-3 shadow-2xl shadow-black/20 ring-1 ring-white/40">
+                <Image src="/logo.png" alt="MotoPayee" width={210} height={84} className="h-16 w-auto" priority />
+              </div>
+            </div>
+
             {/* Badge */}
             <div className="flex justify-center mb-8">
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 rounded-full px-5 py-2">
                 <span className="w-2 h-2 rounded-full bg-[#3d9e3d] animate-pulse" />
-                <span className="text-white/80 text-xs font-semibold tracking-wide">Plateforme automobile #1 au Cameroun</span>
+                <span className="text-white/80 text-xs font-semibold tracking-wide">Marketplace automobile de confiance au Cameroun</span>
               </div>
             </div>
 
             {/* Headline */}
-            <div className="text-center max-w-3xl mx-auto mb-10">
+            <div className="text-center max-w-4xl mx-auto mb-10">
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.1] mb-5">
-                Achetez, louez ou{' '}
+                Achetez, louez, financez ou{' '}
                 <span className="relative">
-                  <span className="text-[#3d9e3d]">financez</span>
+                  <span className="text-[#3d9e3d]">importez</span>
                   <svg className="absolute -bottom-1 left-0 w-full" viewBox="0 0 200 8" fill="none">
                     <path d="M2 6C40 2 160 2 198 6" stroke="#3d9e3d" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
                   </svg>
@@ -132,7 +127,7 @@ export default async function HomePage() {
                 votre véhicule
               </h1>
               <p className="text-blue-200/80 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-                Véhicules inspectés, prix transparents, location avec ou sans chauffeur, import des USA et financement rapide — tout en un seul endroit.
+                Véhicules inspectés, prix transparents, location avec ou sans chauffeur, import assisté et financement rapide avec des partenaires locaux.
               </p>
             </div>
 
@@ -159,7 +154,7 @@ export default async function HomePage() {
         {/* ─── SERVICES ───────────────────────────────────────────────── */}
         <section className="relative -mt-6 z-20 px-4">
           <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
               {[
                 {
                   href: '/listings',
@@ -198,6 +193,18 @@ export default async function HomePage() {
                   iconBg: 'bg-blue-50 text-[#1a3a6b]',
                 },
                 {
+                  href: '/apply',
+                  title: 'Financer',
+                  desc: 'Simulez vos mensualités et envoyez une demande aux IMF partenaires',
+                  icon: (
+                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-2.2 0-4 1.12-4 2.5S9.8 13 12 13s4 1.12 4 2.5S14.2 18 12 18m0-10V6m0 12v-2m8-4a8 8 0 11-16 0 8 8 0 0116 0z" />
+                    </svg>
+                  ),
+                  color: 'from-[#3d9e3d] to-[#1a3a6b]',
+                  iconBg: 'bg-[#f0faf0] text-[#1a3a6b]',
+                },
+                {
                   href: '/imports',
                   title: 'Importer',
                   desc: 'Import assisté depuis les USA — devis, suivi logistique et dédouanement',
@@ -206,8 +213,8 @@ export default async function HomePage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   ),
-                  color: 'from-purple-600 to-violet-600',
-                  iconBg: 'bg-purple-50 text-purple-600',
+                  color: 'from-[#f5a623] to-[#1a3a6b]',
+                  iconBg: 'bg-amber-50 text-[#1a3a6b]',
                 },
               ].map((svc) => (
                 <Link
@@ -222,7 +229,7 @@ export default async function HomePage() {
                     {svc.icon}
                   </div>
                   <h3 className="font-bold text-[#1a3a6b] text-base mb-1 group-hover:text-[#3d9e3d] transition-colors">{svc.title}</h3>
-                  <p className="text-xs text-gray-400 leading-relaxed hidden sm:block">{svc.desc}</p>
+                  <p className="text-xs text-gray-500 leading-relaxed hidden sm:block">{svc.desc}</p>
 
                   {/* Arrow */}
                   <div className="absolute bottom-4 right-4 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-[#3d9e3d] transition-colors">
@@ -269,6 +276,9 @@ export default async function HomePage() {
               />
             )}
 
+            {/* AI Recommendations — personalized for logged-in users */}
+            <RecommendationCarousel />
+
             {/* Empty state */}
             {latest.length === 0 && financeable.length === 0 && hireListings.length === 0 && (
               <div className="text-center py-16">
@@ -304,12 +314,12 @@ export default async function HomePage() {
                 <Link
                   key={make}
                   href={`/listings?make=${make}`}
-                  className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border border-gray-200 hover:border-[#3d9e3d] hover:shadow-md transition-all group"
+                  className="flex items-center gap-3 p-3.5 bg-white rounded-xl border border-gray-200 hover:border-[#1a3a6b]/30 hover:shadow-card-hover transition-all group"
                 >
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-extrabold border-2 ${MAKE_COLORS[make]} group-hover:scale-110 transition-transform`}>
+                  <span className="w-11 h-11 rounded-lg flex items-center justify-center text-sm font-bold bg-gradient-to-br from-[#1a3a6b] to-[#0d1f3c] text-white group-hover:from-[#3d9e3d] group-hover:to-[#2d8a2d] transition-colors flex-shrink-0">
                     {MAKE_INITIALS[make]}
-                  </div>
-                  <span className="text-xs font-semibold text-gray-700 group-hover:text-[#1a3a6b]">{make}</span>
+                  </span>
+                  <span className="text-sm font-semibold text-gray-800 group-hover:text-[#1a3a6b] truncate">{make}</span>
                 </Link>
               ))}
             </div>
@@ -322,7 +332,7 @@ export default async function HomePage() {
             <div className="text-center mb-14">
               <span className="text-[#3d9e3d] text-xs font-bold uppercase tracking-widest">Comment ça marche</span>
               <h2 className="text-3xl md:text-4xl font-extrabold text-[#1a3a6b] mt-3 mb-4">Simple, rapide, transparent</h2>
-              <p className="text-gray-400 max-w-lg mx-auto text-sm">Que vous achetiez, louiez, vendiez ou importiez — le processus est guidé du début à la fin</p>
+              <p className="text-gray-500 max-w-lg mx-auto text-sm">Que vous achetiez, louiez, vendiez ou importiez — le processus est guidé du début à la fin</p>
             </div>
 
             {/* Two-column grid for Buy + Hire flows */}
@@ -460,13 +470,31 @@ export default async function HomePage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { icon: '🚗', value: 'Self-drive', label: 'Conduisez vous-même' },
-                  { icon: '👨‍✈️', value: 'Avec chauffeur', label: 'Chauffeur professionnel' },
-                  { icon: '📅', value: 'Jour / Semaine / Mois', label: 'Durée flexible' },
-                  { icon: '🛡️', value: 'Assurance', label: 'Option disponible' },
+                  {
+                    value: 'Self-drive',
+                    label: 'Conduisez vous-même',
+                    icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 13l2-5a2 2 0 011.9-1.4h10.2A2 2 0 0119 8l2 5m-18 0v5a1 1 0 001 1h1a1 1 0 001-1v-1h12v1a1 1 0 001 1h1a1 1 0 001-1v-5m-18 0h18M7 16h.01M17 16h.01" />,
+                  },
+                  {
+                    value: 'Avec chauffeur',
+                    label: 'Chauffeur professionnel',
+                    icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
+                  },
+                  {
+                    value: 'Jour / Semaine / Mois',
+                    label: 'Durée flexible',
+                    icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />,
+                  },
+                  {
+                    value: 'Assurance',
+                    label: 'Option disponible',
+                    icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3l7 3v5c0 4.5-3 8.6-7 10-4-1.4-7-5.5-7-10V6l7-3z" />,
+                  },
                 ].map((f) => (
                   <div key={f.value} className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
-                    <span className="text-2xl mb-2 block">{f.icon}</span>
+                    <span className="w-10 h-10 mx-auto mb-3 rounded-xl bg-[#f5a623]/15 text-[#f5a623] flex items-center justify-center">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">{f.icon}</svg>
+                    </span>
                     <p className="text-white text-sm font-bold">{f.value}</p>
                     <p className="text-blue-300/60 text-[11px] mt-0.5">{f.label}</p>
                   </div>
@@ -482,7 +510,7 @@ export default async function HomePage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
               <div className="relative">
                 <div className="relative rounded-3xl overflow-hidden shadow-2xl aspect-[4/3]">
-                  <Image src="/team.png" alt="Équipe MotoPayee" fill className="object-cover" />
+                  <Image src="/team.webp" alt="Équipe MotoPayee" fill className="object-cover" />
                 </div>
                 <div className="absolute -bottom-5 -right-5 bg-white rounded-2xl shadow-xl p-5 border border-gray-100">
                   <div className="flex items-center gap-3">
@@ -513,7 +541,7 @@ export default async function HomePage() {
                       <div className={`w-10 h-10 ${f.bg} ${f.color} rounded-xl flex items-center justify-center flex-shrink-0`}>{f.icon}</div>
                       <div>
                         <p className="font-bold text-[#1a3a6b] text-sm">{f.title}</p>
-                        <p className="text-sm text-gray-400 mt-0.5">{f.desc}</p>
+                        <p className="text-sm text-gray-500 mt-0.5">{f.desc}</p>
                       </div>
                     </div>
                   ))}
@@ -532,9 +560,9 @@ export default async function HomePage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
-                { name: 'Aminata K.', city: 'Yaoundé — Zone A', photo: '/woman.png', text: "J'ai trouvé ma Toyota Corolla en moins d'une semaine et obtenu mon financement en 3 jours. Le processus est vraiment transparent.", service: 'Achat + Financement' },
-                { name: 'Eric M.', city: 'Douala — Zone A', photo: '/man.png', text: "En tant que vendeur, MotoPayee m'a permis de vendre ma voiture au juste prix grâce à leur estimation de marché.", service: 'Vente' },
-                { name: 'Marie T.', city: 'Bafoussam — Zone B', photo: '/woman.png', text: "J'ai loué un SUV pour un voyage d'affaires. Réservation rapide, véhicule impeccable, chauffeur professionnel.", service: 'Location' },
+                { name: 'Aminata K.', city: 'Yaoundé — Zone A', photo: '/woman.webp', text: "J'ai trouvé ma Toyota Corolla en moins d'une semaine et obtenu mon financement en 3 jours. Le processus est vraiment transparent.", service: 'Achat + Financement' },
+                { name: 'Eric M.', city: 'Douala — Zone A', photo: '/man.webp', text: "En tant que vendeur, MotoPayee m'a permis de vendre ma voiture au juste prix grâce à leur estimation de marché.", service: 'Vente' },
+                { name: 'Marie T.', city: 'Bafoussam — Zone B', photo: '/woman.webp', text: "J'ai loué un SUV pour un voyage d'affaires. Réservation rapide, véhicule impeccable, chauffeur professionnel.", service: 'Location' },
               ].map((t) => (
                 <div key={t.name} className="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:shadow-md transition-shadow">
                   <div className="flex gap-1 mb-4">
@@ -573,6 +601,9 @@ export default async function HomePage() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/listings" className="inline-flex items-center justify-center gap-2 bg-[#3d9e3d] text-white font-bold px-7 py-3.5 rounded-xl hover:bg-[#2d8a2d] transition shadow-lg text-sm">
                 Acheter un véhicule
+              </Link>
+              <Link href="/apply" className="inline-flex items-center justify-center gap-2 bg-white text-[#1a3a6b] font-bold px-7 py-3.5 rounded-xl hover:bg-blue-50 transition shadow-lg text-sm">
+                Demander un financement
               </Link>
               <Link href="/hire" className="inline-flex items-center justify-center gap-2 bg-[#f5a623] text-[#1a3a6b] font-bold px-7 py-3.5 rounded-xl hover:bg-[#e6951c] transition shadow-lg text-sm">
                 Louer un véhicule
