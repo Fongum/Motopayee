@@ -26,6 +26,21 @@ interface Lead {
   last_message_at: string;
 }
 
+interface PerformanceRow {
+  listing_id: string;
+  views: number;
+  contacts: number;
+  favourites: number;
+}
+
+interface Performance {
+  days: number;
+  totals: { views: number; contacts: number; favourites: number; contactRate: number };
+  byListing: Record<string, PerformanceRow>;
+  ignoredIds: string[];
+  invisibleIds: string[];
+}
+
 function formatXAF(amount: number): string {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
 }
@@ -50,18 +65,47 @@ const STATUS_COLORS: Record<string, string> = {
   withdrawn: 'bg-red-100 text-red-600',
 };
 
+function vehicleLabel(listing: ListingRow | undefined): string {
+  if (!listing?.vehicle) return 'Véhicule';
+  return `${listing.vehicle.year} ${listing.vehicle.make} ${listing.vehicle.model}`;
+}
+
 export default function DealerDashboardClient({
   stats,
   listings,
   leads,
+  performance,
 }: {
   stats: Stats;
   listings: ListingRow[];
   leads: Lead[];
+  performance: Performance;
 }) {
   const [filter, setFilter] = useState<string>('all');
 
   const filtered = filter === 'all' ? listings : listings.filter((l) => l.status === filter);
+  const byId = new Map(listings.map((l) => [l.id, l]));
+  const { totals, days } = performance;
+  const contactRate = `${Math.round(totals.contactRate * 100)}%`;
+
+  const attention = [
+    {
+      key: 'ignored',
+      title: 'Vues mais aucun contact',
+      hint: 'Ces véhicules sont vus sans déclencher de contact. Vérifiez le prix et les photos.',
+      ids: performance.ignoredIds,
+      tone: 'border-amber-200 bg-amber-50',
+      detail: (row: PerformanceRow) => `${row.views} vues, 0 contact`,
+    },
+    {
+      key: 'invisible',
+      title: 'Peu vues',
+      hint: 'Ces véhicules ne sont presque pas vus. Le problème est la visibilité, pas le prix.',
+      ids: performance.invisibleIds,
+      tone: 'border-gray-200 bg-gray-50',
+      detail: (row: PerformanceRow) => `${row.views} vues sur ${days} jours`,
+    },
+  ].filter((group) => group.ids.length > 0);
 
   return (
     <div className="space-y-6">
@@ -113,13 +157,18 @@ export default function DealerDashboardClient({
         ) : (
           <div className="divide-y divide-gray-50">
             {filtered.map((l) => (
-              <Link key={l.id} href={`/me/listings`} className="flex items-center justify-between p-4 hover:bg-gray-50 transition">
+              <Link key={l.id} href={`/me/listings/${l.id}/analytics`} className="flex items-center justify-between p-4 hover:bg-gray-50 transition">
                 <div>
                   <p className="text-sm font-semibold text-gray-800">
                     {l.vehicle ? `${l.vehicle.year} ${l.vehicle.make} ${l.vehicle.model}` : 'Véhicule'}
                   </p>
                   <p className="text-[10px] text-gray-400">
                     {new Date(l.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    {performance.byListing[l.id] && (
+                      <>
+                        {` · ${performance.byListing[l.id].views} vues · ${performance.byListing[l.id].contacts} contacts`}
+                      </>
+                    )}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -133,6 +182,62 @@ export default function DealerDashboardClient({
           </div>
         )}
       </div>
+
+      {/* 30-day demand */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-5">
+        <div className="flex items-baseline justify-between mb-4">
+          <h2 className="font-bold text-gray-900">Demande — {days} derniers jours</h2>
+          <p className="text-[11px] text-gray-400">Annonces publiées uniquement</p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { label: 'Vues', value: totals.views.toLocaleString('fr-FR'), color: 'text-[#1a3a6b]' },
+            { label: 'Acheteurs uniques', value: totals.contacts.toLocaleString('fr-FR'), color: 'text-[#25D366]' },
+            { label: 'Taux de contact', value: contactRate, color: 'text-[#3d9e3d]' },
+            { label: 'Favoris', value: totals.favourites.toLocaleString('fr-FR'), color: 'text-red-500' },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+              <p className={`text-xl font-extrabold ${color}`}>{value}</p>
+              <p className="text-[11px] text-gray-500 mt-0.5">{label}</p>
+            </div>
+          ))}
+        </div>
+        {totals.views === 0 && (
+          <p className="text-xs text-gray-400 mt-3">
+            Aucune donnée pour le moment. Les vues et contacts apparaissent dès que vos annonces sont publiées et consultées.
+          </p>
+        )}
+      </div>
+
+      {/* What needs attention */}
+      {attention.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {attention.map((group) => (
+            <div key={group.key} className={`rounded-2xl border p-5 ${group.tone}`}>
+              <h3 className="font-bold text-gray-900 text-sm">{group.title}</h3>
+              <p className="text-[11px] text-gray-600 mt-1 mb-3">{group.hint}</p>
+              <ul className="space-y-2">
+                {group.ids.slice(0, 5).map((id) => (
+                  <li key={id}>
+                    <Link
+                      href={`/me/listings/${id}/analytics`}
+                      className="flex items-center justify-between gap-3 text-sm text-gray-800 hover:text-[#1a3a6b]"
+                    >
+                      <span className="font-medium truncate">{vehicleLabel(byId.get(id))}</span>
+                      <span className="text-[11px] text-gray-500 whitespace-nowrap">
+                        {group.detail(performance.byListing[id])}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              {group.ids.length > 5 && (
+                <p className="text-[11px] text-gray-500 mt-3">+ {group.ids.length - 5} autres</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Recent leads */}
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">

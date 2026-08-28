@@ -2,8 +2,17 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
 import type { Metadata } from 'next';
 import DealerDashboardClient from './DealerDashboardClient';
+import { dayKey } from '@/lib/daily-series';
+import { dedupeContactEvents, type ContactEventRecord } from '@/lib/contact-events';
+import {
+  inventoryAttention,
+  inventoryTotals,
+  summarizeInventoryPerformance,
+} from '@/lib/inventory-performance';
 
 export const metadata: Metadata = { title: 'Tableau de bord concessionnaire — MotoPayee' };
+
+const PERFORMANCE_DAYS = 30;
 
 export default async function DealerPage() {
   const user = await getCurrentUser();
@@ -35,6 +44,38 @@ export default async function DealerPage() {
       .reduce((sum, l) => sum + l.asking_price, 0),
   };
 
+  // 30-day demand per vehicle. Only live inventory is measured: a draft or a
+  // sold vehicle scoring zero would read as a problem when it is not.
+  const measuredIds = allListings.filter((l) => l.status === 'published').map((l) => l.id);
+  const since = dayKey(new Date(Date.now() - PERFORMANCE_DAYS * 86_400_000));
+
+  const [viewsRes, contactsRes, favouritesRes] = measuredIds.length
+    ? await Promise.all([
+        supabaseAdmin.from('listing_views').select('listing_id').in('listing_id', measuredIds).gte('date_day', since),
+        supabaseAdmin
+          .from('contact_events')
+          .select('id, surface, listing_id, hire_listing_id, actor_id, visitor_key, date_day')
+          .in('listing_id', measuredIds)
+          .gte('date_day', since),
+        supabaseAdmin.from('favourites').select('listing_id').in('listing_id', measuredIds),
+      ])
+    : [{ data: [] }, { data: [] }, { data: [] }];
+
+  const contactRows = (contactsRes.data ?? []) as unknown as ContactEventRecord[];
+  const performanceRows = summarizeInventoryPerformance({
+    listingIds: measuredIds,
+    viewListingIds: ((viewsRes.data ?? []) as { listing_id: string }[]).map((r) => r.listing_id),
+    // Deduped so one keen buyer clicking repeatedly is one contact.
+    contactListingIds: dedupeContactEvents(contactRows)
+      .map((r) => r.listing_id)
+      .filter((id): id is string => !!id),
+    favouriteListingIds: ((favouritesRes.data ?? []) as { listing_id: string }[]).map((r) => r.listing_id),
+  });
+
+  const totals = inventoryTotals(performanceRows);
+  const attention = inventoryAttention(performanceRows);
+  const performanceByListing = Object.fromEntries(performanceRows.map((row) => [row.listing_id, row]));
+
   // Recent conversations (leads)
   const { data: convs } = await supabaseAdmin
     .from('conversations')
@@ -61,6 +102,13 @@ export default async function DealerPage() {
       stats={stats}
       listings={allListings}
       leads={leads}
+      performance={{
+        days: PERFORMANCE_DAYS,
+        totals,
+        byListing: performanceByListing,
+        ignoredIds: attention.ignored.map((row) => row.listing_id),
+        invisibleIds: attention.invisible.map((row) => row.listing_id),
+      }}
     />
   );
 }
