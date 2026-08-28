@@ -7,6 +7,7 @@ import type { HireListing } from '@/lib/types';
 import BookingForm from './BookingForm';
 import WhatsAppContactButton from '../../(components)/WhatsAppContactButton';
 import CallContactButton from '../../(components)/CallContactButton';
+import VehicleCallbackForm from '../../(components)/VehicleCallbackForm';
 import WhatsAppShareButton from '../../(components)/WhatsAppShareButton';
 import CompareButton from '../../(components)/CompareButton';
 import SellerTrustBadge from '../../(components)/SellerTrustBadge';
@@ -253,6 +254,13 @@ export default async function HireDetailPage({ params }: Props) {
                     />
                   </div>
                 )}
+                <div className="mt-3">
+                  <VehicleCallbackForm
+                    vehicleLabel={`${listing.year} ${listing.make} ${listing.model}`}
+                    hireListingId={listing.id}
+                    defaultName={user?.name ?? ''}
+                  />
+                </div>
                 <div className="mt-3">
                   <ChatWidget
                     otherUserId={listing.owner_id}

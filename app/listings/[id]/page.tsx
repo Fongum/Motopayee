@@ -23,6 +23,7 @@ import JsonLd from '../../(components)/JsonLd';
 import SocialShareButtons from '../../(components)/SocialShareButtons';
 import { ListingTrustBadges } from '../../(components)/TrustLabelBadges';
 import InspectionRequestForm from '../../(components)/InspectionRequestForm';
+import VehicleCallbackForm from '../../(components)/VehicleCallbackForm';
 
 type PublicListing = Listing & {
   inspections?: Inspection[];
@@ -316,6 +317,11 @@ export default async function ListingDetailPage({
                   compact
                 />
               </div>
+              <VehicleCallbackForm
+                vehicleLabel={vehicleLabel}
+                listingId={listing.id}
+                defaultName={user?.name ?? ''}
+              />
               <ChatWidget
                 otherUserId={listing.seller_id}
                 otherUserName={listing.seller?.full_name ?? 'Vendeur'}

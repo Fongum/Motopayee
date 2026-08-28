@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const CONTACT_SURFACES = ['listing', 'hire', 'support'] as const;
-export const CONTACT_CHANNELS = ['whatsapp', 'call'] as const;
+export const CONTACT_CHANNELS = ['whatsapp', 'call', 'form'] as const;
 
 export type ContactSurface = (typeof CONTACT_SURFACES)[number];
 export type ContactChannel = (typeof CONTACT_CHANNELS)[number];

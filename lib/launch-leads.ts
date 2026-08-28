@@ -25,7 +25,7 @@ export async function findMatchingLaunchLead({
 
   const { data, error } = await supabaseAdmin
     .from('launch_leads')
-    .select('id, status, notes')
+    .select('id, status, notes, listing_id, hire_listing_id')
     .or(filters.join(','))
     .order('updated_at', { ascending: false })
     .limit(1)

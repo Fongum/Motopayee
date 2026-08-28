@@ -15,6 +15,9 @@ const schema = z.object({
   interest: z.string().trim().max(240).optional(),
   campaign_name: z.string().trim().max(120).optional(),
   notes: z.string().trim().max(1000).optional(),
+  /** The vehicle this enquiry is about, when it came from a listing page. */
+  listing_id: z.string().uuid().optional(),
+  hire_listing_id: z.string().uuid().optional(),
 });
 
 export async function POST(request: Request) {
@@ -36,6 +39,8 @@ export async function POST(request: Request) {
     interest: parsed.data.interest || null,
     campaign_name: parsed.data.campaign_name || null,
     notes: parsed.data.notes || null,
+    listing_id: parsed.data.listing_id ?? null,
+    hire_listing_id: parsed.data.hire_listing_id ?? null,
     status: 'new',
   };
 
@@ -54,6 +59,10 @@ export async function POST(request: Request) {
       interest: parsed.data.interest || null,
       campaign_name: parsed.data.campaign_name || null,
       notes: parsed.data.notes || existingLead.notes || null,
+      // A repeat enquirer is usually asking about a different vehicle, so the
+      // newest reference wins; an enquiry with no vehicle keeps the old one.
+      listing_id: parsed.data.listing_id ?? existingLead.listing_id ?? null,
+      hire_listing_id: parsed.data.hire_listing_id ?? existingLead.hire_listing_id ?? null,
       status: ['converted', 'closed'].includes(existingLead.status) ? existingLead.status : 'new',
     };
 
