@@ -1,4 +1,10 @@
 import { supabaseAdmin } from '@/lib/auth/server';
+import {
+  DEFAULT_RESPONSE_SLA_MINUTES,
+  bucketInboundLeads,
+  INBOUND_LEAD_TYPES,
+  type InboundLead,
+} from '@/lib/inbound-response';
 
 const OPEN_LEAD_STATUSES = ['new', 'contacted', 'interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding'];
 const ACTIVE_FOLLOW_UP_STATUSES = ['call_needed', 'contacted', 'waiting_buyer', 'waiting_mfi'];
@@ -26,12 +32,29 @@ export type OpsLeadReminder = {
   assigned?: { full_name: string | null; email: string | null } | null;
 };
 
+export type OpsInboundLead = {
+  id: string;
+  lead_type: string;
+  source: string;
+  status: string;
+  created_at: string;
+  name: string;
+  phone: string | null;
+  city: string | null;
+  listing_id: string | null;
+  hire_listing_id: string | null;
+};
+
 export type OpsSnapshot = {
   generatedAt: Date;
   queueItems: OpsQueueItem[];
   activeQueues: OpsQueueItem[];
   quietQueues: OpsQueueItem[];
   leadReminders: OpsLeadReminder[];
+  /** People waiting on a promised callback, longest wait first. */
+  inboundLate: OpsInboundLead[];
+  inboundWaiting: OpsInboundLead[];
+  oldestInboundWaitMinutes: number;
   totalOpenActions: number;
   criticalActions: number;
   revenueActions: number;
@@ -84,6 +107,7 @@ export async function getDailyOpsSnapshot(options: { leadLimit?: number } = {}):
     { count: expectedHireFees },
     { count: invoicedHireFees },
     { data: leadReminderData },
+    { data: inboundLeadData },
   ] = await Promise.all([
     supabaseAdmin.from('launch_leads').select('*', { count: 'exact', head: true }).in('status', OPEN_LEAD_STATUSES).is('assigned_to', null),
     supabaseAdmin.from('launch_leads').select('*', { count: 'exact', head: true }).in('status', OPEN_LEAD_STATUSES).lte('next_follow_up_at', generatedAt.toISOString()),
@@ -112,9 +136,25 @@ export async function getDailyOpsSnapshot(options: { leadLimit?: number } = {}):
       .lte('next_follow_up_at', endOfDay.toISOString())
       .order('next_follow_up_at', { ascending: true })
       .limit(options.leadLimit ?? 8),
+    // Awaiting-callback requests, bucketed in code so the wait is measured
+    // against the response promise rather than a follow-up date nobody set.
+    supabaseAdmin
+      .from('launch_leads')
+      .select('id, lead_type, source, status, created_at, name, phone, city, listing_id, hire_listing_id')
+      .eq('status', 'new')
+      .eq('source', 'website')
+      .in('lead_type', INBOUND_LEAD_TYPES as unknown as string[])
+      .order('created_at', { ascending: true })
+      .limit(50),
   ]);
 
+  const inbound = bucketInboundLeads((inboundLeadData ?? []) as unknown as (InboundLead & OpsInboundLead)[], {
+    now: generatedAt,
+  });
+
   const queueItems: OpsQueueItem[] = [
+    { title: 'Rappels promis en retard', count: inbound.late.length, href: '/admin/leads?inbound=late', detail: `Demandes de rappel sans reponse depuis plus de ${Math.round(DEFAULT_RESPONSE_SLA_MINUTES / 60)} h.`, priority: 'critical', area: 'leads' },
+    { title: 'Rappels a passer', count: inbound.waiting.length, href: '/admin/leads?inbound=waiting', detail: 'Acheteurs et locataires qui ont demande a etre rappeles.', priority: 'critical', area: 'leads' },
     { title: 'Relances leads en retard', count: dueLeads ?? 0, href: '/admin/leads?status=due', detail: 'Leads a rappeler avant de creer de nouveaux contacts.', priority: 'critical', area: 'leads' },
     { title: 'Leads non assignes', count: unassignedLeads ?? 0, href: '/admin/leads?assigned=unassigned', detail: 'Attribuer un responsable ou traiter directement.', priority: 'high', area: 'leads' },
     { title: 'Relances leads aujourd hui', count: todayLeads ?? 0, href: '/admin/leads?status=today', detail: 'A terminer avant la fin de journee.', priority: 'medium', area: 'leads' },
@@ -151,6 +191,9 @@ export async function getDailyOpsSnapshot(options: { leadLimit?: number } = {}):
     activeQueues,
     quietQueues,
     leadReminders: (leadReminderData ?? []) as unknown as OpsLeadReminder[],
+    inboundLate: inbound.late,
+    inboundWaiting: inbound.waiting,
+    oldestInboundWaitMinutes: inbound.oldestWaitMinutes,
     totalOpenActions,
     criticalActions,
     revenueActions,

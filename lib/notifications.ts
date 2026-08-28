@@ -160,3 +160,28 @@ export async function notifyInspectionScheduled(phone: string | null | undefined
     `Un inspecteur certifié a été assigné à votre véhicule. Il vous contactera pour planifier l'inspection sous 24h.`
   );
 }
+
+/**
+ * Tell the ops team a callback was requested. Goes to OPS_ALERT_PHONE, a
+ * comma-separated list; with none set this is a no-op, which keeps the site
+ * working in environments that have no ops rota.
+ */
+export async function notifyOpsCallbackRequested(input: {
+  name: string;
+  phone: string | null;
+  leadType: string;
+  vehicle: string | null;
+}) {
+  const recipients = (process.env.OPS_ALERT_PHONE ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+  if (recipients.length === 0) return;
+
+  const kind = input.leadType === 'renter' ? 'Location' : 'Achat';
+  const vehicle = input.vehicle ? ` — ${input.vehicle}` : '';
+  const message = `Rappel demande (${kind}): ${input.name}, ${input.phone ?? 'sans numero'}${vehicle}. A rappeler sous 2h. ${SITE_HOST}/admin/leads?inbound=waiting`;
+
+  await Promise.all(recipients.map((recipient) => sendSMS(recipient, message)));
+}

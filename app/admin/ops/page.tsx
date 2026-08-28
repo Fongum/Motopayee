@@ -1,5 +1,6 @@
 import { getCurrentUser } from '@/lib/auth/server';
 import { getDailyOpsSnapshot, OPS_AREA_LABELS, OPS_PRIORITY_LABELS, type OpsArea, type OpsPriority } from '@/lib/ops-snapshot';
+import { formatWait } from '@/lib/inbound-response';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
@@ -27,7 +28,19 @@ export default async function AdminOpsPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  const { activeQueues, quietQueues, leadReminders, totalOpenActions, criticalActions, revenueActions } = await getDailyOpsSnapshot();
+  const {
+    activeQueues,
+    quietQueues,
+    leadReminders,
+    inboundLate,
+    inboundWaiting,
+    totalOpenActions,
+    criticalActions,
+    revenueActions,
+  } = await getDailyOpsSnapshot();
+
+  const callbacks = [...inboundLate, ...inboundWaiting];
+  const now = Date.now();
 
   return (
     <div className="space-y-6">
@@ -98,6 +111,56 @@ export default async function AdminOpsPage() {
           </div>
         )}
       </section>
+
+      {callbacks.length > 0 && (
+        <section className="rounded-2xl border border-red-200 bg-red-50 p-6">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-semibold text-gray-900">Rappels promis</h2>
+              <p className="mt-1 text-sm text-gray-600">
+                Ces personnes ont demande a etre rappelees. {inboundLate.length > 0 && (
+                  <span className="font-semibold text-red-700">{inboundLate.length} en retard.</span>
+                )}
+              </p>
+            </div>
+            <Link href="/admin/leads?inbound=waiting" className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100">
+              Tout voir
+            </Link>
+          </div>
+          <div className="divide-y divide-red-100">
+            {callbacks.slice(0, 8).map((lead) => {
+              const waited = Math.max(0, Math.floor((now - new Date(lead.created_at).getTime()) / 60_000));
+              const isLate = inboundLate.some((l) => l.id === lead.id);
+              return (
+                <Link
+                  key={lead.id}
+                  href={`/admin/leads/${lead.id}`}
+                  className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm hover:bg-red-100/40"
+                >
+                  <div>
+                    <p className="font-semibold text-gray-900">{lead.name}</p>
+                    <p className="text-xs text-gray-600">
+                      {lead.phone ?? 'Sans numero'}
+                      {lead.city ? ` · ${lead.city}` : ''}
+                      {lead.lead_type === 'renter' ? ' · Location' : ' · Achat'}
+                    </p>
+                  </div>
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                      isLate ? 'bg-red-600 text-white' : 'bg-white text-red-700 border border-red-200'
+                    }`}
+                  >
+                    {formatWait(waited)}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+          {callbacks.length > 8 && (
+            <p className="mt-3 text-xs text-gray-600">+ {callbacks.length - 8} autres demandes en attente.</p>
+          )}
+        </section>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-2xl border border-gray-200 bg-white p-6">

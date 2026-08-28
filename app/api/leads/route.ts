@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { findMatchingLaunchLead, leadEmailKey, leadPhoneKey } from '@/lib/launch-leads';
 import { recordLeadActivity } from '@/lib/launch-lead-activities';
+import { isInboundLead } from '@/lib/inbound-response';
+import { notifyOpsCallbackRequested } from '@/lib/notifications';
+import { logFailure } from '@/lib/logger';
 import { z } from 'zod';
 
 const schema = z.object({
@@ -105,6 +108,18 @@ export async function POST(request: Request) {
     summary: `Lead created from ${parsed.data.source}`,
     meta: { lead_type: parsed.data.lead_type, source: parsed.data.source },
   });
+
+  // The callback form promises a call back, so the ops team is told now rather
+  // than whenever someone next opens the dashboard. A failed SMS must not fail
+  // the request — the lead is already saved and visible in /admin/ops.
+  if (isInboundLead({ lead_type: parsed.data.lead_type, source: parsed.data.source, status: 'new' })) {
+    await notifyOpsCallbackRequested({
+      name: parsed.data.name,
+      phone: parsed.data.phone ?? null,
+      leadType: parsed.data.lead_type,
+      vehicle: parsed.data.interest ?? null,
+    }).catch((err) => logFailure('lead.ops_alert_failed', { leadId: data.id, err }));
+  }
 
   return NextResponse.json({ lead: data }, { status: 201 });
 }

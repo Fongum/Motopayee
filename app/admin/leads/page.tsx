@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { buildContactUrl } from '@/lib/whatsapp';
 import { QUICK_LEAD_ACTIVITY_TEMPLATES, buildLeadOutreachMessage } from '@/lib/launch-lead-playbooks';
+import { DEFAULT_RESPONSE_SLA_MINUTES, INBOUND_LEAD_TYPES } from '@/lib/inbound-response';
 
 const TYPE_LABELS: Record<string, string> = {
   seller: 'Vendeur',
@@ -299,7 +300,7 @@ function leadSla(lead: Pick<LeadRow, 'status' | 'created_at' | 'next_follow_up_a
 export default async function AdminLeadsPage({
   searchParams,
 }: {
-  searchParams: { status?: string; type?: string; source?: string; assigned?: string; priority?: string; campaign?: string };
+  searchParams: { status?: string; type?: string; source?: string; assigned?: string; priority?: string; campaign?: string; inbound?: string };
 }) {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
@@ -365,6 +366,21 @@ export default async function AdminLeadsPage({
   }
   if (searchParams.priority && ['low', 'normal', 'high'].includes(searchParams.priority)) {
     query = query.eq('priority', searchParams.priority);
+  }
+  // Callback requests from the public site. "late" narrows to the ones past
+  // the response promise; the SLA cut is applied in SQL so paging stays honest.
+  if (searchParams.inbound === 'waiting' || searchParams.inbound === 'late') {
+    query = query
+      .eq('status', 'new')
+      .eq('source', 'website')
+      .in('lead_type', INBOUND_LEAD_TYPES as unknown as string[]);
+
+    if (searchParams.inbound === 'late') {
+      query = query.lte(
+        'created_at',
+        new Date(Date.now() - DEFAULT_RESPONSE_SLA_MINUTES * 60_000).toISOString()
+      );
+    }
   }
 
   const [{ data }, { data: staffData }] = await Promise.all([

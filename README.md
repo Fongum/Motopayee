@@ -40,6 +40,12 @@ NEXT_PUBLIC_APP_URL=
 # across serverless instances.
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
+
+# Optional — comma-separated numbers alerted by SMS when a buyer or renter
+# requests a callback from a vehicle page. When unset, no alert is sent and
+# the requests are only visible in /admin/ops and /admin/leads?inbound=waiting.
+# Requires the Africa's Talking SMS credentials to be set as well.
+OPS_ALERT_PHONE=
 ```
 
 ## Rate limiting
