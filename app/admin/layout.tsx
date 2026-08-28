@@ -5,9 +5,12 @@ import Link from 'next/link';
 
 const NAV = [
   { href: '/admin/dashboard', label: 'Vue d\'ensemble' },
+  { href: '/admin/ops', label: 'Daily ops' },
+  { href: '/admin/launch', label: 'Lancement' },
   { href: '/admin/listings', label: 'Annonces' },
   { href: '/admin/leads', label: 'Leads' },
   { href: '/admin/leads/action-board', label: 'Action leads' },
+  { href: '/admin/leads/inventory', label: 'File inventory' },
   { href: '/admin/leads/campaign-links', label: 'Liens campagnes' },
   { href: '/admin/leads/action-board?scope=mine', label: 'Mes actions' },
   { href: '/admin/inspection-requests', label: 'Inspections' },
@@ -15,6 +18,9 @@ const NAV = [
   { href: '/admin/imports/requests', label: 'Imports' },
   { href: '/admin/applications', label: 'Demandes' },
   { href: '/admin/finance', label: 'Finance' },
+  { href: '/admin/finance/eligible', label: 'Finance eligible' },
+  { href: '/admin/finance/matches', label: 'Matching finance' },
+  { href: '/admin/finance/partners', label: 'Partenaires finance' },
   { href: '/admin/hire', label: 'Location' },
   { href: '/admin/hire/bookings', label: 'Reservations' },
   { href: '/admin/rules', label: 'Règles de zone' },
@@ -29,7 +35,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-40 print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/" className="text-lg font-bold"><span className="text-[#3d9e3d]">Moto</span><span className="text-[#1a3a6b]">Payee</span></Link>
@@ -48,7 +54,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex gap-8">
         {/* Sidebar */}
-        <aside className="w-52 flex-shrink-0 hidden md:block">
+        <aside className="w-52 flex-shrink-0 hidden md:block print:hidden">
           <nav className="space-y-1">
             {NAV.map((link) => (
               <Link
