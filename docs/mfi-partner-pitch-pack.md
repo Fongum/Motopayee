@@ -4,7 +4,9 @@ Reference date: August 2026
 
 ## Positioning
 
-MotoPayee is a professional trusted vehicle marketplace starting in Buea and Douala.
+MotoPayee is a professional trusted vehicle marketplace for Cameroon.
+
+Operational finance-partner rollout starts in Buea and Douala, then expands city by city as partner coverage becomes reliable.
 
 MotoPayee does not lend money. MotoPayee prepares and routes organized vehicle finance applications attached to reviewed and finance-eligible vehicles.
 
@@ -188,7 +190,7 @@ To route better applications, MotoPayee needs:
 
 Opening:
 
-MotoPayee is building a trusted vehicle marketplace starting in Buea and Douala. We help buyers find reviewed and finance-eligible vehicles, then submit structured applications to selected finance partners.
+MotoPayee is building a trusted vehicle marketplace for Cameroon. We help buyers find reviewed and finance-eligible vehicles, then submit structured applications to selected finance partners.
 
 Important clarification:
 
