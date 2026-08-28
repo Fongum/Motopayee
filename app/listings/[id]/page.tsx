@@ -301,6 +301,8 @@ export default async function ListingDetailPage({
                   phone={listing.seller.phone}
                   message={`Bonjour, je suis intéressé par votre ${v ? `${v.year} ${v.make} ${v.model}` : 'véhicule'} sur MotoPayee.`}
                   label="Contacter via WhatsApp"
+                  surface="listing"
+                  listingId={listing.id}
                   className="block w-full text-center bg-[#25D366] text-white font-semibold py-3 rounded-xl hover:bg-[#1da851] transition flex items-center justify-center gap-2"
                 />
               )}

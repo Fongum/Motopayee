@@ -1,6 +1,7 @@
 'use client';
 
 import { buildSupportUrl } from '@/lib/whatsapp';
+import { trackContact } from '@/lib/track-contact';
 
 export default function WhatsAppFloatingSupport() {
   const url = buildSupportUrl();
@@ -10,6 +11,7 @@ export default function WhatsAppFloatingSupport() {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={() => trackContact({ surface: 'support', channel: 'whatsapp' })}
       className="fixed bottom-5 right-5 z-50 flex items-center gap-2 bg-[#25D366] text-white rounded-full shadow-lg hover:bg-[#1da851] hover:shadow-xl transition-all group"
       title="Aide via WhatsApp"
     >

@@ -1,15 +1,29 @@
 'use client';
 
 import { buildContactUrl } from '@/lib/whatsapp';
+import { trackContact } from '@/lib/track-contact';
+import type { ContactSurface } from '@/lib/contact-events';
 
 interface Props {
   phone: string;
   message: string;
   label?: string;
   className?: string;
+  /** Omit to leave the click untracked (e.g. staff-facing screens). */
+  surface?: ContactSurface;
+  listingId?: string;
+  hireListingId?: string;
 }
 
-export default function WhatsAppContactButton({ phone, message, label = 'WhatsApp', className }: Props) {
+export default function WhatsAppContactButton({
+  phone,
+  message,
+  label = 'WhatsApp',
+  className,
+  surface,
+  listingId,
+  hireListingId,
+}: Props) {
   const url = buildContactUrl(phone, message);
 
   return (
@@ -17,6 +31,9 @@ export default function WhatsAppContactButton({ phone, message, label = 'WhatsAp
       href={url}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={() => {
+        if (surface) trackContact({ surface, channel: 'whatsapp', listingId, hireListingId });
+      }}
       className={className ?? 'inline-flex items-center gap-2 bg-[#25D366] text-white font-semibold px-5 py-3 rounded-xl hover:bg-[#1da851] transition text-sm'}
     >
       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

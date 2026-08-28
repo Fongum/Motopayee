@@ -6,6 +6,7 @@ import { supabaseAdmin, getCurrentUser } from '@/lib/auth/server';
 import type { HireListing } from '@/lib/types';
 import BookingForm from './BookingForm';
 import WhatsAppContactButton from '../../(components)/WhatsAppContactButton';
+import CallContactButton from '../../(components)/CallContactButton';
 import WhatsAppShareButton from '../../(components)/WhatsAppShareButton';
 import CompareButton from '../../(components)/CompareButton';
 import SellerTrustBadge from '../../(components)/SellerTrustBadge';
@@ -240,11 +241,16 @@ export default async function HireDetailPage({ params }: Props) {
                       phone={listing.owner.phone}
                       message={`Bonjour, je suis intéressé par la location de votre ${listing.year} ${listing.make} ${listing.model} sur MotoPayee.`}
                       label="WhatsApp"
+                      surface="hire"
+                      hireListingId={listing.id}
                       className="flex-1 inline-flex items-center justify-center gap-2 bg-[#25D366] text-white font-semibold px-4 py-2.5 rounded-xl hover:bg-[#1da851] transition text-sm"
                     />
-                    <a href={`tel:${listing.owner.phone}`} className="flex-1 text-center border border-gray-300 text-gray-700 font-medium py-2.5 rounded-xl hover:bg-gray-50 transition text-sm">
-                      Appeler
-                    </a>
+                    <CallContactButton
+                      phone={listing.owner.phone}
+                      surface="hire"
+                      hireListingId={listing.id}
+                      className="flex-1 text-center border border-gray-300 text-gray-700 font-medium py-2.5 rounded-xl hover:bg-gray-50 transition text-sm"
+                    />
                   </div>
                 )}
                 <div className="mt-3">
