@@ -1,6 +1,7 @@
 import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { isAdminRole } from '@/lib/auth/roles';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Brouillon',
@@ -33,17 +34,22 @@ export default async function AdminApplicationsPage({
 
   const page = Math.max(1, parseInt(searchParams.page ?? '1', 10));
   const PAGE_SIZE = 25;
-  let interestedApplicationIds: string[] | null = null;
+  let offerFilteredApplicationIds: string[] | null = null;
   const returnTo = `/admin/applications${searchParams.status ? `?status=${searchParams.status}` : ''}`;
   const twoDaysFromNow = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
 
-  if (searchParams.status === 'buyer_interested') {
-    const { data: interestedOffers } = await supabaseAdmin
+  if (searchParams.status === 'buyer_interested' || searchParams.status === 'offers_waiting_buyer') {
+    let offerQuery = supabaseAdmin
       .from('mfi_application_offers')
-      .select('application_id')
-      .eq('buyer_response', 'interested');
+      .select('application_id');
 
-    interestedApplicationIds = Array.from(new Set((interestedOffers ?? []).map((offer) => offer.application_id as string)));
+    offerQuery = searchParams.status === 'buyer_interested'
+      ? offerQuery.eq('buyer_response', 'interested')
+      : offerQuery.in('status', ['submitted', 'shortlisted', 'accepted']).is('buyer_response', null);
+
+    const { data: matchingOffers } = await offerQuery;
+
+    offerFilteredApplicationIds = Array.from(new Set((matchingOffers ?? []).map((offer) => offer.application_id as string)));
   }
 
   let query = supabaseAdmin
@@ -52,13 +58,14 @@ export default async function AdminApplicationsPage({
       *,
       listing:listings(id, asking_price, zone, vehicle:vehicles(make, model, year)),
       buyer:profiles!buyer_id(id, email, full_name),
+      mfi:mfi_institutions(name, code),
       follow_up_actor:profiles!follow_up_actor_id(id, email, full_name)
     `, { count: 'exact' })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
-  if (searchParams.status === 'buyer_interested') {
-    query = interestedApplicationIds && interestedApplicationIds.length > 0
-      ? query.in('id', interestedApplicationIds)
+  if (searchParams.status === 'buyer_interested' || searchParams.status === 'offers_waiting_buyer') {
+    query = offerFilteredApplicationIds && offerFilteredApplicationIds.length > 0
+      ? query.in('id', offerFilteredApplicationIds)
       : query.eq('id', '00000000-0000-0000-0000-000000000000');
   } else if (searchParams.status === 'follow_up_due') {
     query = query
@@ -68,6 +75,10 @@ export default async function AdminApplicationsPage({
     query = query.in('follow_up_status', ACTIVE_FOLLOW_UP_STATUSES);
   } else if (searchParams.status === 'active') {
     query = query.in('status', ['submitted', 'docs_pending', 'docs_received', 'under_review']);
+  } else if (searchParams.status === 'mfi_unassigned') {
+    query = query
+      .in('status', ['submitted', 'docs_received', 'under_review'])
+      .is('mfi_institution_id', null);
   } else if (searchParams.status) {
     query = query.eq('status', searchParams.status);
   }
@@ -78,6 +89,14 @@ export default async function AdminApplicationsPage({
 
   const { data, count } = await query;
   const apps = data ?? [];
+  const { data: institutionsData } = isAdminRole(user.role)
+    ? await supabaseAdmin
+        .from('mfi_institutions')
+        .select('id, name, code')
+        .eq('active', true)
+        .order('name')
+    : { data: [] };
+  const institutions = (institutionsData ?? []) as Array<{ id: string; name: string; code: string }>;
   const applicationIds = apps.map((app) => app.id as string);
   const { data: offerRows } = applicationIds.length > 0
     ? await supabaseAdmin
@@ -86,12 +105,13 @@ export default async function AdminApplicationsPage({
       .in('application_id', applicationIds)
       .in('status', ['submitted', 'shortlisted', 'accepted'])
     : { data: [] };
-  const offerSignals = new Map<string, { total: number; interested: boolean; accepted: boolean }>();
+  const offerSignals = new Map<string, { total: number; interested: boolean; accepted: boolean; awaitingBuyer: boolean }>();
   ((offerRows ?? []) as Array<{ application_id: string; status: string; buyer_response: string | null }>).forEach((offer) => {
-    const current = offerSignals.get(offer.application_id) ?? { total: 0, interested: false, accepted: false };
+    const current = offerSignals.get(offer.application_id) ?? { total: 0, interested: false, accepted: false, awaitingBuyer: false };
     current.total += 1;
     current.interested = current.interested || offer.buyer_response === 'interested';
     current.accepted = current.accepted || offer.status === 'accepted';
+    current.awaitingBuyer = current.awaitingBuyer || offer.buyer_response == null;
     offerSignals.set(offer.application_id, current);
   });
 
@@ -104,7 +124,7 @@ export default async function AdminApplicationsPage({
 
       {/* Status filter */}
       <div className="flex flex-wrap gap-2 mb-6">
-        {['', 'active', 'buyer_interested', 'follow_up', 'follow_up_due', 'submitted', 'under_review', 'approved', 'disbursed', 'rejected'].map((s) => (
+        {['', 'active', 'mfi_unassigned', 'offers_waiting_buyer', 'buyer_interested', 'follow_up', 'follow_up_due', 'submitted', 'under_review', 'approved', 'disbursed', 'rejected'].map((s) => (
           <Link
             key={s}
             href={s ? `/admin/applications?status=${s}` : '/admin/applications'}
@@ -114,7 +134,7 @@ export default async function AdminApplicationsPage({
                 : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
             }`}
           >
-            {s === '' ? 'Tous' : s === 'active' ? 'En cours' : s === 'buyer_interested' ? 'Acheteurs interesses' : s === 'follow_up' ? 'Suivi ouvert' : s === 'follow_up_due' ? 'Relances dues' : STATUS_LABELS[s] ?? s}
+            {s === '' ? 'Tous' : s === 'active' ? 'En cours' : s === 'mfi_unassigned' ? 'A router IMF' : s === 'offers_waiting_buyer' ? 'Offres a presenter' : s === 'buyer_interested' ? 'Acheteurs interesses' : s === 'follow_up' ? 'Suivi ouvert' : s === 'follow_up_due' ? 'Relances dues' : STATUS_LABELS[s] ?? s}
           </Link>
         ))}
       </div>
@@ -125,6 +145,7 @@ export default async function AdminApplicationsPage({
             <tr>
               <th className="text-left px-4 py-3 font-medium text-gray-700">Acheteur</th>
               <th className="text-left px-4 py-3 font-medium text-gray-700">Véhicule</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-700">IMF</th>
               <th className="text-left px-4 py-3 font-medium text-gray-700">Statut</th>
               <th className="text-left px-4 py-3 font-medium text-gray-700">Relance</th>
               <th className="text-left px-4 py-3 font-medium text-gray-700">Date</th>
@@ -133,11 +154,12 @@ export default async function AdminApplicationsPage({
           </thead>
           <tbody className="divide-y divide-gray-100">
             {apps.length === 0 ? (
-              <tr><td colSpan={6} className="text-center py-8 text-gray-400">Aucune demande</td></tr>
+              <tr><td colSpan={7} className="text-center py-8 text-gray-400">Aucune demande</td></tr>
             ) : apps.map((app: Record<string, unknown>) => {
               const buyer = app.buyer as { email: string; full_name?: string } | undefined;
               const followUpActor = app.follow_up_actor as { email: string; full_name?: string } | undefined;
               const listing = app.listing as { asking_price: number; zone: string; vehicle?: { make: string; model: string; year: number } } | undefined;
+              const mfi = app.mfi as { name?: string | null; code?: string | null } | undefined;
               const v = listing?.vehicle;
               const signals = offerSignals.get(app.id as string);
               const appStatus = app.status as string;
@@ -151,6 +173,31 @@ export default async function AdminApplicationsPage({
                 <tr key={app.id as string} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">{buyer?.full_name ?? buyer?.email ?? '—'}</td>
                   <td className="px-4 py-3 text-gray-500">{v ? `${v.year} ${v.make} ${v.model}` : '—'}</td>
+                  <td className="px-4 py-3 text-xs">
+                    {mfi?.name || mfi?.code ? (
+                      <div>
+                        <p className="font-semibold text-gray-800">{mfi.name ?? mfi.code}</p>
+                        {mfi.code && <p className="mt-0.5 text-gray-400">{mfi.code}</p>}
+                      </div>
+                    ) : isAdminRole(user.role) && institutions.length > 0 ? (
+                      <form action={`/api/admin/applications/${app.id}/assign-mfi`} method="POST" className="flex gap-1">
+                        <input type="hidden" name="return_to" value={returnTo} />
+                        <select name="mfi_institution_id" required className="min-w-36 rounded border border-gray-300 px-2 py-1 text-xs">
+                          <option value="">Router</option>
+                          {institutions.map((institution) => (
+                            <option key={institution.id} value={institution.id}>
+                              {institution.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button type="submit" className="rounded border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700 hover:bg-blue-100">
+                          OK
+                        </button>
+                      </form>
+                    ) : (
+                      <span className="text-gray-300">-</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
                       {STATUS_LABELS[app.status as string] ?? app.status as string}
@@ -158,6 +205,11 @@ export default async function AdminApplicationsPage({
                     {signals?.interested && (
                       <span className="ml-2 text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
                         Acheteur interesse
+                      </span>
+                    )}
+                    {signals?.awaitingBuyer && (
+                      <span className="ml-2 text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">
+                        Offre a presenter
                       </span>
                     )}
                     {signals && !signals.interested && signals.total > 0 && (

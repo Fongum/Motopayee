@@ -58,29 +58,30 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: 'Failed to save buyer response.' }, { status: 500 });
   }
 
-  if (parsed.data.buyer_response === 'interested') {
-    const appRow = application as {
-      id: string;
-      follow_up_status?: string | null;
-      follow_up_notes?: string | null;
-    };
-    const institutionName = (institution as { name?: string | null; code?: string | null } | null)?.name
-      ?? (institution as { code?: string | null } | null)?.code
-      ?? 'IMF offer';
-    const shouldAutoQueue = !appRow.follow_up_status || ['none', 'closed'].includes(appRow.follow_up_status);
+  const appRow = application as {
+    id: string;
+    follow_up_status?: string | null;
+    follow_up_notes?: string | null;
+  };
+  const institutionName = (institution as { name?: string | null; code?: string | null } | null)?.name
+    ?? (institution as { code?: string | null } | null)?.code
+    ?? 'IMF offer';
+  const shouldAutoQueue = !appRow.follow_up_status
+    || ['none', 'closed', 'waiting_buyer', 'waiting_mfi'].includes(appRow.follow_up_status);
 
-    if (shouldAutoQueue) {
-      await supabaseAdmin
-        .from('financing_applications')
-        .update({
-          follow_up_status: 'call_needed',
-          follow_up_notes: appRow.follow_up_notes
-            ?? `Buyer marked interest in ${institutionName}. Staff should call buyer and coordinate next steps with the MFI.`,
-          next_follow_up_at: new Date().toISOString(),
-          follow_up_updated_at: new Date().toISOString(),
-        })
-        .eq('id', appRow.id);
-    }
+  if (shouldAutoQueue) {
+    await supabaseAdmin
+      .from('financing_applications')
+      .update({
+        follow_up_status: 'call_needed',
+        follow_up_notes: parsed.data.buyer_response === 'interested'
+          ? `Buyer marked interest in ${institutionName}. Staff should call buyer and coordinate next steps with the MFI.`
+          : `Buyer declined the offer from ${institutionName}. Staff should confirm whether to seek another offer.`,
+        next_follow_up_at: new Date().toISOString(),
+        follow_up_actor_id: auth.user.id,
+        follow_up_updated_at: new Date().toISOString(),
+      })
+      .eq('id', appRow.id);
   }
 
   await supabaseAdmin.from('audit_logs').insert({

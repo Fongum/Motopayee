@@ -68,6 +68,20 @@ export async function POST(request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: 'Failed to save MFI offer.' }, { status: 500 });
   }
 
+  const nextFollowUpStatus = parsed.data.status === 'submitted' ? 'waiting_buyer' : 'call_needed';
+  await supabaseAdmin
+    .from('financing_applications')
+    .update({
+      follow_up_status: nextFollowUpStatus,
+      next_follow_up_at: new Date().toISOString(),
+      follow_up_actor_id: auth.user.id,
+      follow_up_updated_at: new Date().toISOString(),
+      follow_up_notes: parsed.data.status === 'submitted'
+        ? 'MFI offer received. Staff should review and coordinate buyer response.'
+        : 'MFI declined or withdrew. Staff should review routing options.',
+    })
+    .eq('id', params.id);
+
   await supabaseAdmin.from('audit_logs').insert({
     actor_id: auth.user.id,
     actor_email: auth.user.email,

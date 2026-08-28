@@ -92,6 +92,9 @@ export default async function AdminApplicationDetailPage({ params }: { params: {
   const transitions = STATUS_TRANSITIONS[app.status] ?? [];
   const listing = app.listing as { asking_price: number; zone: string; vehicle?: { make: string; model: string; year: number } } | undefined;
   const v = listing?.vehicle;
+  const activeOffers = offers.filter((offer) => ['submitted', 'shortlisted', 'accepted'].includes(offer.status));
+  const offersAwaitingBuyer = activeOffers.filter((offer) => !offer.buyer_response).length;
+  const interestedOffers = activeOffers.filter((offer) => offer.buyer_response === 'interested').length;
 
   return (
     <div className="space-y-6">
@@ -148,7 +151,20 @@ export default async function AdminApplicationDetailPage({ params }: { params: {
 
       {offers.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">Offres IMF ({offers.length})</h2>
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="font-semibold text-gray-900">Offres IMF ({offers.length})</h2>
+              <p className="mt-1 text-sm text-gray-500">
+                {activeOffers.length} active, {offersAwaitingBuyer} a presenter, {interestedOffers} avec interet acheteur.
+              </p>
+            </div>
+            <Link
+              href="/admin/applications?status=offers_waiting_buyer"
+              className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100"
+            >
+              File offres a presenter
+            </Link>
+          </div>
           <div className="space-y-3">
             {offers.map((offer) => (
               <div key={offer.id} className="rounded-xl border border-gray-100 bg-gray-50 p-4">
@@ -176,6 +192,11 @@ export default async function AdminApplicationDetailPage({ params }: { params: {
                     {offer.buyer_responded_at ? ` le ${new Date(offer.buyer_responded_at).toLocaleDateString('fr-FR')}` : ''}
                   </div>
                 )}
+                {!offer.buyer_response && ['submitted', 'shortlisted', 'accepted'].includes(offer.status) && (
+                  <div className="mb-3 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+                    A presenter a l&apos;acheteur et enregistrer sa reponse.
+                  </div>
+                )}
                 <div className="grid gap-3 text-sm md:grid-cols-3">
                   <div>
                     <p className="text-xs text-gray-500">Apport propose</p>
@@ -198,7 +219,13 @@ export default async function AdminApplicationDetailPage({ params }: { params: {
                 </div>
                 {offer.notes && <p className="mt-3 text-sm leading-relaxed text-gray-600">{offer.notes}</p>}
                 {canAct && (
-                  <MFIOfferActions offerId={offer.id} currentStatus={offer.status} />
+                  <MFIOfferActions
+                    applicationId={params.id}
+                    offerId={offer.id}
+                    currentStatus={offer.status}
+                    buyerResponse={offer.buyer_response}
+                    institutionName={offer.institution?.name ?? offer.institution?.code ?? 'IMF offer'}
+                  />
                 )}
               </div>
             ))}

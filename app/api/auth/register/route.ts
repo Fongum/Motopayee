@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { signUp, signIn } from '@/lib/auth/server';
+import { getUserByEmail, signUp, signIn } from '@/lib/auth/server';
 import { guardRateLimit, getClientId } from '@/lib/rate-limit';
 import { z } from 'zod';
 import type { Role } from '@/lib/types';
@@ -9,7 +9,7 @@ const schema = z.object({
   email: z.string().email(),
   password: z.string().min(8, 'Password must be at least 8 characters.'),
   name: z.string().min(1).optional(),
-  role: z.enum(['buyer', 'seller_individual', 'seller_dealer']),
+  role: z.enum(['buyer', 'seller_individual', 'seller_dealer', 'mfi_partner']),
 });
 
 const COOKIE_OPTIONS = {
@@ -35,6 +35,16 @@ export async function POST(request: Request) {
   }
 
   const { email, password, name, role } = parsed.data;
+
+  if (role === 'mfi_partner') {
+    const existingProfile = await getUserByEmail(email);
+    if (!existingProfile || existingProfile.role !== 'mfi_partner' || !existingProfile.mfi_institution_id) {
+      return NextResponse.json(
+        { error: 'MFI partner registration requires an admin-created partner access record.' },
+        { status: 403 }
+      );
+    }
+  }
 
   const result = await signUp(email, password, role as Role, { name });
   if (!result.success) {

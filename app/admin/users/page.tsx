@@ -12,6 +12,7 @@ const ROLE_COLORS: Record<string, string> = {
   inspector: 'bg-purple-100 text-purple-700',
   verifier: 'bg-orange-100 text-orange-700',
   admin: 'bg-red-100 text-red-700',
+  mfi_partner: 'bg-green-100 text-green-700',
 };
 
 const ROLE_LABELS: Record<string, string> = {
@@ -22,6 +23,7 @@ const ROLE_LABELS: Record<string, string> = {
   inspector: 'Inspecteur',
   verifier: 'Vérificateur',
   admin: 'Admin',
+  mfi_partner: 'Partenaire MFI',
 };
 
 export default async function UsersPage({
@@ -57,7 +59,7 @@ export default async function UsersPage({
 
       {/* Role filter */}
       <div className="flex flex-wrap gap-2 mb-6">
-        {['', 'buyer', 'seller_individual', 'seller_dealer', 'field_agent', 'inspector', 'verifier', 'admin'].map((r) => (
+        {['', 'buyer', 'seller_individual', 'seller_dealer', 'field_agent', 'inspector', 'verifier', 'admin', 'mfi_partner'].map((r) => (
           <a
             key={r}
             href={r ? `/admin/users?role=${r}` : '/admin/users'}
