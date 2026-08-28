@@ -1,6 +1,12 @@
 import { supabaseAdmin } from '@/lib/auth/server';
 import Link from 'next/link';
-import { dedupeContactEvents, type ContactEventRecord } from '@/lib/contact-events';
+import {
+  captureWeeklyMetrics,
+  loadWeeklyHistory,
+  startOfLaunchWeek,
+  weekStartKey,
+  WEEKLY_METRICS,
+} from '@/lib/launch-metrics';
 
 const OPEN_LEAD_STATUSES = ['new', 'contacted', 'interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding'];
 const ACTIVE_PARTNER_STATUSES = ['interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding', 'converted'];
@@ -83,6 +89,7 @@ type Gate = {
 };
 
 type WeeklyTarget = {
+  key: string;
   label: string;
   actual: number;
   target: number;
@@ -129,20 +136,16 @@ function progressWidth(value: number, target: number) {
   return `${Math.min(100, Math.round((value / target) * 100))}%`;
 }
 
-function startOfLaunchWeek(date: Date) {
-  const start = new Date(date);
-  const day = start.getDay();
-  const distanceFromMonday = day === 0 ? 6 : day - 1;
-  start.setDate(start.getDate() - distanceFromMonday);
-  start.setHours(0, 0, 0, 0);
-  return start;
+/** "S. 24 aout" — a short column header for a past launch week. */
+function formatWeekLabel(weekStart: string) {
+  const date = new Date(`${weekStart}T00:00:00`);
+  return `S. ${date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`;
 }
 
 export default async function AdminLaunchPage() {
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const now = new Date();
   const weekStart = startOfLaunchWeek(now);
-  const weekStartIso = weekStart.toISOString();
   const endOfDay = new Date(now);
   endOfDay.setHours(23, 59, 59, 999);
 
@@ -166,13 +169,6 @@ export default async function AdminLaunchPage() {
     { count: expectedHireFees },
     { count: invoicedHireFees },
     { count: rentalBookings },
-    { count: listingsPublishedThisWeek },
-    { count: listingsReviewedThisWeek },
-    { count: hirePublishedThisWeek },
-    { count: inspectionRequestsThisWeek },
-    { count: financingApplicationsThisWeek },
-    { count: rentalBookingsThisWeek },
-    { data: contactEventData },
     { data: leadData },
     { data: readinessData },
   ] = await Promise.all([
@@ -195,17 +191,6 @@ export default async function AdminLaunchPage() {
     supabaseAdmin.from('hire_service_fees').select('*', { count: 'exact', head: true }).eq('status', 'expected'),
     supabaseAdmin.from('hire_service_fees').select('*', { count: 'exact', head: true }).eq('status', 'invoiced'),
     supabaseAdmin.from('hire_bookings').select('*', { count: 'exact', head: true }).gte('created_at', since),
-    supabaseAdmin.from('listings').select('*', { count: 'exact', head: true }).eq('status', 'published').gte('published_at', weekStartIso),
-    supabaseAdmin.from('listings').select('*', { count: 'exact', head: true }).in('status', ['ownership_verified', 'media_done', 'inspection_scheduled', 'inspected', 'pricing_review', 'published']).gte('updated_at', weekStartIso),
-    supabaseAdmin.from('hire_listings').select('*', { count: 'exact', head: true }).eq('status', 'published').gte('published_at', weekStartIso),
-    supabaseAdmin.from('inspection_requests').select('*', { count: 'exact', head: true }).gte('created_at', weekStartIso),
-    supabaseAdmin.from('financing_applications').select('*', { count: 'exact', head: true }).gte('created_at', weekStartIso),
-    supabaseAdmin.from('hire_bookings').select('*', { count: 'exact', head: true }).gte('created_at', weekStartIso),
-    supabaseAdmin
-      .from('contact_events')
-      .select('id, surface, listing_id, hire_listing_id, actor_id, visitor_key, date_day')
-      .in('surface', ['listing', 'hire'])
-      .gte('created_at', weekStartIso),
     supabaseAdmin
       .from('launch_leads')
       .select('lead_type, status, source, campaign_name, next_follow_up_at, created_at')
@@ -217,10 +202,15 @@ export default async function AdminLaunchPage() {
   ]);
 
   const leadRows = (leadData ?? []) as LeadMetricRow[];
-  // Repeat clicks by one viewer on one vehicle in one day are a single inquiry.
-  const inquiries = dedupeContactEvents((contactEventData ?? []) as unknown as ContactEventRecord[]);
-  const buyerInquiriesThisWeek = inquiries.filter((row) => row.surface === 'listing').length;
-  const renterInquiriesThisWeek = inquiries.filter((row) => row.surface === 'hire').length;
+
+  // Capture on view as well as on the Monday cron: history that only accrues
+  // when a scheduled job fires is history that quietly stops accruing.
+  const { values: thisWeek } = await captureWeeklyMetrics(weekStart);
+  const history = await loadWeeklyHistory(4, now);
+  // Earlier weeks only — the current week is the "Actual" column already.
+  const currentWeekKey = weekStartKey(weekStart);
+  const pastWeeks = history.filter((week) => week.weekStart !== currentWeekKey);
+
   const readinessRows = (readinessData ?? []) as ReadinessCheckRow[];
   const readinessByKey = new Map(readinessRows.map((check) => [check.key, check]));
   const readinessChecks = DEFAULT_READINESS_CHECKS.map((check) => {
@@ -232,7 +222,6 @@ export default async function AdminLaunchPage() {
       updatedAt: stored?.updated_at ?? null,
     };
   });
-  const weekLeadRows = leadRows.filter((lead) => new Date(lead.created_at) >= weekStart);
   const openLeads = leadRows.filter((lead) => OPEN_LEAD_STATUSES.includes(lead.status));
   const dueToday = openLeads.filter((lead) => {
     if (!lead.next_follow_up_at) return false;
@@ -248,20 +237,13 @@ export default async function AdminLaunchPage() {
     return acc;
   }, {});
   const topCampaigns = Object.entries(campaignCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const weeklyTargets: WeeklyTarget[] = [
-    { label: 'Seller contacts', actual: weekLeadRows.filter((lead) => lead.lead_type === 'seller').length, target: 20, href: '/admin/leads?type=seller' },
-    { label: 'Dealer contacts', actual: weekLeadRows.filter((lead) => lead.lead_type === 'dealer').length, target: 5, href: '/admin/leads?type=dealer' },
-    { label: 'Rental owner contacts', actual: weekLeadRows.filter((lead) => lead.lead_type === 'rental_owner').length, target: 10, href: '/admin/leads?type=rental_owner' },
-    { label: 'MFI contacts', actual: weekLeadRows.filter((lead) => lead.lead_type === 'mfi').length, target: 3, href: '/admin/leads?type=mfi' },
-    { label: 'Listings reviewed', actual: listingsReviewedThisWeek ?? 0, target: 10, href: '/admin/listings?status=pending' },
-    { label: 'Listings published', actual: listingsPublishedThisWeek ?? 0, target: 5, href: '/admin/listings?status=published' },
-    { label: 'Rentals published', actual: hirePublishedThisWeek ?? 0, target: 5, href: '/admin/hire' },
-    { label: 'Inspection requests', actual: inspectionRequestsThisWeek ?? 0, target: 2, href: '/admin/inspection-requests' },
-    { label: 'Finance applications', actual: financingApplicationsThisWeek ?? 0, target: 2, href: '/admin/applications' },
-    { label: 'Rental bookings', actual: rentalBookingsThisWeek ?? 0, target: 1, href: '/admin/hire/bookings' },
-    { label: 'Buyer inquiries', actual: buyerInquiriesThisWeek, target: 10, href: '/admin/listings?status=published' },
-    { label: 'Renter inquiries', actual: renterInquiriesThisWeek, target: 5, href: '/admin/hire' },
-  ];
+  const weeklyTargets: WeeklyTarget[] = WEEKLY_METRICS.map((metric) => ({
+    key: metric.key,
+    label: metric.label,
+    actual: thisWeek[metric.key] ?? 0,
+    target: metric.target,
+    href: metric.href,
+  }));
 
   const gates: Gate[] = [
     {
@@ -584,6 +566,11 @@ export default async function AdminLaunchPage() {
             <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
               <tr>
                 <th className="px-4 py-3">Metric</th>
+                {pastWeeks.map((week) => (
+                  <th key={week.weekStart} className="px-4 py-3 text-right font-medium text-gray-400">
+                    {formatWeekLabel(week.weekStart)}
+                  </th>
+                ))}
                 <th className="px-4 py-3">Actual</th>
                 <th className="px-4 py-3">Target</th>
                 <th className="px-4 py-3">Status</th>
@@ -599,6 +586,11 @@ export default async function AdminLaunchPage() {
                         {metric.label}
                       </Link>
                     </td>
+                    {pastWeeks.map((week) => (
+                      <td key={week.weekStart} className="px-4 py-3 text-right text-gray-400">
+                        {week.values[metric.key] ?? '—'}
+                      </td>
+                    ))}
                     <td className="px-4 py-3 text-gray-900">{metric.actual}</td>
                     <td className="px-4 py-3 text-gray-500">{metric.target}</td>
                     <td className="px-4 py-3">
