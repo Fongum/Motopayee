@@ -19,9 +19,9 @@ const PAGE_OPTIONS = [
     body: 'Rejoignez le pilote MotoPayee pour presenter vos vehicules a des acheteurs verifies et potentiellement finances.',
   },
   {
-    value: '/hire',
+    value: '/rental-partners',
     label: 'Location proprietaires',
-    fallbackCampaign: 'Rental owner page',
+    fallbackCampaign: 'Rental partner page',
     hook: 'Vous avez un vehicule a mettre en location?',
     body: 'MotoPayee onboarde des proprietaires et partenaires de location pour les demandes de location au Cameroun.',
   },
@@ -38,6 +38,13 @@ const PAGE_OPTIONS = [
     fallbackCampaign: 'Finance partner page',
     hook: 'Votre institution finance des vehicules?',
     body: 'MotoPayee recherche des IMF, credit unions et partenaires de financement pour traiter des demandes vehicules structurees.',
+  },
+  {
+    value: '/inspection',
+    label: 'Inspections',
+    fallbackCampaign: 'Inspection page',
+    hook: 'Vous voulez verifier un vehicule avant de payer?',
+    body: 'MotoPayee propose une inspection vehicule avec resume de condition et frais indicatif a partir de 15 000 XAF.',
   },
 ];
 

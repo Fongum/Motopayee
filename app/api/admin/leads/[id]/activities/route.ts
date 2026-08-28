@@ -90,8 +90,11 @@ export async function POST(request: Request, { params }: RouteParams) {
   if (parsed.data.outcome === 'reached_interested') {
     updates.status = 'interested';
   }
-  if (parsed.data.outcome === 'meeting_booked' || parsed.data.outcome === 'documents_requested') {
+  if (parsed.data.outcome === 'meeting_booked') {
     updates.status = 'qualified';
+  }
+  if (parsed.data.outcome === 'documents_requested') {
+    updates.status = 'awaiting_assets';
   }
   if (parsed.data.outcome === 'not_fit') {
     updates.status = 'not_fit';

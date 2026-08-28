@@ -20,6 +20,8 @@ const STATUS_LABELS: Record<string, string> = {
   contacted: 'Contacte',
   interested: 'Interesse',
   qualified: 'Qualifie',
+  awaiting_assets: 'Attente photos/docs',
+  ready_for_listing: 'Pret listing',
   onboarding: 'Onboarding',
   converted: 'Converti',
   not_fit: 'Pas adapte',
@@ -31,13 +33,15 @@ const STATUS_COLORS: Record<string, string> = {
   contacted: 'bg-blue-50 text-blue-700',
   interested: 'bg-green-50 text-green-700',
   qualified: 'bg-indigo-50 text-indigo-700',
+  awaiting_assets: 'bg-orange-50 text-orange-700',
+  ready_for_listing: 'bg-teal-50 text-teal-700',
   onboarding: 'bg-purple-50 text-purple-700',
   converted: 'bg-emerald-50 text-emerald-700',
   not_fit: 'bg-gray-100 text-gray-600',
   closed: 'bg-gray-100 text-gray-600',
 };
 
-const OPEN_STATUSES = ['new', 'contacted', 'interested', 'qualified', 'onboarding'];
+const OPEN_STATUSES = ['new', 'contacted', 'interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding'];
 
 const ACTIVITY_ACTIONS = [
   { value: 'call', label: 'Appel' },
@@ -74,11 +78,13 @@ const ACTIVITY_LABELS: Record<string, string> = {
   created: 'Creation',
   updated: 'Mise a jour',
   converted: 'Conversion',
+  profile_created: 'Profil cree',
   call: 'Appel',
   whatsapp: 'WhatsApp',
   email: 'Email',
   meeting: 'Rendez-vous',
   documents: 'Documents',
+  checklist: 'Checklist',
   note: 'Note',
   other: 'Autre',
 };
@@ -89,19 +95,19 @@ const OUTCOME_LABELS: Record<string, string> = Object.fromEntries(
 
 const CONVERSION_ACTIONS: Record<string, Array<{ label: string; href: string }>> = {
   seller: [
-    { label: 'Creer vendeur', href: '/admin/users?role=seller_individual' },
-    { label: 'Nouvelle annonce', href: '/me/listings/new' },
+    { label: 'Nouvelle annonce admin', href: '/admin/listings/new' },
+    { label: 'File inventory', href: '/admin/leads/inventory' },
   ],
   dealer: [
-    { label: 'Creer dealer', href: '/admin/users?role=seller_dealer' },
+    { label: 'Nouvelle annonce admin', href: '/admin/listings/new' },
     { label: 'Programme dealer', href: '/dealers' },
   ],
   rental_owner: [
-    { label: 'Annonce location', href: '/me/hire-listings/new' },
+    { label: 'Nouvelle location admin', href: '/admin/hire/new' },
     { label: 'Reservations', href: '/admin/hire/bookings' },
   ],
   buyer: [
-    { label: 'Creer acheteur', href: '/admin/users?role=buyer' },
+    { label: 'Matching finance', href: '/admin/finance/matches' },
     { label: 'Demandes finance', href: '/admin/applications' },
   ],
   renter: [
@@ -109,7 +115,7 @@ const CONVERSION_ACTIONS: Record<string, Array<{ label: string; href: string }>>
     { label: 'Reservations', href: '/admin/hire/bookings' },
   ],
   mfi: [
-    { label: 'IMF actives', href: '/admin/applications' },
+    { label: 'Partenaires finance', href: '/admin/finance/partners' },
     { label: 'Page partenaires', href: '/finance-partners' },
   ],
   inspection: [
@@ -187,6 +193,7 @@ type LeadRow = {
   next_follow_up_at: string | null;
   converted_entity_type: string | null;
   converted_entity_id: string | null;
+  intake_checklist: Record<string, { checked?: boolean; note?: string | null; updated_at?: string; updated_by?: string | null }> | null;
   created_at: string;
   updated_at: string;
   assigned?: { full_name: string | null; email: string | null } | null;
@@ -204,6 +211,16 @@ interface PageProps { params: { id: string } }
 
 function ageInDays(date: string) {
   return Math.max(0, Math.floor((Date.now() - new Date(date).getTime()) / (24 * 60 * 60 * 1000)));
+}
+
+function checklistKey(step: string) {
+  return step
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 72);
 }
 
 function leadSla(lead: Pick<LeadRow, 'status' | 'created_at' | 'next_follow_up_at'>) {
@@ -246,6 +263,8 @@ export default async function AdminLeadDetailPage({ params }: PageProps) {
   const statusColor = STATUS_COLORS[lead.status] ?? 'bg-gray-100 text-gray-600';
   const sla = leadSla(lead);
   const conversionChecklist = CONVERSION_CHECKLISTS[lead.lead_type] ?? CONVERSION_CHECKLISTS.other;
+  const intakeChecklist = lead.intake_checklist ?? {};
+  const completedChecklistItems = conversionChecklist.filter((step) => intakeChecklist[checklistKey(step)]?.checked).length;
   const whatsappMessage = buildLeadOutreachMessage(lead);
 
   return (
@@ -512,15 +531,64 @@ export default async function AdminLeadDetailPage({ params }: PageProps) {
           <section className="rounded-2xl border border-gray-200 bg-white p-5">
             <h2 className="text-sm font-bold text-gray-900">Conversion</h2>
             <div className="mt-3 rounded-xl border border-green-100 bg-green-50 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-green-800">Checklist operationnelle</p>
-              <ul className="mt-2 space-y-2 text-sm text-green-900">
-                {conversionChecklist.map((step) => (
-                  <li key={step} className="flex gap-2">
-                    <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-green-600" />
-                    <span>{step}</span>
-                  </li>
-                ))}
-              </ul>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-green-800">Checklist operationnelle</p>
+                <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-green-800">
+                  {completedChecklistItems}/{conversionChecklist.length}
+                </span>
+              </div>
+              <div className="mt-3 space-y-2">
+                {conversionChecklist.map((step) => {
+                  const itemKey = checklistKey(step);
+                  const item = intakeChecklist[itemKey];
+                  const checked = Boolean(item?.checked);
+                  return (
+                    <form key={itemKey} action={`/api/admin/leads/${lead.id}/checklist`} method="POST" className="rounded-lg border border-green-100 bg-white p-2">
+                      <input type="hidden" name="item_key" value={itemKey} />
+                      <input type="hidden" name="checked" value={checked ? 'false' : 'true'} />
+                      <div className="flex items-start gap-2">
+                        <button
+                          type="submit"
+                          className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border text-xs font-bold ${
+                            checked
+                              ? 'border-green-600 bg-green-600 text-white'
+                              : 'border-gray-300 bg-white text-transparent hover:border-green-600'
+                          }`}
+                          aria-label={checked ? `Rouvrir ${step}` : `Completer ${step}`}
+                        >
+                          ✓
+                        </button>
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-sm ${checked ? 'font-medium text-green-950' : 'text-green-900'}`}>{step}</p>
+                          {item?.updated_at && (
+                            <p className="mt-0.5 text-[11px] text-green-700">
+                              MAJ {new Date(item.updated_at).toLocaleString('fr-FR')}
+                            </p>
+                          )}
+                          <input
+                            name="note"
+                            defaultValue={item?.note ?? ''}
+                            placeholder="Note optionnelle"
+                            className="mt-2 w-full rounded-md border border-green-100 px-2 py-1 text-xs text-gray-700"
+                          />
+                        </div>
+                      </div>
+                    </form>
+                  );
+                })}
+              </div>
+              <form action={`/api/admin/leads/${lead.id}`} method="POST" className="mt-3 grid gap-2 sm:grid-cols-2">
+                <input type="hidden" name="status" value="awaiting_assets" />
+                <button type="submit" className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-800 hover:bg-orange-100">
+                  Marquer attente photos/docs
+                </button>
+              </form>
+              <form action={`/api/admin/leads/${lead.id}`} method="POST" className="mt-2">
+                <input type="hidden" name="status" value="ready_for_listing" />
+                <button type="submit" className="w-full rounded-lg bg-teal-600 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-700">
+                  Marquer pret listing
+                </button>
+              </form>
             </div>
             {lead.converted_entity_type ? (
               <p className="mt-2 text-sm text-green-700">
@@ -530,6 +598,33 @@ export default async function AdminLeadDetailPage({ params }: PageProps) {
               <p className="mt-2 text-sm text-gray-500">Lier ce lead a l&apos;objet cree quand il devient operationnel.</p>
             )}
             <div className="mt-3 flex flex-wrap gap-2">
+              {['seller', 'dealer'].includes(lead.lead_type) ? (
+                <form action={`/api/admin/leads/${lead.id}/profile`} method="POST">
+                  <input type="hidden" name="role" value={lead.lead_type === 'dealer' ? 'seller_dealer' : 'seller_individual'} />
+                  <input type="hidden" name="next" value="sale_listing" />
+                  <button type="submit" className="rounded-md bg-gray-900 px-2.5 py-1 text-xs font-semibold text-white hover:bg-gray-800">
+                    Creer profil + annonce vente
+                  </button>
+                </form>
+              ) : null}
+              {lead.lead_type === 'rental_owner' ? (
+                <form action={`/api/admin/leads/${lead.id}/profile`} method="POST">
+                  <input type="hidden" name="role" value="seller_individual" />
+                  <input type="hidden" name="next" value="hire_listing" />
+                  <button type="submit" className="rounded-md bg-gray-900 px-2.5 py-1 text-xs font-semibold text-white hover:bg-gray-800">
+                    Creer profil + annonce location
+                  </button>
+                </form>
+              ) : null}
+              {lead.lead_type === 'buyer' ? (
+                <form action={`/api/admin/leads/${lead.id}/profile`} method="POST">
+                  <input type="hidden" name="role" value="buyer" />
+                  <input type="hidden" name="next" value="finance_matches" />
+                  <button type="submit" className="rounded-md bg-gray-900 px-2.5 py-1 text-xs font-semibold text-white hover:bg-gray-800">
+                    Creer profil + matching
+                  </button>
+                </form>
+              ) : null}
               {(CONVERSION_ACTIONS[lead.lead_type] ?? CONVERSION_ACTIONS.other ?? []).map((action) => (
                 <Link
                   key={action.href}

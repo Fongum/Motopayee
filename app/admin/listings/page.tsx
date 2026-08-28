@@ -15,10 +15,14 @@ const STATUS_LABELS: Record<string, string> = {
   withdrawn: 'Retiré',
 };
 
+function formatXAF(amount: number) {
+  return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
+}
+
 export default async function AdminListingsPage({
   searchParams,
 }: {
-  searchParams: { status?: string; page?: string };
+  searchParams: { status?: string; financeable?: string; page?: string };
 }) {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
@@ -37,6 +41,11 @@ export default async function AdminListingsPage({
   } else if (searchParams.status) {
     query = query.eq('status', searchParams.status);
   }
+  if (searchParams.financeable === 'true') {
+    query = query.eq('financeable', true);
+  } else if (searchParams.financeable === 'false') {
+    query = query.eq('financeable', false);
+  }
 
   const { data, count } = await query;
   const listings = data ?? [];
@@ -45,7 +54,12 @@ export default async function AdminListingsPage({
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Annonces</h1>
-        <span className="text-sm text-gray-500">{count ?? 0} total</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-500">{count ?? 0} total</span>
+          <Link href="/admin/listings/new" className="rounded-lg bg-[#1a3a6b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#132a4d]">
+            Nouvelle annonce
+          </Link>
+        </div>
       </div>
 
       {/* Status filter */}
@@ -63,6 +77,16 @@ export default async function AdminListingsPage({
             {s === '' ? 'Tous' : s === 'pending' ? 'En attente' : STATUS_LABELS[s] ?? s}
           </Link>
         ))}
+        <Link
+          href="/admin/listings?financeable=true"
+          className={`text-xs px-3 py-1.5 rounded-full border transition ${
+            searchParams.financeable === 'true'
+              ? 'bg-[#1a3a6b] text-white border-[#1a3a6b]'
+              : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+          }`}
+        >
+          Finance eligible
+        </Link>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
@@ -71,6 +95,7 @@ export default async function AdminListingsPage({
             <tr>
               <th className="text-left px-4 py-3 font-medium text-gray-700">Véhicule</th>
               <th className="text-left px-4 py-3 font-medium text-gray-700">Vendeur</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-700">Prix</th>
               <th className="text-left px-4 py-3 font-medium text-gray-700">Zone</th>
               <th className="text-left px-4 py-3 font-medium text-gray-700">Statut</th>
               <th className="text-left px-4 py-3 font-medium text-gray-700">Date</th>
@@ -79,7 +104,7 @@ export default async function AdminListingsPage({
           </thead>
           <tbody className="divide-y divide-gray-100">
             {listings.length === 0 ? (
-              <tr><td colSpan={6} className="text-center py-8 text-gray-400">Aucune annonce trouvée</td></tr>
+              <tr><td colSpan={7} className="text-center py-8 text-gray-400">Aucune annonce trouvée</td></tr>
             ) : listings.map((l: Record<string, unknown>) => {
               const v = l.vehicle as { make: string; model: string; year: number } | undefined;
               const seller = l.seller as { email: string; full_name?: string } | undefined;
@@ -91,6 +116,14 @@ export default async function AdminListingsPage({
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-500">{seller?.full_name ?? seller?.email ?? '—'}</td>
+                  <td className="px-4 py-3">
+                    <p className="font-semibold text-gray-900">{formatXAF(Number(l.asking_price ?? 0))}</p>
+                    {l.financeable ? (
+                      <p className="mt-1 text-xs font-medium text-green-700">Finance eligible</p>
+                    ) : (
+                      <p className="mt-1 text-xs text-gray-400">Non finance</p>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-gray-500">{l.zone as string}</td>
                   <td className="px-4 py-3">
                     <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">

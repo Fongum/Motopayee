@@ -12,7 +12,7 @@ const schema = z.object({
   visible_lead_ids: z.array(z.string().uuid()).max(100).default([]),
   selection_scope: z.enum(['selected', 'visible']).default('selected'),
   assigned_to: z.string().uuid().optional().or(z.literal('')).or(z.literal('__no_change')),
-  status: z.enum(['new', 'contacted', 'interested', 'qualified', 'onboarding', 'converted', 'not_fit', 'closed']).optional().or(z.literal('')).or(z.literal('__no_change')),
+  status: z.enum(['new', 'contacted', 'interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding', 'converted', 'not_fit', 'closed']).optional().or(z.literal('')).or(z.literal('__no_change')),
   priority: z.enum(['low', 'normal', 'high']).optional().or(z.literal('')).or(z.literal('__no_change')),
   campaign_action: z.enum(['__no_change', 'set', 'clear']).default('__no_change'),
   campaign_name: z.string().trim().max(120).optional(),
@@ -121,8 +121,11 @@ export async function POST(request: Request) {
     if (!hasExplicitStatus && activityTemplate.outcome === 'reached_interested') {
       updates.status = 'interested';
     }
-    if (!hasExplicitStatus && (activityTemplate.outcome === 'meeting_booked' || activityTemplate.outcome === 'documents_requested')) {
+    if (!hasExplicitStatus && activityTemplate.outcome === 'meeting_booked') {
       updates.status = 'qualified';
+    }
+    if (!hasExplicitStatus && activityTemplate.outcome === 'documents_requested') {
+      updates.status = 'awaiting_assets';
     }
   }
   const followUp = presetFollowUp(parsed.data.follow_up_preset);

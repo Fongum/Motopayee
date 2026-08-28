@@ -20,6 +20,8 @@ const STATUS_LABELS: Record<string, string> = {
   contacted: 'Contacte',
   interested: 'Interesse',
   qualified: 'Qualifie',
+  awaiting_assets: 'Attente photos/docs',
+  ready_for_listing: 'Pret listing',
   onboarding: 'Onboarding',
   converted: 'Converti',
   not_fit: 'Pas adapte',
@@ -31,13 +33,15 @@ const STATUS_COLORS: Record<string, string> = {
   contacted: 'bg-blue-50 text-blue-700',
   interested: 'bg-green-50 text-green-700',
   qualified: 'bg-indigo-50 text-indigo-700',
+  awaiting_assets: 'bg-orange-50 text-orange-700',
+  ready_for_listing: 'bg-teal-50 text-teal-700',
   onboarding: 'bg-purple-50 text-purple-700',
   converted: 'bg-emerald-50 text-emerald-700',
   not_fit: 'bg-gray-100 text-gray-600',
   closed: 'bg-gray-100 text-gray-600',
 };
 
-const OPEN_STATUSES = ['new', 'contacted', 'interested', 'qualified', 'onboarding'];
+const OPEN_STATUSES = ['new', 'contacted', 'interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding'];
 
 const FILTERS = [
   { value: '', label: 'Tous' },
@@ -50,6 +54,8 @@ const FILTERS = [
   { value: 'contacted', label: 'Contactes' },
   { value: 'interested', label: 'Interesses' },
   { value: 'qualified', label: 'Qualifies' },
+  { value: 'awaiting_assets', label: 'Attente photos/docs' },
+  { value: 'ready_for_listing', label: 'Prets listing' },
   { value: 'onboarding', label: 'Onboarding' },
   { value: 'converted', label: 'Convertis' },
 ];
@@ -184,19 +190,19 @@ type ActivityMetricRow = {
 
 const CONVERSION_ACTIONS: Record<string, Array<{ label: string; href: string }>> = {
   seller: [
-    { label: 'Creer vendeur', href: '/admin/users?role=seller_individual' },
-    { label: 'Nouvelle annonce', href: '/me/listings/new' },
+    { label: 'Nouvelle annonce admin', href: '/admin/listings/new' },
+    { label: 'File inventory', href: '/admin/leads/inventory' },
   ],
   dealer: [
-    { label: 'Creer dealer', href: '/admin/users?role=seller_dealer' },
+    { label: 'Nouvelle annonce admin', href: '/admin/listings/new' },
     { label: 'Programme dealer', href: '/dealers' },
   ],
   rental_owner: [
-    { label: 'Annonce location', href: '/me/hire-listings/new' },
+    { label: 'Nouvelle location admin', href: '/admin/hire/new' },
     { label: 'Reservations', href: '/admin/hire/bookings' },
   ],
   buyer: [
-    { label: 'Creer acheteur', href: '/admin/users?role=buyer' },
+    { label: 'Matching finance', href: '/admin/finance/matches' },
     { label: 'Demandes finance', href: '/admin/applications' },
   ],
   renter: [
@@ -204,7 +210,7 @@ const CONVERSION_ACTIONS: Record<string, Array<{ label: string; href: string }>>
     { label: 'Reservations', href: '/admin/hire/bookings' },
   ],
   mfi: [
-    { label: 'IMF actives', href: '/admin/applications' },
+    { label: 'Partenaires finance', href: '/admin/finance/partners' },
     { label: 'Page partenaires', href: '/finance-partners' },
   ],
   inspection: [
@@ -522,6 +528,9 @@ export default async function AdminLeadsPage({
         <div className="flex flex-wrap gap-2">
           <Link href="/admin/leads/action-board" className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
             Action board
+          </Link>
+          <Link href="/admin/leads/inventory" className="rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-100">
+            File inventory
           </Link>
           <a href={exportHref} className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
             Export CSV
@@ -1127,6 +1136,24 @@ export default async function AdminLeadsPage({
                     )}
                   </div>
                   <div className="flex flex-wrap gap-2">
+                    {['seller', 'dealer'].includes(lead.lead_type) ? (
+                      <form action={`/api/admin/leads/${lead.id}/profile`} method="POST">
+                        <input type="hidden" name="role" value={lead.lead_type === 'dealer' ? 'seller_dealer' : 'seller_individual'} />
+                        <input type="hidden" name="next" value="sale_listing" />
+                        <button type="submit" className="rounded-md bg-gray-900 px-2.5 py-1 text-xs font-semibold text-white hover:bg-gray-800">
+                          Creer profil + vente
+                        </button>
+                      </form>
+                    ) : null}
+                    {lead.lead_type === 'rental_owner' ? (
+                      <form action={`/api/admin/leads/${lead.id}/profile`} method="POST">
+                        <input type="hidden" name="role" value="seller_individual" />
+                        <input type="hidden" name="next" value="hire_listing" />
+                        <button type="submit" className="rounded-md bg-gray-900 px-2.5 py-1 text-xs font-semibold text-white hover:bg-gray-800">
+                          Creer profil + location
+                        </button>
+                      </form>
+                    ) : null}
                     {(CONVERSION_ACTIONS[lead.lead_type] ?? CONVERSION_ACTIONS.other ?? []).map((action) => (
                       <Link
                         key={action.href}

@@ -9,11 +9,19 @@ const FEATURES_OPTIONS = [
   'Lecteur USB', 'Porte-bagages', '4x4', 'Dashcam',
 ];
 
-export default function NewHireListingPage() {
+type SearchParams = Record<string, string | string[] | undefined>;
+
+function firstParam(searchParams: SearchParams | undefined, key: string) {
+  const value = searchParams?.[key];
+  return Array.isArray(value) ? value[0] ?? '' : value ?? '';
+}
+
+export default function NewHireListingPage({ searchParams }: { searchParams?: SearchParams }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
+  const launchLeadId = firstParam(searchParams, 'launch_lead_id');
 
   function toggleFeature(f: string) {
     setSelectedFeatures((prev) =>
@@ -55,6 +63,7 @@ export default function NewHireListingPage() {
       conditions: form.get('conditions') || undefined,
       features: selectedFeatures,
       insurance_included: form.get('insurance_included') === 'on',
+      launch_lead_id: launchLeadId || undefined,
     };
 
     try {
@@ -82,6 +91,12 @@ export default function NewHireListingPage() {
   return (
     <div>
       <h1 className="text-xl font-bold text-gray-900 mb-6">Ajouter un véhicule en location</h1>
+
+      {launchLeadId && (
+        <div className="mb-6 rounded-xl border border-teal-100 bg-teal-50 px-4 py-3 text-sm text-teal-900">
+          Creation depuis un lead lancement. La ville, la description et les conditions ont ete pre-remplies quand disponibles.
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Vehicle Info */}
@@ -196,7 +211,7 @@ export default function NewHireListingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className={labelCls}>Ville *</label>
-              <input name="city" required placeholder="Ex: Douala" className={inputCls} />
+              <input name="city" required defaultValue={firstParam(searchParams, 'city')} placeholder="Ex: Douala" className={inputCls} />
             </div>
             <div>
               <label className={labelCls}>Zone *</label>
@@ -219,11 +234,11 @@ export default function NewHireListingPage() {
           <div className="space-y-4">
             <div>
               <label className={labelCls}>Description</label>
-              <textarea name="description" rows={3} placeholder="Décrivez votre véhicule..." className={inputCls + ' resize-none'} />
+              <textarea name="description" rows={3} defaultValue={firstParam(searchParams, 'description')} placeholder="Décrivez votre véhicule..." className={inputCls + ' resize-none'} />
             </div>
             <div>
               <label className={labelCls}>Conditions de location</label>
-              <textarea name="conditions" rows={3} placeholder="Conditions requises, politique carburant..." className={inputCls + ' resize-none'} />
+              <textarea name="conditions" rows={3} defaultValue={firstParam(searchParams, 'conditions')} placeholder="Conditions requises, politique carburant..." className={inputCls + ' resize-none'} />
             </div>
             <div>
               <label className={labelCls}>Équipements</label>

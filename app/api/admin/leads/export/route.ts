@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server';
 import { requireStaff } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 
-const STATUS_VALUES = ['new', 'contacted', 'interested', 'qualified', 'onboarding', 'converted', 'not_fit', 'closed'];
+const STATUS_VALUES = ['new', 'contacted', 'interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding', 'converted', 'not_fit', 'closed'];
 const TYPE_VALUES = ['seller', 'dealer', 'rental_owner', 'buyer', 'renter', 'mfi', 'inspection', 'other'];
 const SOURCE_VALUES = ['website', 'whatsapp', 'referral', 'facebook', 'field', 'dealer_visit', 'staff', 'other'];
 const PRIORITY_VALUES = ['low', 'normal', 'high'];
-const OPEN_STATUSES = ['new', 'contacted', 'interested', 'qualified', 'onboarding'];
+const OPEN_STATUSES = ['new', 'contacted', 'interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding'];
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function csvCell(value: unknown) {
