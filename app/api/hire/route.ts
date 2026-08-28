@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAuth, requireSeller } from '@/lib/auth/middleware';
 import { parseBody } from '@/lib/validation';
 import { createHireListingSchema } from '@/lib/hire-schemas';
+import { recordLeadActivity } from '@/lib/launch-lead-activities';
 import type { HireListing } from '@/lib/types';
 
 // GET /api/hire — Browse published hire listings (public)
@@ -73,13 +74,14 @@ export async function POST(request: NextRequest) {
 async function createHireListing(ownerId: string, request: NextRequest) {
   const parsed = await parseBody(createHireListingSchema, request, 'Annonce de location invalide.');
   if (!parsed.success) return parsed.response;
+  const { launch_lead_id, ...hireListingData } = parsed.data;
 
   // The schema supplies every default, so the payload can be written straight
   // through — null-coalescing per field is no longer needed.
   const { data, error } = await supabaseAdmin
     .from('hire_listings')
     .insert({
-      ...parsed.data,
+      ...hireListingData,
       owner_id: ownerId,
       status: 'pending_review',
     })
@@ -87,5 +89,32 @@ async function createHireListing(ownerId: string, request: NextRequest) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  if (launch_lead_id) {
+    const { data: convertedLead } = await supabaseAdmin
+      .from('launch_leads')
+      .update({
+        status: 'converted',
+        converted_entity_type: 'hire_listing',
+        converted_entity_id: data.id,
+        next_follow_up_at: null,
+      })
+      .eq('id', launch_lead_id)
+      .eq('lead_type', 'rental_owner')
+      .neq('status', 'converted')
+      .select('id')
+      .maybeSingle();
+
+    if (convertedLead) {
+      await recordLeadActivity({
+        leadId: launch_lead_id,
+        actorId: ownerId,
+        action: 'converted',
+        summary: 'Lead converted into rental listing',
+        meta: { hire_listing_id: data.id },
+      });
+    }
+  }
+
   return NextResponse.json(data, { status: 201 });
 }

@@ -51,8 +51,22 @@ type BookingRow = HireBooking & {
 export default async function AdminHireBookingsPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: { status?: string; fee?: string };
 }) {
+  const feeFilter = ['expected', 'invoiced', 'paid', 'waived', 'refunded'].includes(searchParams.fee ?? '')
+    ? searchParams.fee
+    : null;
+  let feeFilteredBookingIds: string[] | null = null;
+
+  if (feeFilter) {
+    const { data: filteredFees } = await supabaseAdmin
+      .from('hire_service_fees')
+      .select('hire_booking_id')
+      .eq('status', feeFilter);
+
+    feeFilteredBookingIds = Array.from(new Set((filteredFees ?? []).map((fee) => fee.hire_booking_id as string)));
+  }
+
   let query = supabaseAdmin
     .from('hire_bookings')
     .select(`
@@ -67,6 +81,12 @@ export default async function AdminHireBookingsPage({
     query = query.eq('status', searchParams.status);
   }
 
+  if (feeFilter) {
+    query = feeFilteredBookingIds && feeFilteredBookingIds.length > 0
+      ? query.in('id', feeFilteredBookingIds)
+      : query.eq('id', '00000000-0000-0000-0000-000000000000');
+  }
+
   const { data } = await query;
   const bookings = (data ?? []) as unknown as BookingRow[];
   const bookingIds = bookings.map((booking) => booking.id);
@@ -76,6 +96,9 @@ export default async function AdminHireBookingsPage({
         .select('id, hire_booking_id, fee_rate_percent, fee_amount_xaf, status, paid_at')
         .in('hire_booking_id', bookingIds)
     : { data: [] };
+  const { data: allFeeData } = await supabaseAdmin
+    .from('hire_service_fees')
+    .select('status, fee_amount_xaf');
 
   const feesByBooking = new Map(
     ((feeData ?? []) as unknown as Array<{
@@ -87,6 +110,11 @@ export default async function AdminHireBookingsPage({
       paid_at: string | null;
     }>).map((fee) => [fee.hire_booking_id, fee])
   );
+  const feeRows = (allFeeData ?? []) as Array<{ status: string; fee_amount_xaf: number | string | null }>;
+  const feeAmountByStatus = (status: string) => feeRows
+    .filter((fee) => fee.status === status)
+    .reduce((sum, fee) => sum + Number(fee.fee_amount_xaf ?? 0), 0);
+  const feeCountByStatus = (status: string) => feeRows.filter((fee) => fee.status === status).length;
 
   const activeValue = bookings
     .filter((booking) => ['pending', 'confirmed', 'active'].includes(booking.status))
@@ -94,21 +122,18 @@ export default async function AdminHireBookingsPage({
   const paidValue = bookings
     .filter((booking) => booking.payment_status === 'fully_paid')
     .reduce((total, booking) => total + Number(booking.total_amount ?? 0), 0);
-  const expectedFees = bookings.reduce((total, booking) => {
-    const fee = feesByBooking.get(booking.id);
-    return total + Number(fee?.fee_amount_xaf ?? calculateHireServiceFee(Number(booking.total_amount ?? 0)));
-  }, 0);
-  const collectedFees = Array.from(feesByBooking.values()).reduce((total, fee) => (
-    fee.status === 'paid' ? total + Number(fee.fee_amount_xaf ?? 0) : total
-  ), 0);
+  const expectedFees = feeAmountByStatus('expected');
+  const invoicedFees = feeAmountByStatus('invoiced');
+  const collectedFees = feeAmountByStatus('paid');
 
   const stats = [
     { label: 'Demandes', value: bookings.filter((booking) => booking.status === 'pending').length, color: 'text-amber-600' },
     { label: 'Actives', value: bookings.filter((booking) => ['confirmed', 'active'].includes(booking.status)).length, color: 'text-blue-700' },
     { label: 'Valeur active', value: formatXAF(activeValue), color: 'text-gray-900' },
     { label: 'Payees', value: formatXAF(paidValue), color: 'text-green-700' },
-    { label: 'Frais attendus', value: formatXAF(expectedFees), color: 'text-blue-700' },
-    { label: 'Frais encaisses', value: formatXAF(collectedFees), color: 'text-green-700' },
+    { label: 'Frais a facturer', value: `${feeCountByStatus('expected')} - ${formatXAF(expectedFees)}`, color: 'text-amber-700' },
+    { label: 'Frais factures', value: `${feeCountByStatus('invoiced')} - ${formatXAF(invoicedFees)}`, color: 'text-blue-700' },
+    { label: 'Frais encaisses', value: `${feeCountByStatus('paid')} - ${formatXAF(collectedFees)}`, color: 'text-green-700' },
   ];
 
   return (
@@ -123,7 +148,7 @@ export default async function AdminHireBookingsPage({
         </Link>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+      <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-7">
         {stats.map((stat) => (
           <div key={stat.label} className="rounded-2xl border border-gray-200 bg-white p-5">
             <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
@@ -139,6 +164,29 @@ export default async function AdminHireBookingsPage({
             href={filter.value ? `/admin/hire/bookings?status=${filter.value}` : '/admin/hire/bookings'}
             className={`rounded-full border px-3 py-1.5 text-xs transition ${
               (searchParams.status ?? '') === filter.value
+                ? 'border-[#1a3a6b] bg-[#1a3a6b] text-white'
+                : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            {filter.label}
+          </Link>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {[
+          { value: '', label: 'Tous frais' },
+          { value: 'expected', label: 'A facturer' },
+          { value: 'invoiced', label: 'Factures' },
+          { value: 'paid', label: 'Encaisses' },
+          { value: 'waived', label: 'Annules' },
+          { value: 'refunded', label: 'Rembourses' },
+        ].map((filter) => (
+          <Link
+            key={filter.value}
+            href={filter.value ? `/admin/hire/bookings?fee=${filter.value}` : '/admin/hire/bookings'}
+            className={`rounded-full border px-3 py-1.5 text-xs transition ${
+              (searchParams.fee ?? '') === filter.value
                 ? 'border-[#1a3a6b] bg-[#1a3a6b] text-white'
                 : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
             }`}

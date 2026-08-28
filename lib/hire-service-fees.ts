@@ -40,23 +40,33 @@ export async function ensureHireServiceFee(
     .maybeSingle();
 
   if (existing) {
+    const updates: Record<string, unknown> = {
+      hire_listing_id: row.hire_listing_id,
+      renter_id: row.renter_id,
+      owner_id: row.owner_id,
+      booking_value_xaf: bookingValue,
+      fee_rate_percent: DEFAULT_HIRE_SERVICE_FEE_RATE_PERCENT,
+      fee_amount_xaf: feeAmount,
+    };
+
     if (status === 'paid' && existing.status !== 'paid') {
-      const { data, error } = await supabaseAdmin
-        .from('hire_service_fees')
-        .update({ status: 'paid', paid_at: paidAt })
-        .eq('id', existing.id)
-        .select()
-        .single();
-
-      if (error) {
-        logger.error('Failed to update hire service fee', { err: error });
-        return null;
-      }
-
-      return data;
+      updates.status = 'paid';
+      updates.paid_at = paidAt;
     }
 
-    return existing;
+    const { data, error } = await supabaseAdmin
+      .from('hire_service_fees')
+      .update(updates)
+      .eq('id', existing.id)
+      .select()
+      .single();
+
+    if (error) {
+      logger.error('Failed to update hire service fee', { err: error });
+      return null;
+    }
+
+    return data;
   }
 
   const { data, error } = await supabaseAdmin
