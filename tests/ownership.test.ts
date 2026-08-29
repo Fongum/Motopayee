@@ -240,3 +240,155 @@ describe('POST /api/mfi/applications/[id]/offer', () => {
     expect(supabase.writes).toEqual([]);
   });
 });
+
+describe('POST /api/applications/[id]/docs', () => {
+  const load = () => import('@/app/api/applications/[id]/docs/route');
+  const docBody = {
+    doc_type: 'income_proof',
+    storage_path: 'docs/payslip.pdf',
+    filename: 'payslip.pdf',
+    content_type: 'application/pdf',
+  };
+
+  it("refuses attaching a document to another buyer's application", async () => {
+    supabase = createSupabaseMock({
+      financing_applications: { data: { id: 'app-1', buyer_id: 'someone-else', status: 'submitted' } },
+    });
+
+    const { POST } = await load();
+    const response = await POST(jsonRequest(docBody), { params: { id: 'app-1' } });
+
+    expect(response.status).toBe(404);
+    expect(supabase.writesTo('documents')).toEqual([]);
+  });
+
+  it('allows the buyer who owns the application', async () => {
+    supabase = createSupabaseMock({
+      financing_applications: { data: { id: 'app-1', buyer_id: 'user-self', status: 'submitted' } },
+      documents: { data: { id: 'doc-1' } },
+    });
+
+    const { POST } = await load();
+    const response = await POST(jsonRequest(docBody), { params: { id: 'app-1' } });
+
+    expect(response.status).toBe(201);
+    expect(supabase.writesTo('documents')).toHaveLength(1);
+  });
+
+  it('records the uploader as the caller, not a value from the request', async () => {
+    supabase = createSupabaseMock({
+      financing_applications: { data: { id: 'app-1', buyer_id: 'user-self', status: 'submitted' } },
+      documents: { data: { id: 'doc-1' } },
+    });
+
+    const { POST } = await load();
+    await POST(jsonRequest({ ...docBody, uploader_id: 'someone-else' }), { params: { id: 'app-1' } });
+
+    const write = supabase.writesTo('documents')[0].payload as { uploader_id: string; entity_id: string };
+    expect(write.uploader_id).toBe('user-self');
+    expect(write.entity_id).toBe('app-1');
+  });
+
+  it('refuses once the application is finalised', async () => {
+    supabase = createSupabaseMock({
+      financing_applications: { data: { id: 'app-1', buyer_id: 'user-self', status: 'disbursed' } },
+    });
+
+    const { POST } = await load();
+    const response = await POST(jsonRequest(docBody), { params: { id: 'app-1' } });
+
+    expect(response.status).toBe(400);
+    expect(supabase.writesTo('documents')).toEqual([]);
+  });
+});
+
+describe('POST /api/imports/orders/[id]/payments/request', () => {
+  const load = () => import('@/app/api/imports/orders/[id]/payments/request/route');
+  const depositBody = { phone: '677000000', provider: 'mtn_momo' };
+
+  it("refuses paying a deposit on another buyer's order", async () => {
+    supabase = createSupabaseMock({
+      import_orders: { data: { id: 'order-1', buyer_id: 'someone-else', status: 'deposit_pending', reservation_deposit_amount: 500000 } },
+    });
+
+    const { POST } = await load();
+    const response = await POST(jsonRequest(depositBody), { params: { id: 'order-1' } });
+
+    expect(response.status).toBe(404);
+    expect(supabase.writesTo('import_payments')).toEqual([]);
+  });
+
+  it('refuses a second deposit while one is already in flight', async () => {
+    supabase = createSupabaseMock({
+      import_orders: { data: { id: 'order-1', buyer_id: 'user-self', status: 'deposit_pending', reservation_deposit_amount: 500000 } },
+      import_payments: { data: { id: 'pay-1', status: 'processing' } },
+    });
+
+    const { POST } = await load();
+    const response = await POST(jsonRequest(depositBody), { params: { id: 'order-1' } });
+
+    expect(response.status).toBe(409);
+    expect(supabase.writesTo('import_payments')).toEqual([]);
+  });
+
+  it('refuses a deposit that has already been paid', async () => {
+    supabase = createSupabaseMock({
+      import_orders: { data: { id: 'order-1', buyer_id: 'user-self', status: 'deposit_pending', reservation_deposit_amount: 500000 } },
+      import_payments: { data: { id: 'pay-1', status: 'successful' } },
+    });
+
+    const { POST } = await load();
+    const response = await POST(jsonRequest(depositBody), { params: { id: 'order-1' } });
+
+    expect(response.status).toBe(409);
+    expect(supabase.writesTo('import_payments')).toEqual([]);
+  });
+});
+
+describe('PATCH /api/mfi-offers/[id]/buyer-response', () => {
+  const load = () => import('@/app/api/mfi-offers/[id]/buyer-response/route');
+  const responseBody = { buyer_response: 'interested' };
+
+  it("refuses responding to an offer on another buyer's application", async () => {
+    supabase = createSupabaseMock({
+      mfi_application_offers: {
+        data: {
+          id: 'offer-1',
+          application_id: 'app-1',
+          status: 'submitted',
+          institution: { name: 'IMF A', code: 'A' },
+          application: { id: 'app-1', buyer_id: 'someone-else', status: 'submitted' },
+        },
+      },
+    });
+
+    const { PATCH } = await load();
+    const response = await PATCH(jsonRequest(responseBody), { params: { id: 'offer-1' } });
+
+    expect(response.status).toBe(404);
+    expect(supabase.writesTo('mfi_application_offers')).toEqual([]);
+  });
+
+  it('allows the buyer the application belongs to', async () => {
+    supabase = createSupabaseMock({
+      mfi_application_offers: [
+        {
+          data: {
+            id: 'offer-1',
+            application_id: 'app-1',
+            status: 'submitted',
+            institution: { name: 'IMF A', code: 'A' },
+            application: { id: 'app-1', buyer_id: 'user-self', status: 'submitted' },
+          },
+        },
+        { data: { id: 'offer-1' } },
+      ],
+    });
+
+    const { PATCH } = await load();
+    const response = await PATCH(jsonRequest(responseBody), { params: { id: 'offer-1' } });
+
+    expect(response.status).toBeLessThan(300);
+    expect(supabase.writesTo('mfi_application_offers')).toHaveLength(1);
+  });
+});
