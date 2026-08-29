@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { reportError } from '@/lib/error-reporting';
 import { z } from 'zod';
 import { requireVerifier } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
@@ -81,6 +82,7 @@ export async function PATCH(
     .single();
 
   if (error || !data) {
+    reportError('Failed to update offer.', { source: 'api/admin/mfi-offers', cause: error });
     return NextResponse.json({ error: 'Failed to update offer.' }, { status: 500 });
   }
 

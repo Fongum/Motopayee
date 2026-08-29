@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { reportError } from '@/lib/error-reporting';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
 import { requireBuyer } from '@/lib/auth/middleware';
@@ -86,6 +87,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     if ((error as { code?: string } | null)?.code === '23505') {
       return NextResponse.json({ error: 'A reservation deposit payment is already in progress.' }, { status: 409 });
     }
+    reportError('Failed to create import payment record.', { source: 'api/imports/payments/request', cause: error });
     return NextResponse.json({ error: 'Failed to create import payment record.' }, { status: 500 });
   }
 

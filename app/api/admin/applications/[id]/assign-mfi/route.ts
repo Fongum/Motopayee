@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { reportError } from '@/lib/error-reporting';
 import { requireAdmin } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { z } from 'zod';
@@ -62,6 +63,7 @@ async function assignMfi(request: Request, { params }: RouteParams) {
     .single();
 
   if (error) {
+    reportError('Failed to assign MFI.', { source: 'api/admin/applications/assign-mfi', cause: error });
     return NextResponse.json({ error: 'Failed to assign MFI.' }, { status: 500 });
   }
 

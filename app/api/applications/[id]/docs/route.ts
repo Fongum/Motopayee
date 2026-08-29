@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { reportError } from '@/lib/error-reporting';
 import { requireBuyer } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { z } from 'zod';
@@ -53,6 +54,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     .single();
 
   if (error) {
+    reportError('Failed to save document.', { source: 'api/applications/docs', cause: error });
     return NextResponse.json({ error: 'Failed to save document.' }, { status: 500 });
   }
 

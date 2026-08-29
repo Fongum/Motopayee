@@ -1,12 +1,41 @@
 'use client';
 
-export default function GlobalError({
+import { useEffect, useState } from 'react';
+
+export default function RouteError({
   error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const [reference, setReference] = useState<string | null>(error.digest ?? null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch('/api/errors', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: error.message || 'Client render error',
+        digest: error.digest,
+        route: window.location.pathname,
+        stack: error.stack,
+      }),
+      keepalive: true,
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body) => {
+        if (!cancelled && body?.eventId) setReference(body.eventId);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [error]);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="text-center max-w-md">
@@ -16,8 +45,11 @@ export default function GlobalError({
           </svg>
         </div>
         <h1 className="text-xl font-bold text-gray-900 mb-2">Une erreur est survenue</h1>
+        {/* The raw message used to be printed here. It is written for
+            developers, not customers, and can name internals — the reference
+            below is what support actually needs. */}
         <p className="text-sm text-gray-500 mb-6">
-          {error.message || 'Quelque chose ne s\'est pas passé comme prévu. Veuillez réessayer.'}
+          Quelque chose ne s&apos;est pas passé comme prévu. Réessayez, ou contactez-nous si le problème persiste.
         </p>
         <div className="flex gap-3 justify-center">
           <button
@@ -33,6 +65,9 @@ export default function GlobalError({
             Accueil
           </a>
         </div>
+        {reference && (
+          <p className="text-xs text-gray-400 mt-6">Référence: {reference}</p>
+        )}
       </div>
     </div>
   );

@@ -45,6 +45,7 @@ const PUBLIC_ROUTES: Record<string, string> = {
   'listings/[id]': 'Public listing detail.',
   'leads': 'Public lead and callback capture from the marketing and vehicle pages.',
   'contact-events': 'Anonymous contact intent from vehicle pages; throttled by middleware.',
+  errors: 'Client-side crash reports from the error boundaries; a signed-out visitor is exactly who you want to hear from. Throttled by middleware.',
   'listings/[id]/view': 'Anonymous view counter; throttled by middleware.',
   'imports/offers': 'Public import offer catalogue.',
   'imports/offers/[id]': 'Public import offer detail.',

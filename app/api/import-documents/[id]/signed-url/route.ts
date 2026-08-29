@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { reportError } from '@/lib/error-reporting';
 import { authenticateRequest } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { isStaffRole } from '@/lib/auth/roles';
@@ -45,6 +46,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     .createSignedUrl(document.storage_path, 300);
 
   if (error || !signedData) {
+    reportError('Failed to generate signed URL.', { source: 'api/import-documents/signed-url', cause: error });
     return NextResponse.json({ error: 'Failed to generate signed URL.' }, { status: 500 });
   }
 

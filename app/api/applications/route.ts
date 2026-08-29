@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { reportError } from '@/lib/error-reporting';
 import { requireBuyer } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { z } from 'zod';
@@ -57,6 +58,7 @@ export async function POST(request: Request) {
     .single();
 
   if (error || !data) {
+    reportError('Failed to create application.', { source: 'api/applications', cause: error });
     return NextResponse.json({ error: 'Failed to create application.' }, { status: 500 });
   }
 
@@ -76,6 +78,7 @@ export async function GET(request: Request) {
     .order('created_at', { ascending: false });
 
   if (error) {
+    reportError('Failed to fetch applications.', { source: 'api/applications', cause: error });
     return NextResponse.json({ error: 'Failed to fetch applications.' }, { status: 500 });
   }
 
