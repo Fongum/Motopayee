@@ -78,8 +78,11 @@ export default async function MFIApplicationDetailPage({
   const v = listing?.vehicle;
   const openToMFI = Boolean(listing?.financeable && ['submitted', 'docs_received', 'under_review', 'approved'].includes(app.status));
 
-  // MFI partner can access assigned applications or open Finance eligible applications.
-  if (institutionId && app.mfi_institution_id !== institutionId && !openToMFI) notFound();
+  // An MFI partner sees only files routed to their institution. This page
+  // shows the applicant, their documents and their payment history, so being
+  // "open to MFIs" is not on its own a reason to show it to every partner.
+  // openToMFI still gates whether an offer can be made, below.
+  if (institutionId && app.mfi_institution_id !== institutionId) notFound();
 
   const { data: paymentsData } = await supabaseAdmin
     .from('payments')

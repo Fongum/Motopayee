@@ -23,6 +23,7 @@ import JsonLd from '../../(components)/JsonLd';
 import SocialShareButtons from '../../(components)/SocialShareButtons';
 import { ListingTrustBadges } from '../../(components)/TrustLabelBadges';
 import InspectionRequestForm from '../../(components)/InspectionRequestForm';
+import VehicleCallbackForm from '../../(components)/VehicleCallbackForm';
 
 type PublicListing = Listing & {
   inspections?: Inspection[];
@@ -301,6 +302,8 @@ export default async function ListingDetailPage({
                   phone={listing.seller.phone}
                   message={`Bonjour, je suis intéressé par votre ${v ? `${v.year} ${v.make} ${v.model}` : 'véhicule'} sur MotoPayee.`}
                   label="Contacter via WhatsApp"
+                  surface="listing"
+                  listingId={listing.id}
                   className="block w-full text-center bg-[#25D366] text-white font-semibold py-3 rounded-xl hover:bg-[#1da851] transition flex items-center justify-center gap-2"
                 />
               )}
@@ -314,6 +317,11 @@ export default async function ListingDetailPage({
                   compact
                 />
               </div>
+              <VehicleCallbackForm
+                vehicleLabel={vehicleLabel}
+                listingId={listing.id}
+                defaultName={user?.name ?? ''}
+              />
               <ChatWidget
                 otherUserId={listing.seller_id}
                 otherUserName={listing.seller?.full_name ?? 'Vendeur'}

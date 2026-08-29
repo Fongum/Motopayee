@@ -1,10 +1,10 @@
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import { buildContactUrl } from '@/lib/whatsapp';
 import { QUICK_LEAD_ACTIVITY_TEMPLATES, buildLeadOutreachMessage } from '@/lib/launch-lead-playbooks';
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
-const OPEN_STATUSES = ['new', 'contacted', 'interested', 'qualified', 'onboarding'];
+const OPEN_STATUSES = ['new', 'contacted', 'interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding'];
 
 const TYPE_LABELS: Record<string, string> = {
   seller: 'Vendeur',
@@ -22,6 +22,8 @@ const STATUS_LABELS: Record<string, string> = {
   contacted: 'Contacte',
   interested: 'Interesse',
   qualified: 'Qualifie',
+  awaiting_assets: 'Attente photos/docs',
+  ready_for_listing: 'Pret listing',
   onboarding: 'Onboarding',
   not_fit: 'Pas adapte',
   closed: 'Clos',
@@ -259,8 +261,7 @@ export default async function LeadActionBoardPage({
 }: {
   searchParams: { scope?: string; campaign?: string };
 }) {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  const user = await requireAdminPage('leads');
   const isMine = searchParams.scope === 'mine';
   const campaignParam = searchParams.campaign;
   const campaignListQuery = campaignParam ? `&campaign=${encodeURIComponent(campaignParam)}` : '';

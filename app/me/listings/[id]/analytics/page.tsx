@@ -1,5 +1,7 @@
 import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
 import { redirect, notFound } from 'next/navigation';
+import { buildDailySeries, dayKey } from '@/lib/daily-series';
+import { dedupeContactEvents, type ContactEventRecord } from '@/lib/contact-events';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
@@ -13,7 +15,11 @@ interface AnalyticsData {
   total_views: number;
   views_7d: number;
   favourites_count: number;
+  contacts_30d: number;
+  contacts_7d: number;
+  contact_clicks_30d: number;
   by_day: DayData[];
+  contacts_by_day: DayData[];
 }
 
 async function getAnalytics(listingId: string, sellerId: string): Promise<AnalyticsData | null> {
@@ -26,37 +32,41 @@ async function getAnalytics(listingId: string, sellerId: string): Promise<Analyt
 
   if (!listing) return null;
 
-  const ago7d  = new Date(Date.now() - 7  * 86_400_000).toISOString().split('T')[0];
-  const ago30d = new Date(Date.now() - 30 * 86_400_000).toISOString().split('T')[0];
+  const ago7d  = dayKey(new Date(Date.now() - 7  * 86_400_000));
+  const ago30d = dayKey(new Date(Date.now() - 30 * 86_400_000));
 
-  const [totalRes, week7Res, byDayRes, favRes] = await Promise.all([
+  const [totalRes, week7Res, byDayRes, favRes, contactsRes] = await Promise.all([
     supabaseAdmin.from('listing_views').select('id', { count: 'exact', head: true }).eq('listing_id', listingId),
     supabaseAdmin.from('listing_views').select('id', { count: 'exact', head: true }).eq('listing_id', listingId).gte('date_day', ago7d),
     supabaseAdmin.from('listing_views').select('date_day').eq('listing_id', listingId).gte('date_day', ago30d).order('date_day'),
     supabaseAdmin.from('favourites').select('id', { count: 'exact', head: true }).eq('listing_id', listingId),
+    supabaseAdmin
+      .from('contact_events')
+      .select('id, surface, listing_id, hire_listing_id, actor_id, visitor_key, date_day')
+      .eq('listing_id', listingId)
+      .gte('date_day', ago30d)
+      .order('date_day'),
   ]);
 
-  const dayMap: Record<string, number> = {};
-  ((byDayRes.data ?? []) as { date_day: string }[]).forEach((r) => {
-    dayMap[r.date_day] = (dayMap[r.date_day] ?? 0) + 1;
-  });
-
-  const by_day: DayData[] = Array.from({ length: 30 }, (_, i) => {
-    const d = new Date(Date.now() - (29 - i) * 86_400_000);
-    const key = d.toISOString().split('T')[0];
-    return { date: key, count: dayMap[key] ?? 0 };
-  });
+  const viewDays = ((byDayRes.data ?? []) as { date_day: string }[]).map((r) => r.date_day);
+  // One row per click; collapse repeat taps by the same viewer on the same day.
+  const contactRows = (contactsRes.data ?? []) as unknown as ContactEventRecord[];
+  const contacts = dedupeContactEvents(contactRows);
 
   return {
     total_views: totalRes.count ?? 0,
     views_7d: week7Res.count ?? 0,
     favourites_count: favRes.count ?? 0,
-    by_day,
+    contacts_30d: contacts.length,
+    contacts_7d: contacts.filter((r) => r.date_day >= ago7d).length,
+    contact_clicks_30d: contactRows.length,
+    by_day: buildDailySeries(viewDays, 30),
+    contacts_by_day: buildDailySeries(contacts.map((r) => r.date_day), 30),
   };
 }
 
 /** Simple SVG bar chart — no dependencies */
-function BarChart({ data }: { data: DayData[] }) {
+function BarChart({ data, unit, color = '#1a3a6b' }: { data: DayData[]; unit: string; color?: string }) {
   const max = Math.max(...data.map((d) => d.count), 1);
   const W = 600;
   const H = 120;
@@ -73,10 +83,10 @@ function BarChart({ data }: { data: DayData[] }) {
             <rect
               x={x} y={y} width={barW} height={h}
               rx={2}
-              fill={d.count > 0 ? '#1a3a6b' : '#e5e7eb'}
+              fill={d.count > 0 ? color : '#e5e7eb'}
             />
             {d.count > 0 && (
-              <title>{`${d.date}: ${d.count} vue${d.count !== 1 ? 's' : ''}`}</title>
+              <title>{`${d.date}: ${d.count} ${unit}${d.count !== 1 ? 's' : ''}`}</title>
             )}
           </g>
         );
@@ -92,7 +102,7 @@ export default async function ListingAnalyticsPage({ params }: { params: { id: s
   const analytics = await getAnalytics(params.id, user.id);
   if (!analytics) notFound();
 
-  const { total_views, views_7d, favourites_count, by_day } = analytics;
+  const { total_views, views_7d, favourites_count, contacts_30d, contacts_7d, contact_clicks_30d, by_day, contacts_by_day } = analytics;
 
   // Label first day and last day of chart
   const firstDay = by_day[0]?.date ? new Date(by_day[0].date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '';
@@ -131,6 +141,17 @@ export default async function ListingAnalyticsPage({ params }: { params: { id: s
       ),
       color: 'bg-red-50 text-red-600 border-red-100',
     },
+    {
+      label: `Contacts 30 j (${contacts_7d} sur 7 j)`,
+      value: contacts_30d,
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+            d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+      ),
+      color: 'bg-emerald-50 text-[#25D366] border-emerald-100',
+    },
   ];
 
   return (
@@ -144,7 +165,7 @@ export default async function ListingAnalyticsPage({ params }: { params: { id: s
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {STATS.map(({ label, value, icon, color }) => (
           <div key={label} className={`flex items-center gap-4 p-5 bg-white rounded-2xl border ${color}`}>
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
@@ -162,7 +183,20 @@ export default async function ListingAnalyticsPage({ params }: { params: { id: s
       <div className="bg-white border border-gray-200 rounded-2xl p-6">
         <h2 className="text-base font-bold text-gray-900 mb-1">Vues — 30 derniers jours</h2>
         <p className="text-xs text-gray-400 mb-5">{"Chaque barre représente les vues d'une journée"}</p>
-        <BarChart data={by_day} />
+        <BarChart data={by_day} unit="vue" />
+        <div className="flex justify-between text-xs text-gray-400 mt-2">
+          <span>{firstDay}</span>
+          <span>{lastDay}</span>
+        </div>
+      </div>
+
+      {/* Contacts chart */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-6">
+        <h2 className="text-base font-bold text-gray-900 mb-1">Contacts — 30 derniers jours</h2>
+        <p className="text-xs text-gray-400 mb-5">
+          {`Acheteurs uniques qui ont cliqué pour vous joindre par WhatsApp ou téléphone — ${contact_clicks_30d} clic${contact_clicks_30d !== 1 ? 's' : ''} au total`}
+        </p>
+        <BarChart data={contacts_by_day} unit="contact" color="#25D366" />
         <div className="flex justify-between text-xs text-gray-400 mt-2">
           <span>{firstDay}</span>
           <span>{lastDay}</span>

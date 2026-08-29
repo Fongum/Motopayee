@@ -42,6 +42,7 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li><Link href="/listings" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Acheter un véhicule</Link></li>
               <li><Link href="/hire" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Louer un véhicule</Link></li>
+              <li><Link href="/rental-partners" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Mettre en location</Link></li>
               <li><Link href="/sell" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Vendre un véhicule</Link></li>
               <li><Link href="/imports" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Importer des USA</Link></li>
             </ul>
@@ -51,6 +52,8 @@ export default function Footer() {
             <p className="text-white text-xs font-bold mb-5 uppercase tracking-widest">Services</p>
             <ul className="space-y-3 text-sm">
               <li><Link href="/apply" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Financement</Link></li>
+              <li><Link href="/inspection" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Inspection véhicule</Link></li>
+              <li><Link href="/trust" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Labels confiance</Link></li>
               <li><Link href="/calculator" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Simulateur MVE</Link></li>
               <li><Link href="/register" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Créer un compte</Link></li>
               <li><Link href="/login" className="text-blue-300 hover:text-[#3d9e3d] transition-colors">Se connecter</Link></li>

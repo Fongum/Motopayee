@@ -1,11 +1,10 @@
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
-import { redirect } from 'next/navigation';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import { isAdminRole } from '@/lib/auth/roles';
 import type { ZoneRule } from '@/lib/types';
 
 export default async function RulesPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  const user = await requireAdminPage('rules');
 
   const { data } = await supabaseAdmin
     .from('zone_rules')

@@ -11,14 +11,24 @@ const ROLES: { value: Role; label: string }[] = [
   { value: 'seller_dealer', label: 'Concessionnaire — Je gère un parc de véhicules' },
 ];
 
+const MFI_ROLE: { value: Role; label: string } = {
+  value: 'mfi_partner',
+  label: 'Partenaire MFI — Je traite des dossiers de financement',
+};
+
+const ROLE_VALUES = ['buyer', 'seller_individual', 'seller_dealer', 'mfi_partner'];
+
 export default function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const defaultRole = (searchParams.get('role') as Role | null) ?? 'buyer';
+  const requestedRole = searchParams.get('role');
+  const defaultRole = (requestedRole && ROLE_VALUES.includes(requestedRole) ? requestedRole : 'buyer') as Role;
   const refCode = searchParams.get('ref') ?? '';
+  const inviteEmail = searchParams.get('email') ?? '';
+  const roleOptions = defaultRole === 'mfi_partner' ? [...ROLES, MFI_ROLE] : ROLES;
 
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(inviteEmail);
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<Role>(defaultRole);
   const [referralCode, setReferralCode] = useState(refCode);
@@ -52,7 +62,7 @@ export default function RegisterForm() {
       }).catch(() => {});
     }
 
-    router.push('/onboarding');
+    router.push(role === 'mfi_partner' ? '/mfi' : '/onboarding');
     router.refresh();
   }
 
@@ -100,7 +110,7 @@ export default function RegisterForm() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Je suis</label>
             <div className="space-y-2">
-              {ROLES.map((r) => (
+              {roleOptions.map((r) => (
                 <label key={r.value} className="flex items-start gap-3 cursor-pointer">
                   <input
                     type="radio"

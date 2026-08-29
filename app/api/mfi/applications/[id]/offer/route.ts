@@ -40,13 +40,24 @@ export async function POST(request: Request, { params }: RouteParams) {
 
   const { data: app } = await supabaseAdmin
     .from('financing_applications')
-    .select('id, status, listing:listings(id, financeable)')
+    .select('id, status, mfi_institution_id, listing:listings(id, financeable)')
     .eq('id', params.id)
     .maybeSingle();
 
   const listing = Array.isArray(app?.listing) ? app?.listing[0] : app?.listing;
   if (!app || !listing?.financeable) {
     return NextResponse.json({ error: 'Application is not available to MFI partners.' }, { status: 404 });
+  }
+
+  // Applications are routed to one institution by staff, and only that
+  // institution may act on the file — the same rule /disburse enforces and the
+  // MFI screens now scope to. An unrouted application is nobody's yet.
+  const assignedTo = (app as { mfi_institution_id: string | null }).mfi_institution_id;
+  if (institutionId && assignedTo !== institutionId) {
+    return NextResponse.json(
+      { error: 'Application is not routed to your institution.' },
+      { status: 403 }
+    );
   }
 
   if (!['submitted', 'docs_received', 'under_review', 'approved'].includes(app.status as string)) {
@@ -67,6 +78,20 @@ export async function POST(request: Request, { params }: RouteParams) {
   if (error || !data) {
     return NextResponse.json({ error: 'Failed to save MFI offer.' }, { status: 500 });
   }
+
+  const nextFollowUpStatus = parsed.data.status === 'submitted' ? 'waiting_buyer' : 'call_needed';
+  await supabaseAdmin
+    .from('financing_applications')
+    .update({
+      follow_up_status: nextFollowUpStatus,
+      next_follow_up_at: new Date().toISOString(),
+      follow_up_actor_id: auth.user.id,
+      follow_up_updated_at: new Date().toISOString(),
+      follow_up_notes: parsed.data.status === 'submitted'
+        ? 'MFI offer received. Staff should review and coordinate buyer response.'
+        : 'MFI declined or withdrew. Staff should review routing options.',
+    })
+    .eq('id', params.id);
 
   await supabaseAdmin.from('audit_logs').insert({
     actor_id: auth.user.id,

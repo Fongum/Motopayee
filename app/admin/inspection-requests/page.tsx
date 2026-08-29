@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import { supabaseAdmin } from '@/lib/auth/server';
 import type { InspectionRequest, InspectionRequestStatus } from '@/lib/types';
 import InspectionRequestActions from './InspectionRequestActions';
@@ -72,8 +73,26 @@ type PaymentSummary = {
 export default async function AdminInspectionRequestsPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: { status?: string; payment?: string };
 }) {
+  await requireAdminPage('inspection-requests');
+
+  const paymentFilter = ['pending', 'processing', 'successful', 'failed', 'cancelled'].includes(searchParams.payment ?? '')
+    ? searchParams.payment
+    : null;
+  let paymentFilteredRequestIds: string[] | null = null;
+
+  if (paymentFilter) {
+    const { data: filteredPayments } = await supabaseAdmin
+      .from('payments')
+      .select('inspection_request_id')
+      .eq('payment_type', 'inspection_fee')
+      .eq('status', paymentFilter)
+      .not('inspection_request_id', 'is', null);
+
+    paymentFilteredRequestIds = Array.from(new Set((filteredPayments ?? []).map((payment) => payment.inspection_request_id as string)));
+  }
+
   let query = supabaseAdmin
     .from('inspection_requests')
     .select(`
@@ -100,6 +119,12 @@ export default async function AdminInspectionRequestsPage({
     query = query.eq('status', searchParams.status);
   }
 
+  if (paymentFilter) {
+    query = paymentFilteredRequestIds && paymentFilteredRequestIds.length > 0
+      ? query.in('id', paymentFilteredRequestIds)
+      : query.eq('id', '00000000-0000-0000-0000-000000000000');
+  }
+
   const { data } = await query;
   const requests = (data ?? []) as unknown as RequestRow[];
   const requestIds = requests.map((request) => request.id);
@@ -111,6 +136,10 @@ export default async function AdminInspectionRequestsPage({
       .eq('payment_type', 'inspection_fee')
       .order('created_at', { ascending: false })
     : { data: [] };
+  const { data: allInspectionPaymentRows } = await supabaseAdmin
+    .from('payments')
+    .select('amount, status')
+    .eq('payment_type', 'inspection_fee');
   const latestPayments = new Map<string, PaymentSummary>();
   ((paymentRows ?? []) as unknown as PaymentSummary[]).forEach((payment) => {
     if (!latestPayments.has(payment.inspection_request_id)) {
@@ -127,6 +156,19 @@ export default async function AdminInspectionRequestsPage({
     id: inspector.id as string,
     label: ((inspector.full_name as string | null) || (inspector.email as string | null) || 'Inspecteur') as string,
   }));
+  const inspectionPayments = (allInspectionPaymentRows ?? []) as Array<{ amount: number | string | null; status: string }>;
+  const paymentCountByStatus = (status: string) => inspectionPayments.filter((payment) => payment.status === status).length;
+  const paymentAmountByStatus = (status: string) => inspectionPayments
+    .filter((payment) => payment.status === status)
+    .reduce((total, payment) => total + Number(payment.amount ?? 0), 0);
+  const stats = [
+    { label: 'A programmer', value: requests.filter((request) => request.status === 'paid').length.toLocaleString('fr-FR'), href: '/admin/inspection-requests?status=paid', color: 'text-green-700' },
+    { label: 'Programmees', value: requests.filter((request) => request.status === 'scheduled').length.toLocaleString('fr-FR'), href: '/admin/inspection-requests?status=scheduled', color: 'text-purple-700' },
+    { label: 'Terminees', value: requests.filter((request) => request.status === 'completed').length.toLocaleString('fr-FR'), href: '/admin/inspection-requests?status=completed', color: 'text-gray-900' },
+    { label: 'Paiements en cours', value: paymentCountByStatus('pending') + paymentCountByStatus('processing'), href: '/admin/inspection-requests?payment=pending', color: 'text-amber-700' },
+    { label: 'Revenu recu', value: formatXAF(paymentAmountByStatus('successful')), href: '/admin/inspection-requests?payment=successful', color: 'text-green-700' },
+    { label: 'Paiements echoues', value: paymentCountByStatus('failed'), href: '/admin/inspection-requests?payment=failed', color: 'text-red-700' },
+  ];
 
   return (
     <div>
@@ -136,6 +178,15 @@ export default async function AdminInspectionRequestsPage({
           <p className="mt-1 text-sm text-gray-500">Leads acheteurs a convertir en inspections payees.</p>
         </div>
         <span className="text-sm text-gray-500">{requests.length} affichees</span>
+      </div>
+
+      <div className="mb-6 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+        {stats.map((stat) => (
+          <Link key={stat.label} href={stat.href} className="rounded-2xl border border-gray-200 bg-white p-5 transition hover:border-[#3d9e3d] hover:shadow-sm">
+            <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+            <p className="mt-1 text-sm text-gray-500">{stat.label}</p>
+          </Link>
+        ))}
       </div>
 
       <div className="mb-6 flex flex-wrap gap-2">
@@ -153,6 +204,30 @@ export default async function AdminInspectionRequestsPage({
           </Link>
         ))}
       </div>
+
+      <div className="mb-6 flex flex-wrap gap-2">
+        {[
+          { value: '', label: 'Tous paiements' },
+          { value: 'pending', label: 'Envoyes' },
+          { value: 'processing', label: 'En traitement' },
+          { value: 'successful', label: 'Recus' },
+          { value: 'failed', label: 'Echoues' },
+          { value: 'cancelled', label: 'Annules' },
+        ].map((filter) => (
+          <Link
+            key={filter.value || 'all-payments'}
+            href={filter.value ? `/admin/inspection-requests?payment=${filter.value}` : '/admin/inspection-requests'}
+            className={`rounded-full border px-3 py-1.5 text-xs transition ${
+              searchParams.payment === filter.value || (!searchParams.payment && !filter.value)
+                ? 'border-[#1a3a6b] bg-[#1a3a6b] text-white'
+                : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            {filter.label}
+          </Link>
+        ))}
+      </div>
+
 
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
         <table className="w-full text-sm">

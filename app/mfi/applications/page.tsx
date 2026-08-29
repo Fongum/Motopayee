@@ -69,14 +69,18 @@ export default async function MFIApplicationsPage({
     .from('financing_applications')
     .select(`
       id, status, created_at, income_grade,
-      disbursed_at,
+      disbursed_at, mfi_institution_id,
       listing:listings(asking_price, zone, financeable, vehicle:vehicles(make, model, year)),
       buyer:profiles!buyer_id(full_name, city)
     `)
     .order('created_at', { ascending: false });
 
   if (institutionId) {
+    // Scoped to files routed to this institution. Applicant name and city are
+    // selected above, so an unscoped list would show every partner — including
+    // competitors — who is applying for finance and where they live.
     query = query
+      .eq('mfi_institution_id', institutionId)
       .in('status', ['submitted', 'docs_received', 'under_review', 'approved', 'disbursed'])
       .eq('listing.financeable', true);
   } else {
@@ -108,6 +112,7 @@ export default async function MFIApplicationsPage({
 
   const allItems = (data ?? []) as unknown as Array<
     FinancingApplication & {
+      mfi_institution_id?: string | null;
       listing?: {
         asking_price: number;
         zone: string;
@@ -119,6 +124,12 @@ export default async function MFIApplicationsPage({
   >;
   const items = searchParams.filter === 'buyer_interested'
     ? allItems.filter((app) => offersByApplication.get(app.id)?.buyer_response === 'interested')
+    : searchParams.filter === 'assigned'
+      ? allItems.filter((app) => app.mfi_institution_id === institutionId)
+    : searchParams.filter === 'needs_response'
+      ? allItems.filter((app) => app.mfi_institution_id === institutionId && !offersByApplication.has(app.id))
+    : searchParams.filter === 'open_market'
+      ? allItems.filter((app) => app.mfi_institution_id !== institutionId && !offersByApplication.has(app.id))
     : searchParams.filter === 'my_offers'
       ? allItems.filter((app) => {
         const offer = offersByApplication.get(app.id);
@@ -148,6 +159,9 @@ export default async function MFIApplicationsPage({
         <div className="mb-6 flex flex-wrap gap-2">
           {[
             { value: '', label: 'Toutes' },
+            { value: 'assigned', label: 'Assignees' },
+            { value: 'needs_response', label: 'A repondre' },
+            { value: 'open_market', label: 'Ouvertes' },
             { value: 'my_offers', label: 'Mes offres actives' },
             { value: 'buyer_interested', label: 'Acheteurs interesses' },
             { value: 'accepted', label: 'Offres retenues' },
@@ -174,6 +188,12 @@ export default async function MFIApplicationsPage({
           <p className="text-gray-500">
             {searchParams.filter === 'buyer_interested'
               ? 'Aucun acheteur interesse par votre offre pour le moment.'
+              : searchParams.filter === 'assigned'
+                ? 'Aucune demande assignee a votre IMF pour le moment.'
+              : searchParams.filter === 'needs_response'
+                ? 'Aucune demande assignee sans reponse pour le moment.'
+              : searchParams.filter === 'open_market'
+                ? 'Aucune demande ouverte disponible pour le moment.'
               : searchParams.filter === 'my_offers'
                 ? 'Aucune offre active pour le moment.'
               : searchParams.filter === 'accepted'
@@ -191,6 +211,7 @@ export default async function MFIApplicationsPage({
             const v = app.listing?.vehicle;
             const buyer = app.buyer;
             const offer = offersByApplication.get(app.id);
+            const assignedToThisMfi = institutionId && app.mfi_institution_id === institutionId;
             return (
               <Link
                 key={app.id}
@@ -214,6 +235,16 @@ export default async function MFIApplicationsPage({
                     {offer?.buyer_response === 'interested' && (
                       <p className="mt-2 inline-flex rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
                         Acheteur interesse par votre offre
+                      </p>
+                    )}
+                    {assignedToThisMfi && !offer && (
+                      <p className="mt-2 inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+                        Assignee a votre IMF - reponse attendue
+                      </p>
+                    )}
+                    {!assignedToThisMfi && !offer && (
+                      <p className="mt-2 inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                        Ouverte aux offres partenaires
                       </p>
                     )}
                     {app.status === 'disbursed' && app.disbursed_at && (

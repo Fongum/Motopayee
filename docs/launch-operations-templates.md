@@ -2,7 +2,7 @@
 
 Reference date: August 2026
 
-Use these templates during the first 30-day launch push in Buea and Douala.
+Use these templates during the first 30-day launch push. Public messaging should position MotoPayee for Cameroon, while internal field execution starts in Buea and Douala.
 
 ## Operating Rule
 
@@ -303,11 +303,11 @@ Before a rental listing is published:
 
 ### Seller
 
-Hello, this is MotoPayee. You can list your vehicle for free on our reviewed vehicle marketplace for Buea and Douala. Please send the make, model, year, price, city, mileage, and clear photos of the car.
+Hello, this is MotoPayee. You can list your vehicle for free on our reviewed vehicle marketplace for Cameroon. Please send the make, model, year, price, city, mileage, and clear photos of the car.
 
 ### Dealer
 
-Hello, this is MotoPayee. We are onboarding selected dealers for a free 6-month pilot in Buea and Douala. We help package your inventory, promote your vehicles, and connect you with serious buyers and finance-ready customers.
+Hello, this is MotoPayee. We are onboarding selected dealers across Cameroon for a free 6-month pilot. We help package your inventory, promote your vehicles, and connect you with serious buyers and finance-ready customers.
 
 ### Rental Owner
 
@@ -323,4 +323,4 @@ Hello, this is MotoPayee. Please share your rental dates, vehicle type needed, p
 
 ### Finance Partner
 
-Hello, this is MotoPayee. We are building a trusted vehicle marketplace for Buea and Douala and would like to discuss sending structured vehicle finance applications to selected partner institutions.
+Hello, this is MotoPayee. We are building a trusted vehicle marketplace for Cameroon and would like to discuss sending structured vehicle finance applications to selected partner institutions.

@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import type { ImportRequest } from '@/lib/types';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -33,8 +33,7 @@ export default async function AdminImportRequestsPage({
 }: {
   searchParams: { status?: string; page?: string };
 }) {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  await requireAdminPage('imports');
 
   const page = Math.max(1, parseInt(searchParams.page ?? '1', 10));
   const pageSize = 25;

@@ -69,7 +69,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     meta: { from: 'approved', to: 'disbursed' },
   });
 
-  await ensureFinanceCommission(params.id, user.id);
+  await ensureFinanceCommission(params.id, user.id, { dueNow: true });
 
   // Notify buyer
   const { data: buyerProfile } = await supabaseAdmin

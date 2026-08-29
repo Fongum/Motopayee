@@ -80,6 +80,9 @@ export async function POST(request: Request, { params }: RouteParams) {
   if (['approved', 'rejected'].includes(parsed.data.status)) {
     updates.decided_at = new Date().toISOString();
   }
+  if (parsed.data.status === 'disbursed') {
+    updates.disbursed_at = new Date().toISOString();
+  }
 
   const { data, error } = await supabaseAdmin
     .from('financing_applications')
@@ -102,8 +105,10 @@ export async function POST(request: Request, { params }: RouteParams) {
     meta: { from: app.status, to: parsed.data.status, income_grade: parsed.data.income_grade },
   });
 
-  if (parsed.data.status === 'disbursed') {
+  if (parsed.data.status === 'approved') {
     await ensureFinanceCommission(params.id, auth.user.id);
+  } else if (parsed.data.status === 'disbursed') {
+    await ensureFinanceCommission(params.id, auth.user.id, { dueNow: true });
   }
 
   // SMS notification (fire-and-forget)

@@ -8,7 +8,7 @@ import { z } from 'zod';
 const schema = z.object({
   lead_type: z.enum(['seller', 'dealer', 'rental_owner', 'buyer', 'renter', 'mfi', 'inspection', 'other']),
   source: z.enum(['website', 'whatsapp', 'referral', 'facebook', 'field', 'dealer_visit', 'staff', 'other']).default('staff'),
-  status: z.enum(['new', 'contacted', 'interested', 'qualified', 'onboarding', 'converted', 'not_fit', 'closed']).default('new'),
+  status: z.enum(['new', 'contacted', 'interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding', 'converted', 'not_fit', 'closed']).default('new'),
   priority: z.enum(['low', 'normal', 'high']).default('normal'),
   name: z.string().trim().min(2).max(120),
   business_name: z.string().trim().max(160).optional(),

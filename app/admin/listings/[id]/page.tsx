@@ -1,16 +1,16 @@
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
-import { redirect, notFound } from 'next/navigation';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
+import { isAdminRole } from '@/lib/auth/roles';
+import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Inspection, Listing } from '@/lib/types';
-import { isAdminRole } from '@/lib/auth/roles';
 
 function formatXAF(amount: number) {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
 }
 
 export default async function AdminListingDetailPage({ params }: { params: { id: string } }) {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  const user = await requireAdminPage('listings');
 
   const { data, error } = await supabaseAdmin
     .from('listings')

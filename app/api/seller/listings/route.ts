@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireSeller } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
+import { recordLeadActivity } from '@/lib/launch-lead-activities';
 import { z } from 'zod';
 
 const schema = z.object({
@@ -17,6 +18,7 @@ const schema = z.object({
   zone: z.enum(['A', 'B', 'C']),
   city: z.string().optional(),
   description: z.string().optional(),
+  launch_lead_id: z.string().uuid().optional(),
 });
 
 export async function POST(request: Request) {
@@ -32,7 +34,7 @@ export async function POST(request: Request) {
   }
 
   const { make, model, year, mileage_km, fuel_type, transmission, color, engine_cc, seats,
-          asking_price, zone, city, description } = parsed.data;
+          asking_price, zone, city, description, launch_lead_id } = parsed.data;
 
   // Create vehicle record
   const { data: vehicle, error: vehicleError } = await supabaseAdmin
@@ -64,6 +66,32 @@ export async function POST(request: Request) {
     // Rollback vehicle
     await supabaseAdmin.from('vehicles').delete().eq('id', vehicle.id);
     return NextResponse.json({ error: 'Failed to create listing.' }, { status: 500 });
+  }
+
+  if (launch_lead_id) {
+    const { data: convertedLead } = await supabaseAdmin
+      .from('launch_leads')
+      .update({
+        status: 'converted',
+        converted_entity_type: 'listing',
+        converted_entity_id: listing.id,
+        next_follow_up_at: null,
+      })
+      .eq('id', launch_lead_id)
+      .in('lead_type', ['seller', 'dealer'])
+      .neq('status', 'converted')
+      .select('id')
+      .maybeSingle();
+
+    if (convertedLead) {
+      await recordLeadActivity({
+        leadId: launch_lead_id,
+        actorId: auth.user.id,
+        action: 'converted',
+        summary: 'Lead converted into sale listing',
+        meta: { listing_id: listing.id, vehicle_id: vehicle.id },
+      });
+    }
   }
 
   return NextResponse.json({ listing }, { status: 201 });

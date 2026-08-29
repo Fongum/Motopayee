@@ -1,5 +1,5 @@
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
-import { redirect } from 'next/navigation';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
 import { calculateFinanceCommission } from '@/lib/finance-commissions';
 
@@ -38,10 +38,23 @@ const COMMISSION_COLORS: Record<string, string> = {
 export default async function AdminFinancePage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: { status?: string; commission?: string };
 }) {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  await requireAdminPage('finance');
+
+  const commissionFilter = ['expected', 'invoiced', 'paid', 'waived'].includes(searchParams.commission ?? '')
+    ? searchParams.commission
+    : null;
+  let commissionFilteredApplicationIds: string[] | null = null;
+
+  if (commissionFilter) {
+    const { data: filteredCommissions } = await supabaseAdmin
+      .from('finance_commissions')
+      .select('application_id')
+      .eq('status', commissionFilter);
+
+    commissionFilteredApplicationIds = Array.from(new Set((filteredCommissions ?? []).map((commission) => commission.application_id as string)));
+  }
 
   let query = supabaseAdmin
     .from('financing_applications')
@@ -62,6 +75,12 @@ export default async function AdminFinancePage({
 
   if (searchParams.status === 'approved' || searchParams.status === 'disbursed') {
     query = query.eq('status', searchParams.status);
+  }
+
+  if (commissionFilter) {
+    query = commissionFilteredApplicationIds && commissionFilteredApplicationIds.length > 0
+      ? query.in('id', commissionFilteredApplicationIds)
+      : query.eq('id', '00000000-0000-0000-0000-000000000000');
   }
 
   const { data } = await query;
@@ -85,9 +104,12 @@ export default async function AdminFinancePage({
   const { data: commissionData } = applicationIds.length > 0
     ? await supabaseAdmin
         .from('finance_commissions')
-        .select('id, application_id, commission_rate_percent, commission_amount_xaf, status, paid_at, notes')
+        .select('id, application_id, commission_rate_percent, commission_amount_xaf, status, due_at, paid_at, notes')
         .in('application_id', applicationIds)
     : { data: [] };
+  const { data: allCommissionData } = await supabaseAdmin
+    .from('finance_commissions')
+    .select('status, commission_amount_xaf');
 
   const commissionsByApplication = new Map(
     ((commissionData ?? []) as unknown as Array<{
@@ -96,28 +118,31 @@ export default async function AdminFinancePage({
       commission_rate_percent: number;
       commission_amount_xaf: number;
       status: string;
+      due_at: string | null;
       paid_at: string | null;
       notes: string | null;
     }>).map((commission) => [commission.application_id, commission])
   );
+  const commissionRows = (allCommissionData ?? []) as Array<{ status: string; commission_amount_xaf: number | string | null }>;
+  const commissionAmountByStatus = (status: string) => commissionRows
+    .filter((commission) => commission.status === status)
+    .reduce((sum, commission) => sum + Number(commission.commission_amount_xaf ?? 0), 0);
+  const commissionCountByStatus = (status: string) => commissionRows.filter((commission) => commission.status === status).length;
 
   const approvedRows = rows.filter((row) => row.status === 'approved');
   const disbursedRows = rows.filter((row) => row.status === 'disbursed');
   const approvedValue = approvedRows.reduce((total, row) => total + Number(row.listing?.asking_price ?? 0), 0);
   const disbursedValue = disbursedRows.reduce((total, row) => total + Number(row.listing?.asking_price ?? 0), 0);
-  const expectedCommission = rows.reduce((total, row) => {
-    const commission = commissionsByApplication.get(row.id);
-    return total + Number(commission?.commission_amount_xaf ?? calculateFinanceCommission(Number(row.listing?.asking_price ?? 0)));
-  }, 0);
-  const paidCommission = Array.from(commissionsByApplication.values()).reduce((total, commission) => (
-    commission.status === 'paid' ? total + Number(commission.commission_amount_xaf ?? 0) : total
-  ), 0);
+  const expectedCommissionAmount = commissionAmountByStatus('expected');
+  const invoicedCommissionAmount = commissionAmountByStatus('invoiced');
+  const paidCommissionAmount = commissionAmountByStatus('paid');
 
   const stats = [
     { label: 'A decaisser', value: approvedRows.length, amount: approvedValue, href: '/admin/finance?status=approved', color: 'text-amber-600' },
     { label: 'Financees', value: disbursedRows.length, amount: disbursedValue, href: '/admin/finance?status=disbursed', color: 'text-emerald-700' },
-    { label: 'Commission attendue', value: null, amount: expectedCommission, href: '/admin/finance', color: 'text-blue-700' },
-    { label: 'Commission encaissee', value: null, amount: paidCommission, href: '/admin/finance', color: 'text-green-700' },
+    { label: 'A facturer', value: commissionCountByStatus('expected'), amount: expectedCommissionAmount, href: '/admin/finance?commission=expected', color: 'text-amber-600' },
+    { label: 'Facturee', value: commissionCountByStatus('invoiced'), amount: invoicedCommissionAmount, href: '/admin/finance?commission=invoiced', color: 'text-blue-700' },
+    { label: 'Encaissee', value: commissionCountByStatus('paid'), amount: paidCommissionAmount, href: '/admin/finance?commission=paid', color: 'text-green-700' },
   ];
 
   return (
@@ -127,12 +152,29 @@ export default async function AdminFinancePage({
           <h1 className="text-2xl font-bold text-gray-900">Reconciliation financement</h1>
           <p className="mt-1 text-sm text-gray-500">Suivi des dossiers approuves, decaisses, et des partenaires IMF.</p>
         </div>
-        <Link href="/admin/applications" className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-          Toutes les demandes
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/finance/matches" className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100">
+            Matching finance
+          </Link>
+          <Link href="/admin/applications?status=mfi_unassigned" className="rounded-lg border border-purple-200 bg-purple-50 px-4 py-2 text-sm font-semibold text-purple-700 hover:bg-purple-100">
+            A router IMF
+          </Link>
+          <Link href="/admin/applications?status=offers_waiting_buyer" className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100">
+            Offres a presenter
+          </Link>
+          <Link href="/admin/finance/partners" className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100">
+            Partenaires finance
+          </Link>
+          <Link href="/admin/finance/eligible" className="rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-100">
+            Vehicules finance eligible
+          </Link>
+          <Link href="/admin/applications" className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            Toutes les demandes
+          </Link>
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         {stats.map((stat) => (
           <Link
             key={stat.label}
@@ -163,6 +205,28 @@ export default async function AdminFinancePage({
             href={filter.value ? `/admin/finance?status=${filter.value}` : '/admin/finance'}
             className={`rounded-full border px-3 py-1.5 text-xs transition ${
               (searchParams.status ?? '') === filter.value
+                ? 'border-[#1a3a6b] bg-[#1a3a6b] text-white'
+                : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            {filter.label}
+          </Link>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {[
+          { value: '', label: 'Toutes commissions' },
+          { value: 'expected', label: 'A facturer' },
+          { value: 'invoiced', label: 'Facturees' },
+          { value: 'paid', label: 'Encaissees' },
+          { value: 'waived', label: 'Annulees' },
+        ].map((filter) => (
+          <Link
+            key={filter.value}
+            href={filter.value ? `/admin/finance?commission=${filter.value}` : '/admin/finance'}
+            className={`rounded-full border px-3 py-1.5 text-xs transition ${
+              (searchParams.commission ?? '') === filter.value
                 ? 'border-[#1a3a6b] bg-[#1a3a6b] text-white'
                 : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
             }`}
@@ -229,6 +293,11 @@ export default async function AdminFinancePage({
                     }`}>
                       {COMMISSION_LABELS[commissionStatus] ?? 'Estimee'}
                     </span>
+                    {commission?.due_at && commission.status !== 'paid' && (
+                      <p className="mt-1 text-xs text-amber-700">
+                        Due {new Date(commission.due_at).toLocaleDateString('fr-FR')}
+                      </p>
+                    )}
                     {commission && (
                       <form action={`/api/admin/finance-commissions/${commission.id}/status`} method="POST" className="mt-2 flex gap-2">
                         <select name="status" defaultValue={commission.status} className="w-28 rounded-md border border-gray-300 px-2 py-1 text-xs">

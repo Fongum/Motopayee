@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { reportError } from '@/lib/error-reporting';
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import { requireStaff } from '@/lib/auth/middleware';
@@ -89,6 +90,7 @@ export async function POST(
     if ((dbError as { code?: string } | null)?.code === '23505') {
       return NextResponse.json({ error: 'A payment is already in progress for this inspection request.' }, { status: 409 });
     }
+    reportError('Failed to create payment record.', { source: 'api/admin/inspection-requests/payment', cause: dbError });
     return NextResponse.json({ error: 'Failed to create payment record.' }, { status: 500 });
   }
 

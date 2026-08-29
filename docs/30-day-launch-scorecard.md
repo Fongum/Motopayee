@@ -4,7 +4,9 @@ Reference date: August 2026
 
 ## Strategic Focus
 
-MotoPayee is launching as a professional trusted vehicle marketplace for Buea and Douala.
+MotoPayee is launching as a professional trusted vehicle marketplace for Cameroon.
+
+Operational priority starts in Buea and Douala, then expands city by city as verification, inspection, and partner coverage become reliable.
 
 The first public push should focus on:
 
@@ -247,9 +249,13 @@ Every lead should end each day in one status:
 
 ## Launch Positioning
 
-Primary line:
+Primary public line:
 
-> MotoPayee is the trusted vehicle marketplace for Buea and Douala.
+> MotoPayee is the trusted vehicle marketplace for Cameroon.
+
+Internal launch focus:
+
+> Start operational execution in Buea and Douala, without positioning MotoPayee as limited to those cities.
 
 Supporting lines:
 

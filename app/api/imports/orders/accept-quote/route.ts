@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { reportError } from '@/lib/error-reporting';
 import { z } from 'zod';
 import { requireBuyer } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
@@ -92,6 +93,7 @@ export async function POST(request: Request) {
     .single();
 
   if (error || !order) {
+    reportError('Failed to create import order.', { source: 'api/imports/orders/accept-quote', cause: error });
     return NextResponse.json({ error: 'Failed to create import order.' }, { status: 500 });
   }
 

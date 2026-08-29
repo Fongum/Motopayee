@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import type { HireListing } from '@/lib/types';
 import AdminHireActions from './AdminHireActions';
 import Link from 'next/link';
@@ -16,6 +17,8 @@ const STATUS_FR: Record<string, { label: string; cls: string }> = {
 };
 
 export default async function AdminHirePage() {
+  await requireAdminPage('hire');
+
   const { data: pendingData } = await supabaseAdmin
     .from('hire_listings')
     .select('*, owner:profiles!owner_id(full_name, email, phone)', { count: 'exact' })
@@ -38,9 +41,14 @@ export default async function AdminHirePage() {
           <h1 className="text-xl font-bold text-gray-900">Gestion des locations</h1>
           <p className="mt-1 text-sm text-gray-500">Validation des vehicules proposes a la location.</p>
         </div>
-        <Link href="/admin/hire/bookings" className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-          Voir les reservations
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/hire/new" className="rounded-lg bg-[#1a3a6b] px-4 py-2 text-sm font-medium text-white hover:bg-[#132a4d]">
+            Nouvelle location
+          </Link>
+          <Link href="/admin/hire/bookings" className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            Voir les reservations
+          </Link>
+        </div>
       </div>
 
       {/* Pending review */}

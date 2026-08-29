@@ -55,6 +55,7 @@ export const createHireListingSchema = z
   .object({
     ...hireListingFields,
     dealer_id: z.string().uuid().nullish(),
+    launch_lead_id: z.string().uuid().optional(),
     fuel_type: hireListingFields.fuel_type.default('petrol'),
     transmission: hireListingFields.transmission.default('automatic'),
     seats: hireListingFields.seats.default(5),

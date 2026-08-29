@@ -1,6 +1,5 @@
-import { redirect } from 'next/navigation';
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
-import { isAdminRole } from '@/lib/auth/roles';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import type { Metadata } from 'next';
 import AdminReviewActions from './AdminReviewActions';
 
@@ -13,8 +12,7 @@ const STATUS_FR: Record<string, { label: string; cls: string }> = {
 };
 
 export default async function AdminReviewsPage() {
-  const user = await getCurrentUser();
-  if (!user || !isAdminRole(user.role)) redirect('/login');
+  await requireAdminPage('reviews');
 
   const { data } = await supabaseAdmin
     .from('reviews')

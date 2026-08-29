@@ -1,6 +1,5 @@
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
-import { redirect } from 'next/navigation';
-import { isAdminRole } from '@/lib/auth/roles';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import type { Profile } from '@/lib/types';
 import VerifyToggle from '@/app/(components)/VerifyToggle';
 
@@ -12,6 +11,7 @@ const ROLE_COLORS: Record<string, string> = {
   inspector: 'bg-purple-100 text-purple-700',
   verifier: 'bg-orange-100 text-orange-700',
   admin: 'bg-red-100 text-red-700',
+  mfi_partner: 'bg-green-100 text-green-700',
 };
 
 const ROLE_LABELS: Record<string, string> = {
@@ -22,6 +22,7 @@ const ROLE_LABELS: Record<string, string> = {
   inspector: 'Inspecteur',
   verifier: 'Vérificateur',
   admin: 'Admin',
+  mfi_partner: 'Partenaire MFI',
 };
 
 export default async function UsersPage({
@@ -29,8 +30,7 @@ export default async function UsersPage({
 }: {
   searchParams: { role?: string; page?: string };
 }) {
-  const user = await getCurrentUser();
-  if (!user || !isAdminRole(user.role)) redirect('/admin/dashboard');
+  await requireAdminPage('users');
 
   const page = Math.max(1, parseInt(searchParams.page ?? '1', 10));
   const PAGE_SIZE = 30;
@@ -57,7 +57,7 @@ export default async function UsersPage({
 
       {/* Role filter */}
       <div className="flex flex-wrap gap-2 mb-6">
-        {['', 'buyer', 'seller_individual', 'seller_dealer', 'field_agent', 'inspector', 'verifier', 'admin'].map((r) => (
+        {['', 'buyer', 'seller_individual', 'seller_dealer', 'field_agent', 'inspector', 'verifier', 'admin', 'mfi_partner'].map((r) => (
           <a
             key={r}
             href={r ? `/admin/users?role=${r}` : '/admin/users'}

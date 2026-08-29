@@ -40,6 +40,17 @@ NEXT_PUBLIC_APP_URL=
 # across serverless instances.
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
+
+# Optional — where production errors are forwarded. Accepts a Slack incoming
+# webhook or any collector that takes JSON. When unset, errors are still
+# written to the structured logs; they just do not page anyone.
+ERROR_WEBHOOK_URL=
+
+# Optional — comma-separated numbers alerted by SMS when a buyer or renter
+# requests a callback from a vehicle page. When unset, no alert is sent and
+# the requests are only visible in /admin/ops and /admin/leads?inbound=waiting.
+# Requires the Africa's Talking SMS credentials to be set as well.
+OPS_ALERT_PHONE=
 ```
 
 ## Rate limiting

@@ -4,16 +4,24 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function NewListingPage() {
+type SearchParams = Record<string, string | string[] | undefined>;
+
+function firstParam(searchParams: SearchParams | undefined, key: string) {
+  const value = searchParams?.[key];
+  return Array.isArray(value) ? value[0] ?? '' : value ?? '';
+}
+
+export default function NewListingPage({ searchParams }: { searchParams?: SearchParams }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const launchLeadId = firstParam(searchParams, 'launch_lead_id');
 
   const [form, setForm] = useState({
     make: '', model: '', year: new Date().getFullYear().toString(),
     mileage_km: '0', fuel_type: 'petrol', transmission: 'manual',
     color: '', engine_cc: '', seats: '',
-    asking_price: '', zone: 'A', city: '', description: '',
+    asking_price: '', zone: 'A', city: firstParam(searchParams, 'city'), description: firstParam(searchParams, 'description'),
   });
 
   function update(field: string, value: string) {
@@ -35,6 +43,7 @@ export default function NewListingPage() {
         engine_cc: form.engine_cc ? parseInt(form.engine_cc, 10) : null,
         seats: form.seats ? parseInt(form.seats, 10) : null,
         asking_price: parseFloat(form.asking_price),
+        launch_lead_id: launchLeadId || undefined,
       }),
     });
 
@@ -57,6 +66,12 @@ export default function NewListingPage() {
         <Link href="/me/listings" className="text-sm font-medium text-[#1a3a6b] hover:text-[#3d9e3d] transition-colors">← Mes annonces</Link>
         <h1 className="text-2xl font-bold text-[#1a3a6b]">Nouvelle annonce</h1>
       </div>
+
+      {launchLeadId && (
+        <div className="mb-6 rounded-xl border border-teal-100 bg-teal-50 px-4 py-3 text-sm text-teal-900">
+          Creation depuis un lead lancement. La ville et les notes ont ete pre-remplies quand disponibles.
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Vehicle info */}

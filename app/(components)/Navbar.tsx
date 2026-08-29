@@ -63,6 +63,9 @@ export default function Navbar() {
             <Link href="/hire" className="text-sm font-medium text-gray-700 hover:text-[#1a3a6b] transition-colors">
               Location
             </Link>
+            <Link href="/rental-partners" className="text-sm font-medium text-gray-700 hover:text-[#1a3a6b] transition-colors">
+              Loueurs
+            </Link>
             <Link href="/sell" className="text-sm font-medium text-gray-700 hover:text-[#1a3a6b] transition-colors">
               Vendre
             </Link>
@@ -74,6 +77,9 @@ export default function Navbar() {
             </Link>
             <Link href="/finance-partners" className="text-sm font-medium text-gray-700 hover:text-[#1a3a6b] transition-colors">
               Partenaires
+            </Link>
+            <Link href="/inspection" className="text-sm font-medium text-gray-700 hover:text-[#1a3a6b] transition-colors">
+              Inspection
             </Link>
 
             {!loading && (
@@ -142,10 +148,12 @@ export default function Navbar() {
           <Link href="/listings" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Véhicules</Link>
           <Link href="/imports" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Import US</Link>
           <Link href="/hire" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Location</Link>
+          <Link href="/rental-partners" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Loueurs</Link>
           <Link href="/sell" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Vendre</Link>
           <Link href="/apply" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Financement</Link>
           <Link href="/calculator" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Simulateur</Link>
           <Link href="/finance-partners" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Partenaires</Link>
+          <Link href="/inspection" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-700 hover:text-[#1a3a6b] py-1">Inspection</Link>
           <div className="pt-2 border-t border-gray-100">
             {user ? (
               <>
