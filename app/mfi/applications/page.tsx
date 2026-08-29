@@ -76,7 +76,11 @@ export default async function MFIApplicationsPage({
     .order('created_at', { ascending: false });
 
   if (institutionId) {
+    // Scoped to files routed to this institution. Applicant name and city are
+    // selected above, so an unscoped list would show every partner — including
+    // competitors — who is applying for finance and where they live.
     query = query
+      .eq('mfi_institution_id', institutionId)
       .in('status', ['submitted', 'docs_received', 'under_review', 'approved', 'disbursed'])
       .eq('listing.financeable', true);
   } else {
