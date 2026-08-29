@@ -1,5 +1,5 @@
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
-import { redirect } from 'next/navigation';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -24,8 +24,7 @@ export default async function AdminListingsPage({
 }: {
   searchParams: { status?: string; financeable?: string; page?: string };
 }) {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  await requireAdminPage('listings');
 
   const page = Math.max(1, parseInt(searchParams.page ?? '1', 10));
   const PAGE_SIZE = 25;

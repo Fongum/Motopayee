@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 
 function formatXAF(value: number | string | null) {
   if (value == null) return '-';
@@ -27,8 +27,7 @@ export default async function AdminImportOrdersPage({
 }: {
   searchParams: { status?: string };
 }) {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  await requireAdminPage('imports');
 
   let query = supabaseAdmin
     .from('import_orders')

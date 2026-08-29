@@ -1,6 +1,6 @@
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 
 const INVENTORY_TYPES = ['seller', 'dealer', 'rental_owner'];
 const INVENTORY_STATUSES = ['ready_for_listing', 'awaiting_assets', 'qualified', 'onboarding'];
@@ -247,8 +247,7 @@ function LeadInventoryCard({ lead }: { lead: LeadRow }) {
 }
 
 export default async function InventoryLeadQueuePage() {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  await requireAdminPage('leads');
 
   const { data } = await supabaseAdmin
     .from('launch_leads')

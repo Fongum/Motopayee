@@ -1,5 +1,5 @@
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
-import { redirect } from 'next/navigation';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
 
 const LEAD_TYPES = [
@@ -31,8 +31,7 @@ export default async function LeadImportPage({
 }: {
   searchParams: { created?: string; updated?: string; skipped?: string };
 }) {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  const user = await requireAdminPage('leads');
 
   const { data: staffData } = await supabaseAdmin
     .from('profiles')

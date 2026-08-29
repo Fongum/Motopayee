@@ -1,7 +1,7 @@
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
-import { redirect } from 'next/navigation';
-import Link from 'next/link';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import { isAdminRole } from '@/lib/auth/roles';
+import Link from 'next/link';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Brouillon',
@@ -29,8 +29,7 @@ export default async function AdminApplicationsPage({
 }: {
   searchParams: { status?: string; page?: string };
 }) {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  const user = await requireAdminPage('applications');
 
   const page = Math.max(1, parseInt(searchParams.page ?? '1', 10));
   const PAGE_SIZE = 25;

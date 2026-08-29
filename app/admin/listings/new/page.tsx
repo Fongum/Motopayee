@@ -1,6 +1,6 @@
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 
 type SearchParams = { launch_lead_id?: string; seller_id?: string; city?: string; description?: string };
 
@@ -17,8 +17,7 @@ type LeadRow = {
 };
 
 export default async function AdminNewListingPage({ searchParams }: { searchParams: SearchParams }) {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  await requireAdminPage('listings');
 
   const [{ data: sellersData }, { data: leadData }] = await Promise.all([
     supabaseAdmin

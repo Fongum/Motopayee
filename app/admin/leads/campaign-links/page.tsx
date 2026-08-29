@@ -1,10 +1,13 @@
 import CampaignLinkBuilder from './CampaignLinkBuilder';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 
-export default function CampaignLinksPage({
+export default async function CampaignLinksPage({
   searchParams,
 }: {
   searchParams?: { campaign?: string; source?: string; path?: string };
 }) {
+  await requireAdminPage('leads');
+
   return (
     <div className="space-y-6">
       <div>

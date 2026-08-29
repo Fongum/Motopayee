@@ -1,5 +1,5 @@
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
-import { redirect } from 'next/navigation';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
 
 const OPEN_LEAD_STATUSES = ['new', 'contacted', 'interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding'];
@@ -46,8 +46,7 @@ const READINESS_LABELS: Record<ReadinessStatus, string> = {
 };
 
 export default async function AdminDashboardPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  const user = await requireAdminPage('dashboard');
 
   const inspectionActiveStatuses = ['submitted', 'contacted', 'quoted', 'paid', 'scheduled'];
   const now = new Date();

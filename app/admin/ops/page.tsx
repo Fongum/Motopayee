@@ -1,7 +1,6 @@
-import { getCurrentUser } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import { getDailyOpsSnapshot, OPS_AREA_LABELS, OPS_PRIORITY_LABELS, type OpsArea, type OpsPriority } from '@/lib/ops-snapshot';
 import { formatWait } from '@/lib/inbound-response';
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
 const PRIORITY_STYLES: Record<OpsPriority, string> = {
@@ -25,8 +24,7 @@ function formatDate(value: string | null) {
 }
 
 export default async function AdminOpsPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  await requireAdminPage('ops');
 
   const {
     activeQueues,

@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import type { ImportOffer } from '@/lib/types';
 import AdminOfferForm from './AdminOfferForm';
 
@@ -21,8 +21,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default async function AdminImportOffersPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  await requireAdminPage('imports');
 
   const { data } = await supabaseAdmin
     .from('import_offers')

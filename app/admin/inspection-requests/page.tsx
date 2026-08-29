@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import { supabaseAdmin } from '@/lib/auth/server';
 import type { InspectionRequest, InspectionRequestStatus } from '@/lib/types';
 import InspectionRequestActions from './InspectionRequestActions';
@@ -74,6 +75,8 @@ export default async function AdminInspectionRequestsPage({
 }: {
   searchParams: { status?: string; payment?: string };
 }) {
+  await requireAdminPage('inspection-requests');
+
   const paymentFilter = ['pending', 'processing', 'successful', 'failed', 'cancelled'].includes(searchParams.payment ?? '')
     ? searchParams.payment
     : null;

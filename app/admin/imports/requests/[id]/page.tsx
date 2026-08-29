@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { notFound, redirect } from 'next/navigation';
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
+import { notFound } from 'next/navigation';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import type { ImportQuote, ImportRequest } from '@/lib/types';
 import QuoteComposer from './QuoteComposer';
 
@@ -46,8 +47,7 @@ export default async function AdminImportRequestDetailPage({
 }: {
   params: { id: string };
 }) {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  await requireAdminPage('imports');
 
   const { data: requestData } = await supabaseAdmin
     .from('import_requests')

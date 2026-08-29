@@ -1,5 +1,5 @@
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
-import { redirect } from 'next/navigation';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
 import { buildContactUrl } from '@/lib/whatsapp';
 import { QUICK_LEAD_ACTIVITY_TEMPLATES, buildLeadOutreachMessage } from '@/lib/launch-lead-playbooks';
@@ -302,8 +302,7 @@ export default async function AdminLeadsPage({
 }: {
   searchParams: { status?: string; type?: string; source?: string; assigned?: string; priority?: string; campaign?: string; inbound?: string };
 }) {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  const user = await requireAdminPage('leads');
 
   let query = supabaseAdmin
     .from('launch_leads')

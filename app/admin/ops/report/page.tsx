@@ -1,6 +1,5 @@
-import { getCurrentUser } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import { getDailyOpsSnapshot, OPS_AREA_LABELS, OPS_PRIORITY_LABELS } from '@/lib/ops-snapshot';
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import PrintButton from './PrintButton';
 
@@ -16,8 +15,7 @@ function formatLeadDate(value: string | null) {
 }
 
 export default async function AdminOpsReportPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  const user = await requireAdminPage('ops');
 
   const { generatedAt, activeQueues, quietQueues, leadReminders, totalOpenActions, criticalActions, revenueActions } = await getDailyOpsSnapshot({ leadLimit: 12 });
 

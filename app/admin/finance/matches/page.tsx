@@ -1,5 +1,5 @@
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
-import { redirect } from 'next/navigation';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
 
 const OPEN_LEAD_STATUSES = ['new', 'contacted', 'interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding'];
@@ -17,8 +17,7 @@ export default async function AdminFinanceMatchesPage({
 }: {
   searchParams: { lead_id?: string; buyer_id?: string };
 }) {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  await requireAdminPage('finance');
 
   const [{ data: leadData }, { data: listingData }, { data: applicationData }] = await Promise.all([
     supabaseAdmin

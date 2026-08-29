@@ -1,5 +1,6 @@
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
-import { redirect, notFound } from 'next/navigation';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
+import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { isAdminRole, isVerifierRole } from '@/lib/auth/roles';
 import type { FinancingApplication, MFIApplicationOffer, MFIInstitution, Payment } from '@/lib/types';
@@ -35,8 +36,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default async function AdminApplicationDetailPage({ params }: { params: { id: string } }) {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  const user = await requireAdminPage('applications');
 
   const [appResult, paymentsResult, institutionsResult, offersResult] = await Promise.all([
     supabaseAdmin

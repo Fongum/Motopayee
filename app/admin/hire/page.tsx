@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import type { HireListing } from '@/lib/types';
 import AdminHireActions from './AdminHireActions';
 import Link from 'next/link';
@@ -16,6 +17,8 @@ const STATUS_FR: Record<string, { label: string; cls: string }> = {
 };
 
 export default async function AdminHirePage() {
+  await requireAdminPage('hire');
+
   const { data: pendingData } = await supabaseAdmin
     .from('hire_listings')
     .select('*, owner:profiles!owner_id(full_name, email, phone)', { count: 'exact' })

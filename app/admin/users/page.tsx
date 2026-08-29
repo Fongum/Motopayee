@@ -1,6 +1,5 @@
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
-import { redirect } from 'next/navigation';
-import { isAdminRole } from '@/lib/auth/roles';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import type { Profile } from '@/lib/types';
 import VerifyToggle from '@/app/(components)/VerifyToggle';
 
@@ -31,8 +30,7 @@ export default async function UsersPage({
 }: {
   searchParams: { role?: string; page?: string };
 }) {
-  const user = await getCurrentUser();
-  if (!user || !isAdminRole(user.role)) redirect('/admin/dashboard');
+  await requireAdminPage('users');
 
   const page = Math.max(1, parseInt(searchParams.page ?? '1', 10));
   const PAGE_SIZE = 30;

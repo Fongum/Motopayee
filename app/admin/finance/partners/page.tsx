@@ -1,5 +1,5 @@
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
-import { redirect } from 'next/navigation';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
 
 function formatXAF(amount: number) {
@@ -17,8 +17,7 @@ function mfiRegisterHref(email: string | null | undefined) {
 }
 
 export default async function AdminFinancePartnersPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  await requireAdminPage('finance');
 
   const [{ data: institutions }, { data: applications }, { data: offers }, { data: partnerProfiles }] = await Promise.all([
     supabaseAdmin

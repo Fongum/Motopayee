@@ -1,8 +1,9 @@
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import { buildContactUrl } from '@/lib/whatsapp';
 import { QUICK_LEAD_ACTIVITY_TEMPLATES, buildLeadOutreachMessage } from '@/lib/launch-lead-playbooks';
 import Link from 'next/link';
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 
 const TYPE_LABELS: Record<string, string> = {
   seller: 'Vendeur',
@@ -238,8 +239,7 @@ function leadSla(lead: Pick<LeadRow, 'status' | 'created_at' | 'next_follow_up_a
 }
 
 export default async function AdminLeadDetailPage({ params }: PageProps) {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  await requireAdminPage('leads');
 
   const [{ data: leadData }, { data: staffData }] = await Promise.all([
     supabaseAdmin

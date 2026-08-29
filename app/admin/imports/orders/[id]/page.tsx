@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { notFound, redirect } from 'next/navigation';
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
+import { notFound } from 'next/navigation';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import type { ImportDocument, ImportOrder, ImportPayment, ImportQuote, ImportRequest, ImportShipment } from '@/lib/types';
 import OrderStatusForm from '../OrderStatusForm';
 import ShipmentCreateForm from '../ShipmentCreateForm';
@@ -30,8 +31,7 @@ export default async function AdminImportOrderDetailPage({
 }: {
   params: { id: string };
 }) {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  await requireAdminPage('imports');
 
   const { data: orderData } = await supabaseAdmin
     .from('import_orders')

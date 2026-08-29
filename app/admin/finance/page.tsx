@@ -1,5 +1,5 @@
-import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
-import { redirect } from 'next/navigation';
+import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
 import { calculateFinanceCommission } from '@/lib/finance-commissions';
 
@@ -40,8 +40,7 @@ export default async function AdminFinancePage({
 }: {
   searchParams: { status?: string; commission?: string };
 }) {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
+  await requireAdminPage('finance');
 
   const commissionFilter = ['expected', 'invoiced', 'paid', 'waived'].includes(searchParams.commission ?? '')
     ? searchParams.commission

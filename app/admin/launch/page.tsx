@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
 import {
   captureWeeklyMetrics,
@@ -143,6 +144,8 @@ function formatWeekLabel(weekStart: string) {
 }
 
 export default async function AdminLaunchPage() {
+  await requireAdminPage('launch');
+
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const now = new Date();
   const weekStart = startOfLaunchWeek(now);

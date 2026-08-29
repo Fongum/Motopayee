@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
 import type { HireBooking } from '@/lib/types';
 import BookingAdminActions from './BookingAdminActions';
@@ -53,6 +54,8 @@ export default async function AdminHireBookingsPage({
 }: {
   searchParams: { status?: string; fee?: string };
 }) {
+  await requireAdminPage('hire');
+
   const feeFilter = ['expected', 'invoiced', 'paid', 'waived', 'refunded'].includes(searchParams.fee ?? '')
     ? searchParams.fee
     : null;
