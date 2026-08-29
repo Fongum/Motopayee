@@ -40,13 +40,22 @@ export async function POST(request: Request, { params }: RouteParams) {
 
   const { data: app } = await supabaseAdmin
     .from('financing_applications')
-    .select('id, status, listing:listings(id, financeable)')
+    .select('id, status, mfi_institution_id, listing:listings(id, financeable)')
     .eq('id', params.id)
     .maybeSingle();
 
   const listing = Array.isArray(app?.listing) ? app?.listing[0] : app?.listing;
   if (!app || !listing?.financeable) {
     return NextResponse.json({ error: 'Application is not available to MFI partners.' }, { status: 404 });
+  }
+
+  // Once an application has been routed to an institution it belongs to that
+  // institution, as /disburse already enforces. Without this a partner could
+  // upsert an offer onto a competitor's assigned application and, through the
+  // follow-up update below, overwrite the staff notes driving that file.
+  const assignedTo = (app as { mfi_institution_id: string | null }).mfi_institution_id;
+  if (assignedTo && institutionId && assignedTo !== institutionId) {
+    return NextResponse.json({ error: 'Application is routed to another institution.' }, { status: 403 });
   }
 
   if (!['submitted', 'docs_received', 'under_review', 'approved'].includes(app.status as string)) {
