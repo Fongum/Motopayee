@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
+import TruncationNotice from '../../(components)/TruncationNotice';
 import { calculateFinanceCommission } from '@/lib/finance-commissions';
 import {
   commissionAmount,
@@ -128,7 +129,6 @@ export default async function AdminFinancePage({
   const expectedCommissionAmount = commissionAmount(commissionTotals, 'expected');
   const invoicedCommissionAmount = commissionAmount(commissionTotals, 'invoiced');
   const paidCommissionAmount = commissionAmount(commissionTotals, 'paid');
-  const listTruncated = (matchingApplicationCount ?? 0) > rows.length;
 
   const stats = [
     { label: 'A decaisser', value: pipelineCount(pipelineTotals, 'approved'), amount: pipelineValue(pipelineTotals, 'approved'), href: '/admin/finance?status=approved', color: 'text-amber-600' },
@@ -229,16 +229,9 @@ export default async function AdminFinancePage({
         ))}
       </div>
 
-      {/* Reconciliation work needs to know the table is a slice, not the set.
-          The stat tiles above are always the full totals. */}
-      {listTruncated && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Affichage des {rows.length} dossiers les plus recents sur {matchingApplicationCount} correspondants.
-          Les totaux ci-dessus portent sur l ensemble.
-        </div>
-      )}
+      <TruncationNotice shown={rows.length} total={matchingApplicationCount} noun="dossiers" totalsAreComplete />
 
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
         <table className="w-full text-sm">
           <thead className="border-b border-gray-200 bg-gray-50">
             <tr>

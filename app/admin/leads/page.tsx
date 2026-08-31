@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
+import TruncationNotice from '../../(components)/TruncationNotice';
 import { buildContactUrl } from '@/lib/whatsapp';
 import { QUICK_LEAD_ACTIVITY_TEMPLATES, buildLeadOutreachMessage } from '@/lib/launch-lead-playbooks';
 import { DEFAULT_RESPONSE_SLA_MINUTES, INBOUND_LEAD_TYPES } from '@/lib/inbound-response';
@@ -448,7 +449,6 @@ export default async function AdminLeadsPage({
   const topTypes = asTuples(metrics.by_type, 6);
   const topOutcomes = asTuples(outcomeRows, 6);
   const recordedOutcomes = outcomeRows.reduce((sum, row) => sum + row.count, 0);
-  const listTruncated = (matchingLeadCount ?? 0) > leads.length;
 
   const stats = [
     { label: 'Ouverts', value: openLeads.length, color: 'text-blue-700' },
@@ -941,16 +941,9 @@ export default async function AdminLeadsPage({
         </div>
       </form>
 
-      {/* The list is capped, so say so — an admin acting on a filtered queue
-          needs to know when it is not the whole queue. */}
-      {listTruncated && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Affichage des {leads.length} leads les plus recents sur {matchingLeadCount} correspondants.
-          Affinez les filtres pour voir le reste.
-        </div>
-      )}
+      <TruncationNotice shown={leads.length} total={matchingLeadCount} noun="leads" />
 
-      <div className="space-y-3">
+            <div className="space-y-3">
         {leads.length === 0 ? (
           <div className="rounded-2xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-400">
             Aucun lead a afficher.

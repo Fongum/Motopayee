@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
+import TruncationNotice from '../../../(components)/TruncationNotice';
 import type { HireBooking } from '@/lib/types';
 import BookingAdminActions from './BookingAdminActions';
 import { calculateHireServiceFee } from '@/lib/hire-service-fees';
@@ -121,7 +122,6 @@ export default async function AdminHireBookingsPage({
   const expectedFees = feeAmount(feeTotals, 'expected');
   const invoicedFees = feeAmount(feeTotals, 'invoiced');
   const collectedFees = feeAmount(feeTotals, 'paid');
-  const listTruncated = (matchingBookingCount ?? 0) > bookings.length;
 
   const stats = [
     { label: 'Demandes', value: bookingCount(bookingTotals, 'pending'), color: 'text-amber-600' },
@@ -193,15 +193,9 @@ export default async function AdminHireBookingsPage({
         ))}
       </div>
 
-      {/* The tiles above always cover every booking; this list is a slice. */}
-      {listTruncated && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Affichage des {bookings.length} reservations les plus recentes sur {matchingBookingCount} correspondantes.
-          Les totaux ci-dessus portent sur l ensemble.
-        </div>
-      )}
+      <TruncationNotice shown={bookings.length} total={matchingBookingCount} noun="reservations" totalsAreComplete />
 
-      <div className="space-y-3">
+            <div className="space-y-3">
         {bookings.length === 0 ? (
           <div className="rounded-2xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-400">
             Aucune reservation a afficher.

@@ -3,8 +3,12 @@ import { requireAdminPage } from '@/lib/auth/admin-access';
 import { buildContactUrl } from '@/lib/whatsapp';
 import { QUICK_LEAD_ACTIVITY_TEMPLATES, buildLeadOutreachMessage } from '@/lib/launch-lead-playbooks';
 import Link from 'next/link';
+import TruncationNotice from '../../../(components)/TruncationNotice';
 
 const OPEN_STATUSES = ['new', 'contacted', 'interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding'];
+
+/** Leads the board renders. The heading shows the true matching count. */
+const ACTION_BOARD_LIMIT = 300;
 
 const TYPE_LABELS: Record<string, string> = {
   seller: 'Vendeur',
@@ -270,13 +274,30 @@ export default async function LeadActionBoardPage({
   const endOfDay = new Date(now);
   endOfDay.setHours(23, 59, 59, 999);
 
-  const [{ data }, { data: staffData }] = await Promise.all([
-    supabaseAdmin
-      .from('launch_leads')
-      .select('*, assigned:profiles!assigned_to(full_name, email)')
-      .in('status', OPEN_STATUSES)
+  // The campaign and "mine" filters used to run in JavaScript over every open
+  // lead. They have to move into the query before the list can be bounded at
+  // all: capping first and filtering afterwards would return some arbitrary
+  // subset of the cap, not the newest N matches.
+  let leadQuery = supabaseAdmin
+    .from('launch_leads')
+    .select('*, assigned:profiles!assigned_to(full_name, email)', { count: 'exact' })
+    .in('status', OPEN_STATUSES);
+
+  if (campaignParam === '__none') {
+    leadQuery = leadQuery.is('campaign_name', null);
+  } else if (campaignParam) {
+    leadQuery = leadQuery.eq('campaign_name', campaignParam);
+  }
+
+  if (isMine) {
+    leadQuery = leadQuery.eq('assigned_to', user.id);
+  }
+
+  const [{ data, count: matchingLeadCount }, { data: staffData }] = await Promise.all([
+    leadQuery
       .order('next_follow_up_at', { ascending: true, nullsFirst: false })
-      .order('created_at', { ascending: true }),
+      .order('created_at', { ascending: true })
+      .limit(ACTION_BOARD_LIMIT),
     supabaseAdmin
       .from('profiles')
       .select('id, full_name, email, role')
@@ -285,13 +306,7 @@ export default async function LeadActionBoardPage({
       .order('full_name'),
   ]);
 
-  const allLeads = (data ?? []) as unknown as LeadRow[];
-  const scopedLeads = campaignParam === '__none'
-    ? allLeads.filter((lead) => !lead.campaign_name)
-    : campaignParam
-      ? allLeads.filter((lead) => lead.campaign_name === campaignParam)
-      : allLeads;
-  const leads = isMine ? scopedLeads.filter((lead) => lead.assigned_to === user.id) : scopedLeads;
+  const leads = (data ?? []) as unknown as LeadRow[];
   const staff = (staffData ?? []) as StaffRow[];
   const unassigned = leads.filter((lead) => !lead.assigned_to);
   const overdue = leads.filter((lead) => lead.next_follow_up_at && new Date(lead.next_follow_up_at) <= now);
@@ -354,6 +369,8 @@ export default async function LeadActionBoardPage({
           </Link>
         </div>
       </div>
+
+      <TruncationNotice shown={leads.length} total={matchingLeadCount} noun="leads ouverts" />
 
       {campaignParam && (
         <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm">
