@@ -1,8 +1,9 @@
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
+import { PARTNER_ENGAGED_STATUSES } from '@/lib/launch-lead-metrics';
+import { OPEN_LEAD_STATUSES } from '@/lib/launch-lead-metrics';
 
-const OPEN_LEAD_STATUSES = ['new', 'contacted', 'interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding'];
 
 const LEAD_TYPE_LABELS: Record<string, string> = {
   seller: 'Vendeur',
@@ -122,8 +123,8 @@ export default async function AdminDashboardPage() {
     supabaseAdmin.from('launch_leads').select('*', { count: 'exact', head: true }).in('status', OPEN_LEAD_STATUSES).gt('next_follow_up_at', endOfDay.toISOString()).lte('next_follow_up_at', sevenDaysFromNow.toISOString()),
     supabaseAdmin.from('listings').select('*', { count: 'exact', head: true }).eq('status', 'published').eq('financeable', true),
     supabaseAdmin.from('hire_listings').select('*', { count: 'exact', head: true }).eq('status', 'published'),
-    supabaseAdmin.from('launch_leads').select('*', { count: 'exact', head: true }).eq('lead_type', 'dealer').in('status', ['interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding', 'converted']),
-    supabaseAdmin.from('launch_leads').select('*', { count: 'exact', head: true }).eq('lead_type', 'mfi').in('status', ['interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding', 'converted']),
+    supabaseAdmin.from('launch_leads').select('*', { count: 'exact', head: true }).eq('lead_type', 'dealer').in('status', PARTNER_ENGAGED_STATUSES),
+    supabaseAdmin.from('launch_leads').select('*', { count: 'exact', head: true }).eq('lead_type', 'mfi').in('status', PARTNER_ENGAGED_STATUSES),
     supabaseAdmin
       .from('launch_leads')
       .select('id, lead_type, status, priority, name, business_name, city, next_follow_up_at, assigned:profiles!assigned_to(full_name, email)')

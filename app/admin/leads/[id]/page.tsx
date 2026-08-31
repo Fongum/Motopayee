@@ -4,6 +4,7 @@ import { buildContactUrl } from '@/lib/whatsapp';
 import { QUICK_LEAD_ACTIVITY_TEMPLATES, buildLeadOutreachMessage } from '@/lib/launch-lead-playbooks';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { OPEN_LEAD_STATUSES } from '@/lib/launch-lead-metrics';
 
 const TYPE_LABELS: Record<string, string> = {
   seller: 'Vendeur',
@@ -42,7 +43,8 @@ const STATUS_COLORS: Record<string, string> = {
   closed: 'bg-gray-100 text-gray-600',
 };
 
-const OPEN_STATUSES = ['new', 'contacted', 'interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding'];
+// The pipeline's in-play vocabulary, shared with the metric functions.
+const OPEN_STATUSES: readonly string[] = OPEN_LEAD_STATUSES;
 
 const ACTIVITY_ACTIONS = [
   { value: 'call', label: 'Appel' },

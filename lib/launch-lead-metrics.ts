@@ -33,8 +33,50 @@ export const OPEN_LEAD_STATUSES = [
 /** Statuses that take a lead out of play. */
 export const CLOSED_LEAD_STATUSES = ['converted', 'not_fit', 'closed'] as const;
 
+/**
+ * Every status the database will accept, in pipeline order.
+ *
+ * Mirrors the `launch_leads_status_check` constraint as migration 028 left it.
+ * This list was hand-copied into six places — two zod enums, an export
+ * whitelist, a filter list and two count queries — which is six chances to miss
+ * one the next time the pipeline grows a stage. 028 already grew it once.
+ */
+export const LEAD_STATUSES = [
+  'new',
+  'contacted',
+  'interested',
+  'qualified',
+  'awaiting_assets',
+  'ready_for_listing',
+  'onboarding',
+  'converted',
+  'not_fit',
+  'closed',
+] as const;
+
+export type LeadStatus = (typeof LEAD_STATUSES)[number];
+
+/**
+ * Statuses where a partner has engaged — anything past first contact, including
+ * those already converted. Used for the "active partners" counts on the launch
+ * board and the admin dashboard, which is a different question from whether a
+ * lead is still open.
+ */
+export const PARTNER_ENGAGED_STATUSES = [
+  'interested',
+  'qualified',
+  'awaiting_assets',
+  'ready_for_listing',
+  'onboarding',
+  'converted',
+] as const;
+
 export function isOpenLeadStatus(status: string): boolean {
   return (OPEN_LEAD_STATUSES as readonly string[]).includes(status);
+}
+
+export function isLeadStatus(value: unknown): value is LeadStatus {
+  return typeof value === 'string' && (LEAD_STATUSES as readonly string[]).includes(value);
 }
 
 export const METRIC_WINDOW_DAYS = 30;

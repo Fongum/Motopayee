@@ -1,12 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import {
   CLOSED_LEAD_STATUSES,
+  LEAD_STATUSES,
+  PARTNER_ENGAGED_STATUSES,
   NO_CAMPAIGN_LABEL,
   OPEN_LEAD_STATUSES,
   STALE_LEAD_DAYS,
   campaignLabel,
   campaignPerformance,
   conversionRate,
+  isLeadStatus,
   isOpenLeadStatus,
   topN,
   windowStart,
@@ -36,6 +39,39 @@ describe('lead status vocabulary', () => {
   it('does not treat an unknown status as open', () => {
     expect(isOpenLeadStatus('archived')).toBe(false);
     expect(isOpenLeadStatus('')).toBe(false);
+  });
+
+  it('partitions every status into exactly one of open or closed', () => {
+    // The invariant that makes the two lists safe to use independently. Adding a
+    // pipeline stage to LEAD_STATUSES without placing it in one of them — which
+    // is what happened when migration 028 introduced two — fails here rather
+    // than quietly dropping those leads out of every count.
+    const partitioned = [...OPEN_LEAD_STATUSES, ...CLOSED_LEAD_STATUSES].sort();
+    expect(partitioned).toEqual([...LEAD_STATUSES].sort());
+    expect(new Set(partitioned).size).toBe(LEAD_STATUSES.length);
+  });
+
+  it('mirrors the launch_leads status CHECK constraint', () => {
+    // migration 028's list, in pipeline order.
+    expect([...LEAD_STATUSES]).toEqual([
+      'new', 'contacted', 'interested', 'qualified', 'awaiting_assets',
+      'ready_for_listing', 'onboarding', 'converted', 'not_fit', 'closed',
+    ]);
+  });
+
+  it('treats every partner-engaged status as a real status', () => {
+    for (const status of PARTNER_ENGAGED_STATUSES) {
+      expect(isLeadStatus(status)).toBe(true);
+    }
+    // "Engaged" spans open and converted, so it is not a subset of either list.
+    expect(PARTNER_ENGAGED_STATUSES).toContain('converted');
+    expect(PARTNER_ENGAGED_STATUSES).not.toContain('new');
+  });
+
+  it('rejects values outside the constraint', () => {
+    expect(isLeadStatus('archived')).toBe(false);
+    expect(isLeadStatus(null)).toBe(false);
+    expect(isLeadStatus(7)).toBe(false);
   });
 });
 

@@ -4,8 +4,10 @@ import { buildContactUrl } from '@/lib/whatsapp';
 import { QUICK_LEAD_ACTIVITY_TEMPLATES, buildLeadOutreachMessage } from '@/lib/launch-lead-playbooks';
 import Link from 'next/link';
 import TruncationNotice from '../../../(components)/TruncationNotice';
+import { OPEN_LEAD_STATUSES } from '@/lib/launch-lead-metrics';
 
-const OPEN_STATUSES = ['new', 'contacted', 'interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding'];
+// The pipeline's in-play vocabulary, shared with the metric functions.
+const OPEN_STATUSES: readonly string[] = OPEN_LEAD_STATUSES;
 
 /** Leads the board renders. The heading shows the true matching count. */
 const ACTION_BOARD_LIMIT = 300;
