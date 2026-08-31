@@ -70,17 +70,28 @@ const definerFunctions = parseFunctions(allCode).filter((f) => /security\s+defin
 // ─── Function grants ──────────────────────────────────────────────────────────
 
 describe('function privileges', () => {
-  it('never revokes EXECUTE from anon/authenticated, which is a no-op', () => {
+  it('never revokes EXECUTE from anon/authenticated without also revoking from PUBLIC', () => {
     // PostgreSQL grants EXECUTE on a new function to PUBLIC by default, and
-    // anon/authenticated hold it *through* PUBLIC — so revoking from them
-    // directly removes nothing and the function stays callable with the anon
-    // key. Shipped once already; the fix is `revoke ... from public`.
+    // anon/authenticated usually hold it *through* PUBLIC — so revoking from
+    // them alone removes nothing and the function stays callable with the anon
+    // key. That shipped once already.
+    //
+    // But it is not always a no-op: a project with `alter default privileges
+    // ... grant execute on functions to anon` hands those roles a *direct*
+    // grant at CREATE time, which a PUBLIC revoke does not touch. So the rule
+    // is not "never revoke from anon" — it is "never revoke from anon as the
+    // only revoke for that function".
+    const revokedFromPublic = new Set<string>();
+    const publicRe = /revoke\s+execute\s+on\s+function\s+(?:public\.)?(\w+)\s*\([^)]*\)\s*from\s+public\s*;/gi;
+    let m;
+    while ((m = publicRe.exec(allCode))) revokedFromPublic.add(m[1]);
+
     const offenders: string[] = [];
-    for (const [file, text] of Array.from(code)) {
-      const hits = text.match(/^revoke\s+execute[^;]*from\s+[^;]*\b(anon|authenticated)\b[^;]*;/gim);
-      if (hits) offenders.push(`${file}: ${hits[0].replace(/\s+/g, ' ').slice(0, 90)}`);
+    const roleRe = /revoke\s+execute\s+on\s+function\s+(?:public\.)?(\w+)\s*\([^)]*\)\s*from\s+[^;]*\b(?:anon|authenticated)\b[^;]*;/gi;
+    while ((m = roleRe.exec(allCode))) {
+      if (!revokedFromPublic.has(m[1])) offenders.push(m[1]);
     }
-    expect(offenders).toEqual([]);
+    expect(Array.from(new Set(offenders)).sort()).toEqual([]);
   });
 
   it('revokes EXECUTE from PUBLIC on every security definer function', () => {
