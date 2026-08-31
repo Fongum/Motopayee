@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
+import { fetchUnreadCounts } from '@/lib/unread-messages.server';
+import { unreadFor } from '@/lib/unread-messages';
 import type { Metadata } from 'next';
 import InboxClient from './InboxClient';
 
@@ -22,21 +24,9 @@ export default async function InboxPage() {
     .order('last_message_at', { ascending: false });
 
   // Get unread counts
-  const convIds = (data ?? []).map((c: Record<string, unknown>) => c.id as string);
-  const { data: unreadData } = convIds.length > 0
-    ? await supabaseAdmin
-        .from('messages')
-        .select('conversation_id')
-        .in('conversation_id', convIds)
-        .neq('sender_id', user.id)
-        .is('read_at', null)
-    : { data: [] };
-
-  const unreadMap: Record<string, number> = {};
-  for (const m of unreadData ?? []) {
-    const cid = (m as Record<string, unknown>).conversation_id as string;
-    unreadMap[cid] = (unreadMap[cid] ?? 0) + 1;
-  }
+  // Counted in Postgres (migration 042) rather than by fetching every unread
+  // row and tallying it here.
+  const unread = await fetchUnreadCounts(user.id);
 
   const conversations = (data ?? []).map((c: Record<string, unknown>) => {
     const otherUser = (c.participant_a as string) === user.id
@@ -54,7 +44,7 @@ export default async function InboxPage() {
       other_name: otherUser?.full_name ?? 'Utilisateur',
       subject,
       last_message_at: c.last_message_at as string,
-      unread: unreadMap[c.id as string] ?? 0,
+      unread: unreadFor(unread, c.id as string),
     };
   });
 
