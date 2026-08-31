@@ -4,6 +4,8 @@ import { isAdminRole } from '@/lib/auth/roles';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Inspection, Listing } from '@/lib/types';
+import { fetchDocumentsFor } from '@/lib/documents.server';
+import { DOCUMENT_STAFF_COLUMNS } from '@/lib/documents';
 
 function formatXAF(amount: number) {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
@@ -18,7 +20,6 @@ export default async function AdminListingDetailPage({ params }: { params: { id:
       *,
       vehicle:vehicles(*),
       seller:profiles!seller_id(id, email, full_name, phone),
-      documents(*),
       field_agent:profiles!field_agent_id(id, email, full_name),
       inspector:profiles!inspector_id(id, email, full_name),
       verifier:profiles!verifier_id(id, email, full_name),
@@ -37,6 +38,9 @@ export default async function AdminListingDetailPage({ params }: { params: { id:
     inspections?: Inspection[];
     documents?: Array<{ id: string; filename: string; doc_type: string }>;
   };
+
+  // Fetched separately: documents is polymorphic and cannot be embedded.
+  listing.documents = await fetchDocumentsFor('listing', params.id, DOCUMENT_STAFF_COLUMNS) as unknown as typeof listing.documents;
   const v = listing.vehicle;
   const latestInspection = (listing.inspections ?? []).length > 0
     ? [...(listing.inspections ?? [])].sort((a, b) => (

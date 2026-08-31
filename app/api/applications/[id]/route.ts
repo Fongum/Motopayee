@@ -10,9 +10,11 @@ export async function GET(request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
+  // See lib/documents: the polymorphic table cannot be embedded, and the
+  // embed's PGRST200 was being reported as "Application not found".
   const { data, error } = await supabaseAdmin
     .from('financing_applications')
-    .select('*, listing:listings(*, vehicle:vehicles(*)), documents(*)')
+    .select('*, listing:listings(*, vehicle:vehicles(*))')
     .eq('id', params.id)
     .eq('buyer_id', auth.user.id)
     .single();
@@ -20,6 +22,7 @@ export async function GET(request: Request, { params }: RouteParams) {
   if (error || !data) {
     return NextResponse.json({ error: 'Application not found.' }, { status: 404 });
   }
+
 
   return NextResponse.json({ application: data });
 }

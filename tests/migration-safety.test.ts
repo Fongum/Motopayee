@@ -25,6 +25,22 @@ function stripComments(text: string): string {
   return text.replace(/^\s*--.*$/gm, '');
 }
 
+/** Every .ts/.tsx under app/ and lib/, for the source-level checks below. */
+function appSources(dir = process.cwd()): string[] {
+  const out: string[] = [];
+  for (const root of ['app', 'lib']) {
+    const walk = (d: string) => {
+      for (const entry of readdirSync(d, { withFileTypes: true })) {
+        const full = join(d, entry.name);
+        if (entry.isDirectory()) walk(full);
+        else if (/\.tsx?$/.test(entry.name) && !entry.name.endsWith('.test.ts')) out.push(full);
+      }
+    };
+    walk(join(dir, root));
+  }
+  return out;
+}
+
 const code = new Map(Array.from(sql).map(([f, text]) => [f, stripComments(text)] as const));
 const allCode = Array.from(code.values()).join('\n');
 
@@ -157,6 +173,37 @@ describe('RLS policies', () => {
     for (const [key, { file, table, body }] of Array.from(livePolicies())) {
       const selfRef = new RegExp(`from\\s+(?:public\\.)?${table}\\b`, 'i');
       if (selfRef.test(body)) offenders.push(`${key} (${file})`);
+    }
+    expect(offenders).toEqual([]);
+  });
+});
+
+// ─── Embeds PostgREST cannot resolve ──────────────────────────────────────────
+
+describe('polymorphic tables are never embedded', () => {
+  /**
+   * A table keyed by entity_type/entity_id has no foreign key to the things it
+   * points at, so PostgREST cannot infer an embed and answers PGRST200. Seven
+   * routes embedded `documents(...)` anyway, and every one of them treats a
+   * query error as "not found" — so each answered 404 for its whole existence.
+   */
+  const POLYMORPHIC = ['documents'];
+
+  it('has no select embedding a polymorphic table', () => {
+    const offenders: string[] = [];
+    for (const file of appSources()) {
+      const src = readFileSync(file, 'utf8');
+      for (const table of POLYMORPHIC) {
+        // `documents(` inside a select string, not `import_documents(` and not a
+        // standalone `.from('documents')`.
+        const re = new RegExp(`(?<![\\w_])${table}\\s*\\(`, 'g');
+        for (const line of src.split('\n')) {
+          if (!re.test(line)) continue;
+          if (/\.from\(/.test(line)) continue;
+          if (/^\s*(\/\/|\*|--)/.test(line)) continue;
+          offenders.push(`${file.replace(process.cwd(), '').replace(/\\/g, '/')}: ${line.trim().slice(0, 60)}`);
+        }
+      }
     }
     expect(offenders).toEqual([]);
   });
