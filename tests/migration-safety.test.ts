@@ -18,15 +18,15 @@ const files = readdirSync(MIGRATIONS_DIR)
   .sort();
 
 const sql = new Map(files.map((f) => [f, readFileSync(join(MIGRATIONS_DIR, f), 'utf8')]));
-const allSql = [...sql.values()].join('\n');
+const allSql = Array.from(sql.values()).join('\n');
 
 /** Strip `-- ...` comments so prose about a mistake is not mistaken for the mistake. */
 function stripComments(text: string): string {
   return text.replace(/^\s*--.*$/gm, '');
 }
 
-const code = new Map([...sql].map(([f, text]) => [f, stripComments(text)]));
-const allCode = [...code.values()].join('\n');
+const code = new Map(Array.from(sql).map(([f, text]) => [f, stripComments(text)] as const));
+const allCode = Array.from(code.values()).join('\n');
 
 describe('migration files exist', () => {
   it('finds the migrations directory', () => {
@@ -76,7 +76,7 @@ describe('function privileges', () => {
     // directly removes nothing and the function stays callable with the anon
     // key. Shipped once already; the fix is `revoke ... from public`.
     const offenders: string[] = [];
-    for (const [file, text] of code) {
+    for (const [file, text] of Array.from(code)) {
       const hits = text.match(/^revoke\s+execute[^;]*from\s+[^;]*\b(anon|authenticated)\b[^;]*;/gim);
       if (hits) offenders.push(`${file}: ${hits[0].replace(/\s+/g, ' ').slice(0, 90)}`);
     }
@@ -91,7 +91,7 @@ describe('function privileges', () => {
     let m;
     while ((m = revokeRe.exec(allCode))) revoked.add(m[1]);
 
-    const unprotected = [...new Set(definerFunctions.map((f) => f.name))]
+    const unprotected = Array.from(new Set(definerFunctions.map((f) => f.name)))
       .filter((fn) => !revoked.has(fn))
       .sort();
     expect(unprotected).toEqual([]);
@@ -100,9 +100,9 @@ describe('function privileges', () => {
   it('pins search_path on every security definer function', () => {
     // Without it the function resolves unqualified names through the caller's
     // search_path, which is the classic definer-rights hijack.
-    const missing = [...new Set(
-      definerFunctions.filter((f) => !/set\s+search_path/i.test(f.header)).map((f) => f.name)
-    )].sort();
+    const missing = Array.from(
+      new Set(definerFunctions.filter((f) => !/set\s+search_path/i.test(f.header)).map((f) => f.name))
+    ).sort();
     expect(missing).toEqual([]);
   });
 
@@ -143,7 +143,7 @@ describe('RLS policies', () => {
     // resolve the caller through profiles, thirteen tables became unreadable.
     // Resolve the caller in a security definer helper with row_security off.
     const offenders: string[] = [];
-    for (const [key, { file, table, body }] of livePolicies()) {
+    for (const [key, { file, table, body }] of Array.from(livePolicies())) {
       const selfRef = new RegExp(`from\\s+(?:public\\.)?${table}\\b`, 'i');
       if (selfRef.test(body)) offenders.push(`${key} (${file})`);
     }
@@ -161,7 +161,7 @@ describe('migration hygiene', () => {
 
   it('creates indexes idempotently so a re-run does not fail', () => {
     const bad: string[] = [];
-    for (const [file, text] of code) {
+    for (const [file, text] of Array.from(code)) {
       const hits = text.match(/create\s+index\s+(?!concurrently\s+)(?!if\s+not\s+exists)\w+/gi);
       // Migrations 001-013 predate this rule and are already applied; holding
       // them to it would mean editing history that can never re-run anyway.
