@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
+import { shapeHireMedia } from '@/lib/hire-query';
+import type { HireQuery } from '@/lib/hire-query';
 import type { HireListing } from '@/lib/types';
 
 function formatXAF(amount: number): string {
@@ -26,12 +28,18 @@ export default async function MyHireListingsPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  const { data } = await supabaseAdmin
+  const query = supabaseAdmin
     .from('hire_listings')
     .select('*, media:hire_listing_media(id, storage_path, bucket, display_order)')
     .eq('owner_id', user.id)
     .neq('status', 'withdrawn')
     .order('created_at', { ascending: false });
+
+  // The row thumbnail is `media[0]`, so the embed needs the same ordering the
+  // public grid uses — otherwise an owner sees a different cover here than
+  // buyers see on /hire.
+  const shaped = shapeHireMedia(query as unknown as HireQuery) as unknown as typeof query;
+  const { data } = await shaped;
 
   const listings = (data ?? []) as unknown as HireListing[];
 

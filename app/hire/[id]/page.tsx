@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import Navbar from '../../(components)/Navbar';
 import Footer from '../../(components)/Footer';
 import { supabaseAdmin, getCurrentUser } from '@/lib/auth/server';
+import { shapeHireMedia } from '@/lib/hire-query';
+import type { HireQuery } from '@/lib/hire-query';
 import type { HireListing } from '@/lib/types';
 import BookingForm from './BookingForm';
 import WhatsAppContactButton from '../../(components)/WhatsAppContactButton';
@@ -23,12 +25,19 @@ import { HireTrustBadges } from '../../(components)/TrustLabelBadges';
 type Props = { params: { id: string } };
 
 async function getListing(id: string) {
-  const { data } = await supabaseAdmin
+  // The owner's phone is selected deliberately here — this page is the contact
+  // surface. It is *not* selected on the browse grid, which never shows it.
+  const query = supabaseAdmin
     .from('hire_listings')
     .select('*, owner:profiles!owner_id(id, full_name, phone, is_verified, city, avg_rating, total_reviews), media:hire_listing_media(*)')
     .eq('id', id)
-    .eq('status', 'published')
-    .single();
+    .eq('status', 'published');
+
+  // The gallery renders `media` in array order, so the owner's chosen lead photo
+  // has to come back first, and a video must not be handed to an <img>.
+  const shaped = shapeHireMedia(query as unknown as HireQuery) as unknown as typeof query;
+
+  const { data } = await shaped.single();
   return data as unknown as HireListing | null;
 }
 
@@ -231,8 +240,8 @@ export default async function HireDetailPage({ params }: Props) {
                     </p>
                     <SellerTrustBadge
                       isVerified={listing.owner?.is_verified ?? false}
-                      avgRating={(listing.owner as unknown as { avg_rating: number | null })?.avg_rating ?? null}
-                      totalReviews={(listing.owner as unknown as { total_reviews: number })?.total_reviews ?? 0}
+                      avgRating={listing.owner?.avg_rating ?? null}
+                      totalReviews={listing.owner?.total_reviews ?? 0}
                     />
                   </div>
                 </div>

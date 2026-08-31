@@ -7,39 +7,57 @@ import HireCarousel from './(components)/HireCarousel';
 import HeroSearch from './(components)/HeroSearch';
 import RecommendationCarousel from './(components)/RecommendationCarousel';
 import { supabaseAdmin } from '@/lib/auth/server';
+import { LISTING_CAROUSEL_SELECT, shapeListingMedia } from '@/lib/listing-query';
+import type { ListingQuery } from '@/lib/listing-query';
+import { shapeHireMedia } from '@/lib/hire-query';
+import type { HireQuery } from '@/lib/hire-query';
 import type { HireListing } from '@/lib/types';
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
 
 async function getLatestListings(limit = 14) {
-  const { data } = await supabaseAdmin
+  const query = supabaseAdmin
     .from('listings')
-    .select('id, asking_price, zone, price_band, vehicle:vehicles(make,model,year,mileage_km,fuel_type), media:media_assets(id)')
+    .select(LISTING_CAROUSEL_SELECT)
     .eq('status', 'published')
     .order('created_at', { ascending: false })
     .limit(limit);
+
+  const { data } = await (shapeListingMedia(
+    query as unknown as ListingQuery,
+    { mediaLimit: 1 }
+  ) as unknown as typeof query);
   return data ?? [];
 }
 
 async function getFinanceableListings(limit = 10) {
-  const { data } = await supabaseAdmin
+  const query = supabaseAdmin
     .from('listings')
-    .select('id, asking_price, zone, price_band, vehicle:vehicles(make,model,year,mileage_km,fuel_type), media:media_assets(id)')
+    .select(LISTING_CAROUSEL_SELECT)
     .eq('status', 'published')
     .eq('financeable', true)
     .order('created_at', { ascending: false })
     .limit(limit);
+
+  const { data } = await (shapeListingMedia(
+    query as unknown as ListingQuery,
+    { mediaLimit: 1 }
+  ) as unknown as typeof query);
   return data ?? [];
 }
 
 async function getHireListings(limit = 10) {
-  const { data } = await supabaseAdmin
+  // HireCarousel reads only these fields and never touches the owner, so the
+  // `*` and the profile join were both dead weight on the homepage.
+  const query = supabaseAdmin
     .from('hire_listings')
-    .select('*, owner:profiles!owner_id(full_name, is_verified), media:hire_listing_media(id, storage_path, bucket, display_order)')
+    .select('id, make, model, year, city, daily_rate, hire_type, availability, media:hire_listing_media(id, storage_path, bucket, display_order)')
     .eq('status', 'published')
     .eq('availability', 'available')
     .order('created_at', { ascending: false })
     .limit(limit);
+
+  const { data } = await (shapeHireMedia(query as unknown as HireQuery) as unknown as typeof query);
   return (data ?? []) as unknown as HireListing[];
 }
 

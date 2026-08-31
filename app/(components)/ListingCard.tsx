@@ -131,11 +131,8 @@ export default function ListingCard({ listing }: Props) {
               <span className="text-[10px] font-semibold text-blue-600">Vérifié</span>
             </div>
           )}
-          {(listing.seller as unknown as { avg_rating: number | null })?.avg_rating != null && (
-            <StarRating
-              rating={(listing.seller as unknown as { avg_rating: number }).avg_rating}
-              count={(listing.seller as unknown as { total_reviews: number }).total_reviews}
-            />
+          {listing.seller?.avg_rating != null && (
+            <StarRating rating={listing.seller.avg_rating} count={listing.seller.total_reviews} />
           )}
         </div>
       </div>

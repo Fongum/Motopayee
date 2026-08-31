@@ -5,6 +5,15 @@ import Footer from '../(components)/Footer';
 import ListingCard from '../(components)/ListingCard';
 import SearchFilters from './SearchFilters';
 import { supabaseAdmin } from '@/lib/auth/server';
+import { reportError } from '@/lib/error-reporting';
+import {
+  LISTINGS_PAGE_SIZE,
+  LISTING_CARD_SELECT,
+  applyListingSearch,
+  listingRange,
+  parseListingSearch,
+} from '@/lib/listing-query';
+import type { ListingQuery, ListingSearchParams, RawSearchParams } from '@/lib/listing-query';
 import type { Listing } from '@/lib/types';
 
 // ─── SEO Metadata ─────────────────────────────────────────────────────────────
@@ -19,82 +28,41 @@ export const metadata: Metadata = {
   },
 };
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface SearchParams {
-  zone?: string;
-  make?: string;
-  model?: string;
-  min_price?: string;
-  max_price?: string;
-  min_year?: string;
-  max_year?: string;
-  max_mileage?: string;
-  fuel_type?: string;
-  condition_grade?: string;
-  financeable?: string;
-  sort?: string;
-  page?: string;
-}
-
 // ─── Data fetching ────────────────────────────────────────────────────────────
 
-const PAGE_SIZE = 20;
+async function getListings(params: ListingSearchParams) {
+  const [from, to] = listingRange(params.page);
 
-async function getListings(params: SearchParams) {
-  const page = Math.max(1, parseInt(params.page ?? '1', 10));
-  const offset = (page - 1) * PAGE_SIZE;
-
-  // Step 1: If vehicle-level filters are set, resolve matching vehicle IDs first
-  const hasVehicleFilters = params.min_year || params.max_year || params.max_mileage ||
-    params.fuel_type || params.condition_grade || params.make || params.model;
-
-  let vehicleIds: string[] | null = null;
-
-  if (hasVehicleFilters) {
-    let vq = supabaseAdmin.from('vehicles').select('id');
-    if (params.make)            vq = vq.ilike('make', `%${params.make}%`);
-    if (params.model)           vq = vq.ilike('model', `%${params.model}%`);
-    if (params.min_year)        vq = vq.gte('year', parseInt(params.min_year));
-    if (params.max_year)        vq = vq.lte('year', parseInt(params.max_year));
-    if (params.max_mileage)     vq = vq.lte('mileage_km', parseInt(params.max_mileage));
-    if (params.fuel_type)       vq = vq.eq('fuel_type', params.fuel_type);
-    if (params.condition_grade) vq = vq.eq('condition_grade', params.condition_grade);
-    const { data } = await vq;
-    vehicleIds = (data ?? []).map((v: { id: string }) => v.id);
-    if (vehicleIds.length === 0) return { listings: [], total: 0 };
-  }
-
-  // Step 2: Build listings query
-  let q = supabaseAdmin
+  const query = supabaseAdmin
     .from('listings')
-    .select('*, vehicle:vehicles(*), media:media_assets(*), seller:profiles!seller_id(is_verified)', { count: 'exact' })
+    .select(LISTING_CARD_SELECT, { count: 'exact' })
     .eq('status', 'published');
 
-  if (vehicleIds)              q = q.in('vehicle_id', vehicleIds);
-  if (params.zone)             q = q.eq('zone', params.zone);
-  if (params.min_price)        q = q.gte('asking_price', parseFloat(params.min_price));
-  if (params.max_price)        q = q.lte('asking_price', parseFloat(params.max_price));
-  if (params.financeable === 'true') q = q.eq('financeable', true);
+  // One query: the vehicle filters ride the inner join declared in the select.
+  // A card shows a single thumbnail, so only the primary photo is embedded.
+  const shaped = applyListingSearch(
+    query as unknown as ListingQuery,
+    params,
+    { mediaLimit: 1 }
+  ) as unknown as typeof query;
 
-  // Sorting
-  switch (params.sort) {
-    case 'price_asc':  q = q.order('asking_price', { ascending: true }); break;
-    case 'price_desc': q = q.order('asking_price', { ascending: false }); break;
-    case 'mileage':    q = q.order('created_at', { ascending: false }); break; // mileage sort via vehicle join handled in UI ordering
-    default:           q = q.order('created_at', { ascending: false }); break;
+  const { data, count, error } = await shaped.range(from, to);
+
+  if (error) {
+    reportError(error, { route: '/listings', context: 'browse query' });
+    return { listings: [] as Listing[], total: 0, failed: true };
   }
 
-  const { data, count } = await q.range(offset, offset + PAGE_SIZE - 1);
-  return { listings: (data ?? []) as unknown as Listing[], total: count ?? 0 };
+  return { listings: (data ?? []) as unknown as Listing[], total: count ?? 0, failed: false };
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default async function ListingsPage({ searchParams }: { searchParams: SearchParams }) {
-  const page = Math.max(1, parseInt(searchParams.page ?? '1', 10));
-  const { listings, total } = await getListings(searchParams);
-  const totalPages = Math.ceil(total / PAGE_SIZE);
+export default async function ListingsPage({ searchParams }: { searchParams: RawSearchParams }) {
+  const params = parseListingSearch(searchParams);
+  const page = params.page;
+  const { listings, total, failed } = await getListings(params);
+  const totalPages = Math.ceil(total / LISTINGS_PAGE_SIZE);
 
   // Build pagination href
   function pageHref(p: number) {
@@ -148,8 +116,14 @@ export default async function ListingsPage({ searchParams }: { searchParams: Sea
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <p className="text-gray-700 font-semibold mb-1">Aucun véhicule trouvé</p>
-              <p className="text-gray-500 text-sm">Essayez de modifier vos critères de recherche.</p>
+              <p className="text-gray-700 font-semibold mb-1">
+                {failed ? 'Recherche momentanément indisponible' : 'Aucun véhicule trouvé'}
+              </p>
+              <p className="text-gray-500 text-sm">
+                {failed
+                  ? 'Un incident technique nous empêche de charger les véhicules. Réessayez dans un instant.'
+                  : 'Essayez de modifier vos critères de recherche.'}
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">

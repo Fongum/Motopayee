@@ -5,6 +5,15 @@ import Footer from '../(components)/Footer';
 import HireCard from '../(components)/HireCard';
 import HireSearchFilters from './SearchFilters';
 import { supabaseAdmin } from '@/lib/auth/server';
+import { reportError } from '@/lib/error-reporting';
+import {
+  HIRE_CARD_SELECT,
+  HIRE_PAGE_SIZE,
+  applyHireSearch,
+  hireRange,
+  parseHireSearch,
+} from '@/lib/hire-query';
+import type { HireQuery, HireSearchParams, RawHireParams } from '@/lib/hire-query';
 import type { HireListing } from '@/lib/types';
 import LeadCaptureForm from '../(components)/LeadCaptureForm';
 import { campaignNameFromSearch, leadSourceFromSearch } from '@/lib/campaigns';
@@ -19,56 +28,32 @@ export const metadata: Metadata = {
   },
 };
 
-interface SearchParams {
-  city?: string;
-  zone?: string;
-  make?: string;
-  hire_type?: string;
-  min_price?: string;
-  max_price?: string;
-  fuel_type?: string;
-  sort?: string;
-  page?: string;
-  campaign?: string;
-  campaign_name?: string;
-  source?: string;
-  utm_source?: string;
-  utm_campaign?: string;
-}
+async function getHireListings(params: HireSearchParams) {
+  const [from, to] = hireRange(params.page);
 
-const PAGE_SIZE = 20;
-
-async function getHireListings(params: SearchParams) {
-  const page = Math.max(1, parseInt(params.page ?? '1', 10));
-  const offset = (page - 1) * PAGE_SIZE;
-
-  let q = supabaseAdmin
+  const query = supabaseAdmin
     .from('hire_listings')
-    .select('*, owner:profiles!owner_id(full_name, is_verified, phone), media:hire_listing_media(*)', { count: 'exact' })
+    .select(HIRE_CARD_SELECT, { count: 'exact' })
     .eq('status', 'published');
 
-  if (params.city)      q = q.ilike('city', `%${params.city}%`);
-  if (params.zone)      q = q.eq('zone', params.zone);
-  if (params.make)      q = q.ilike('make', `%${params.make}%`);
-  if (params.hire_type) q = q.in('hire_type', [params.hire_type, 'both']);
-  if (params.min_price) q = q.gte('daily_rate', parseInt(params.min_price));
-  if (params.max_price) q = q.lte('daily_rate', parseInt(params.max_price));
-  if (params.fuel_type) q = q.eq('fuel_type', params.fuel_type);
+  // Shared with GET /api/hire, so the filters the endpoint accepts are the
+  // filters this page honours.
+  const shaped = applyHireSearch(query as unknown as HireQuery, params) as unknown as typeof query;
+  const { data, count, error } = await shaped.range(from, to);
 
-  switch (params.sort) {
-    case 'price_asc':  q = q.order('daily_rate', { ascending: true }); break;
-    case 'price_desc': q = q.order('daily_rate', { ascending: false }); break;
-    default:           q = q.order('created_at', { ascending: false }); break;
+  if (error) {
+    reportError(error, { source: 'hire/browse', route: '/hire' });
+    return { listings: [] as HireListing[], total: 0, failed: true };
   }
 
-  const { data, count } = await q.range(offset, offset + PAGE_SIZE - 1);
-  return { listings: (data ?? []) as unknown as HireListing[], total: count ?? 0 };
+  return { listings: (data ?? []) as unknown as HireListing[], total: count ?? 0, failed: false };
 }
 
-export default async function HirePage({ searchParams }: { searchParams: SearchParams }) {
-  const page = Math.max(1, parseInt(searchParams.page ?? '1', 10));
-  const { listings, total } = await getHireListings(searchParams);
-  const totalPages = Math.ceil(total / PAGE_SIZE);
+export default async function HirePage({ searchParams }: { searchParams: RawHireParams }) {
+  const params = parseHireSearch(searchParams);
+  const page = params.page;
+  const { listings, total, failed } = await getHireListings(params);
+  const totalPages = Math.ceil(total / HIRE_PAGE_SIZE);
   const campaignName = campaignNameFromSearch(searchParams, 'Rental owner page');
   const source = leadSourceFromSearch(searchParams);
 
@@ -142,8 +127,14 @@ export default async function HirePage({ searchParams }: { searchParams: SearchP
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <p className="text-gray-500 font-semibold mb-1">Aucun véhicule disponible</p>
-              <p className="text-gray-400 text-sm">Essayez de modifier vos critères de recherche.</p>
+              <p className="text-gray-500 font-semibold mb-1">
+                {failed ? 'Recherche momentanément indisponible' : 'Aucun véhicule disponible'}
+              </p>
+              <p className="text-gray-400 text-sm">
+                {failed
+                  ? 'Un incident technique nous empêche de charger les véhicules. Réessayez dans un instant.'
+                  : 'Essayez de modifier vos critères de recherche.'}
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">

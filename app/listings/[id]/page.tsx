@@ -8,6 +8,8 @@ import ZoneBadge from '../../(components)/ZoneBadge';
 import FavouriteButton from '../../(components)/FavouriteButton';
 import ViewTracker from '../../(components)/ViewTracker';
 import { supabaseAdmin, getCurrentUser } from '@/lib/auth/server';
+import { shapeListingMedia } from '@/lib/listing-query';
+import type { ListingQuery } from '@/lib/listing-query';
 import type { Inspection, Listing } from '@/lib/types';
 import FinancingCalculator from '../../(components)/FinancingCalculator';
 import WhatsAppContactButton from '../../(components)/WhatsAppContactButton';
@@ -30,12 +32,21 @@ type PublicListing = Listing & {
 };
 
 async function getListing(id: string): Promise<PublicListing | null> {
-  const { data } = await supabaseAdmin
+  const query = supabaseAdmin
     .from('listings')
     .select('*, vehicle:vehicles(*), media:media_assets(*), seller:profiles!seller_id(is_verified, full_name, phone, avg_rating, total_reviews), inspections(*)')
     .eq('id', id)
-    .eq('status', 'published')
-    .single();
+    .eq('status', 'published');
+
+  // The gallery and the OpenGraph image both take `media[0]`, so the seller's
+  // chosen lead photo has to come back first — and a video must not stand in
+  // for it. No limit: the gallery wants every photo, in order.
+  const shaped = shapeListingMedia(
+    query as unknown as ListingQuery,
+    {}
+  ) as unknown as typeof query;
+
+  const { data } = await shaped.single();
   return data as unknown as PublicListing | null;
 }
 
@@ -220,8 +231,8 @@ export default async function ListingDetailPage({
             {/* Seller trust badge */}
             <SellerTrustBadge
               isVerified={listing.seller?.is_verified ?? false}
-              avgRating={(listing.seller as unknown as { avg_rating: number | null })?.avg_rating ?? null}
-              totalReviews={(listing.seller as unknown as { total_reviews: number })?.total_reviews ?? 0}
+              avgRating={listing.seller?.avg_rating ?? null}
+              totalReviews={listing.seller?.total_reviews ?? 0}
             />
 
             <ListingTrustBadges listing={listing} />
