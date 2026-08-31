@@ -4,6 +4,7 @@ import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
 import { shapeHireMedia } from '@/lib/hire-query';
 import type { HireQuery } from '@/lib/hire-query';
 import type { HireListing } from '@/lib/types';
+import { PORTAL_LIST_LIMIT } from '@/lib/portal-lists';
 
 function formatXAF(amount: number): string {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
@@ -33,7 +34,8 @@ export default async function MyHireListingsPage() {
     .select('*, media:hire_listing_media(id, storage_path, bucket, display_order)')
     .eq('owner_id', user.id)
     .neq('status', 'withdrawn')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(PORTAL_LIST_LIMIT);
 
   // The row thumbnail is `media[0]`, so the embed needs the same ordering the
   // public grid uses — otherwise an owner sees a different cover here than

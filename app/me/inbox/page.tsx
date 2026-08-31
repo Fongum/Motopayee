@@ -4,6 +4,7 @@ import { fetchUnreadCounts } from '@/lib/unread-messages.server';
 import { unreadFor } from '@/lib/unread-messages';
 import type { Metadata } from 'next';
 import InboxClient from './InboxClient';
+import { PORTAL_LIST_LIMIT } from '@/lib/portal-lists';
 
 export const metadata: Metadata = { title: 'Messages — MotoPayee' };
 
@@ -21,7 +22,8 @@ export default async function InboxPage() {
       hire_listing:hire_listings(id, make, model, year)
     `)
     .or(`participant_a.eq.${user.id},participant_b.eq.${user.id}`)
-    .order('last_message_at', { ascending: false });
+    .order('last_message_at', { ascending: false })
+    .limit(PORTAL_LIST_LIMIT);
 
   // Get unread counts
   // Counted in Postgres (migration 042) rather than by fetching every unread
