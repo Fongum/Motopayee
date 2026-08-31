@@ -2,6 +2,31 @@ import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
 import { calculateFinanceCommission } from '@/lib/finance-commissions';
+import {
+  commissionAmount,
+  commissionCount,
+  financeListSelect,
+  firstEmbedded,
+  isCommissionStatus,
+  isPipelineStatus,
+  pipelineCount,
+  pipelineValue,
+} from '@/lib/finance-dashboard';
+import { fetchCommissionTotals, fetchPipelineTotals } from '@/lib/finance-dashboard.server';
+
+/** Rows the reconciliation table renders. Capped, with the total shown alongside. */
+const FINANCE_LIST_LIMIT = 200;
+
+type CommissionRow = {
+  id: string;
+  application_id: string;
+  commission_rate_percent: number;
+  commission_amount_xaf: number | string;
+  status: string;
+  due_at: string | null;
+  paid_at: string | null;
+  notes: string | null;
+};
 
 function formatXAF(amount: number) {
   return new Intl.NumberFormat('fr-CM', {
@@ -42,48 +67,29 @@ export default async function AdminFinancePage({
 }) {
   await requireAdminPage('finance');
 
-  const commissionFilter = ['expected', 'invoiced', 'paid', 'waived'].includes(searchParams.commission ?? '')
-    ? searchParams.commission
-    : null;
-  let commissionFilteredApplicationIds: string[] | null = null;
+  const commissionFilter = isCommissionStatus(searchParams.commission) ? searchParams.commission : null;
 
-  if (commissionFilter) {
-    const { data: filteredCommissions } = await supabaseAdmin
-      .from('finance_commissions')
-      .select('application_id')
-      .eq('status', commissionFilter);
-
-    commissionFilteredApplicationIds = Array.from(new Set((filteredCommissions ?? []).map((commission) => commission.application_id as string)));
-  }
-
+  // The commission rides an inner join when it is being filtered on, so there
+  // is no pre-query resolving application ids into a `.in()` list — that list
+  // was unbounded, and PostgREST caps it at 1000, so the filter silently lost
+  // every match past the thousandth.
   let query = supabaseAdmin
     .from('financing_applications')
-    .select(`
-      id,
-      status,
-      down_payment_percent,
-      max_tenor,
-      decided_at,
-      disbursed_at,
-      listing:listings(asking_price, zone, vehicle:vehicles(make, model, year)),
-      buyer:profiles!buyer_id(full_name, email, phone, city),
-      mfi:mfi_institutions(name, code)
-    `)
+    .select(financeListSelect(commissionFilter !== null), { count: 'exact' })
     .in('status', ['approved', 'disbursed'])
     .order('disbursed_at', { ascending: false, nullsFirst: false })
-    .order('decided_at', { ascending: false });
+    .order('decided_at', { ascending: false })
+    .limit(FINANCE_LIST_LIMIT);
 
-  if (searchParams.status === 'approved' || searchParams.status === 'disbursed') {
+  if (isPipelineStatus(searchParams.status)) {
     query = query.eq('status', searchParams.status);
   }
 
   if (commissionFilter) {
-    query = commissionFilteredApplicationIds && commissionFilteredApplicationIds.length > 0
-      ? query.in('id', commissionFilteredApplicationIds)
-      : query.eq('id', '00000000-0000-0000-0000-000000000000');
+    query = query.eq('commission.status', commissionFilter);
   }
 
-  const { data } = await query;
+  const { data, count: matchingApplicationCount } = await query;
   const rows = (data ?? []) as unknown as Array<{
     id: string;
     status: string;
@@ -98,51 +104,38 @@ export default async function AdminFinancePage({
     } | null;
     buyer?: { full_name?: string | null; email?: string | null; phone?: string | null; city?: string | null } | null;
     mfi?: { name?: string | null; code?: string | null } | null;
+    commission?: CommissionRow | CommissionRow[] | null;
   }>;
 
-  const applicationIds = rows.map((row) => row.id);
-  const { data: commissionData } = applicationIds.length > 0
-    ? await supabaseAdmin
-        .from('finance_commissions')
-        .select('id, application_id, commission_rate_percent, commission_amount_xaf, status, due_at, paid_at, notes')
-        .in('application_id', applicationIds)
-    : { data: [] };
-  const { data: allCommissionData } = await supabaseAdmin
-    .from('finance_commissions')
-    .select('status, commission_amount_xaf');
-
+  // The commission now arrives embedded in the row above, so the second query
+  // keyed by application id is gone.
   const commissionsByApplication = new Map(
-    ((commissionData ?? []) as unknown as Array<{
-      id: string;
-      application_id: string;
-      commission_rate_percent: number;
-      commission_amount_xaf: number;
-      status: string;
-      due_at: string | null;
-      paid_at: string | null;
-      notes: string | null;
-    }>).map((commission) => [commission.application_id, commission])
+    rows
+      .map((row) => firstEmbedded(row.commission))
+      .filter((commission): commission is CommissionRow => commission !== null)
+      .map((commission) => [commission.application_id, commission])
   );
-  const commissionRows = (allCommissionData ?? []) as Array<{ status: string; commission_amount_xaf: number | string | null }>;
-  const commissionAmountByStatus = (status: string) => commissionRows
-    .filter((commission) => commission.status === status)
-    .reduce((sum, commission) => sum + Number(commission.commission_amount_xaf ?? 0), 0);
-  const commissionCountByStatus = (status: string) => commissionRows.filter((commission) => commission.status === status).length;
 
-  const approvedRows = rows.filter((row) => row.status === 'approved');
-  const disbursedRows = rows.filter((row) => row.status === 'disbursed');
-  const approvedValue = approvedRows.reduce((total, row) => total + Number(row.listing?.asking_price ?? 0), 0);
-  const disbursedValue = disbursedRows.reduce((total, row) => total + Number(row.listing?.asking_price ?? 0), 0);
-  const expectedCommissionAmount = commissionAmountByStatus('expected');
-  const invoicedCommissionAmount = commissionAmountByStatus('invoiced');
-  const paidCommissionAmount = commissionAmountByStatus('paid');
+  // Totalled in Postgres (migration 037). These five figures used to be reduced
+  // in JS: the commission ones over the whole table fetched unbounded, the
+  // pipeline ones over whichever page of applications the table happened to
+  // render. Both truncated at 1000 rows and quietly under-reported.
+  const [commissionTotals, pipelineTotals] = await Promise.all([
+    fetchCommissionTotals(),
+    fetchPipelineTotals(),
+  ]);
+
+  const expectedCommissionAmount = commissionAmount(commissionTotals, 'expected');
+  const invoicedCommissionAmount = commissionAmount(commissionTotals, 'invoiced');
+  const paidCommissionAmount = commissionAmount(commissionTotals, 'paid');
+  const listTruncated = (matchingApplicationCount ?? 0) > rows.length;
 
   const stats = [
-    { label: 'A decaisser', value: approvedRows.length, amount: approvedValue, href: '/admin/finance?status=approved', color: 'text-amber-600' },
-    { label: 'Financees', value: disbursedRows.length, amount: disbursedValue, href: '/admin/finance?status=disbursed', color: 'text-emerald-700' },
-    { label: 'A facturer', value: commissionCountByStatus('expected'), amount: expectedCommissionAmount, href: '/admin/finance?commission=expected', color: 'text-amber-600' },
-    { label: 'Facturee', value: commissionCountByStatus('invoiced'), amount: invoicedCommissionAmount, href: '/admin/finance?commission=invoiced', color: 'text-blue-700' },
-    { label: 'Encaissee', value: commissionCountByStatus('paid'), amount: paidCommissionAmount, href: '/admin/finance?commission=paid', color: 'text-green-700' },
+    { label: 'A decaisser', value: pipelineCount(pipelineTotals, 'approved'), amount: pipelineValue(pipelineTotals, 'approved'), href: '/admin/finance?status=approved', color: 'text-amber-600' },
+    { label: 'Financees', value: pipelineCount(pipelineTotals, 'disbursed'), amount: pipelineValue(pipelineTotals, 'disbursed'), href: '/admin/finance?status=disbursed', color: 'text-emerald-700' },
+    { label: 'A facturer', value: commissionCount(commissionTotals, 'expected'), amount: expectedCommissionAmount, href: '/admin/finance?commission=expected', color: 'text-amber-600' },
+    { label: 'Facturee', value: commissionCount(commissionTotals, 'invoiced'), amount: invoicedCommissionAmount, href: '/admin/finance?commission=invoiced', color: 'text-blue-700' },
+    { label: 'Encaissee', value: commissionCount(commissionTotals, 'paid'), amount: paidCommissionAmount, href: '/admin/finance?commission=paid', color: 'text-green-700' },
   ];
 
   return (
@@ -235,6 +228,15 @@ export default async function AdminFinancePage({
           </Link>
         ))}
       </div>
+
+      {/* Reconciliation work needs to know the table is a slice, not the set.
+          The stat tiles above are always the full totals. */}
+      {listTruncated && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Affichage des {rows.length} dossiers les plus recents sur {matchingApplicationCount} correspondants.
+          Les totaux ci-dessus portent sur l ensemble.
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
         <table className="w-full text-sm">

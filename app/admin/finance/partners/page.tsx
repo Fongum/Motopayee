@@ -1,6 +1,16 @@
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
+import {
+  disbursedValue,
+  institutionStats,
+  partnerContactEmail,
+  totalDisbursedValue,
+} from '@/lib/mfi-partner-stats';
+import { fetchPartnerStats } from '@/lib/mfi-partner-stats.server';
+
+/** Partners the roster renders. The stat tiles always cover every institution. */
+const PARTNER_LIST_LIMIT = 200;
 
 function formatXAF(amount: number) {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
@@ -19,23 +29,16 @@ function mfiRegisterHref(email: string | null | undefined) {
 export default async function AdminFinancePartnersPage() {
   await requireAdminPage('finance');
 
-  const [{ data: institutions }, { data: applications }, { data: offers }, { data: partnerProfiles }] = await Promise.all([
+  // One rollup call (migration 039) replaces three unbounded table fetches that
+  // were re-filtered once per institution inside the render below.
+  const [{ data: institutions }, partnerStats] = await Promise.all([
     supabaseAdmin
       .from('mfi_institutions')
       .select('id, name, code, contact_email, contact_phone, city, active, created_at')
       .order('active', { ascending: false })
-      .order('name'),
-    supabaseAdmin
-      .from('financing_applications')
-      .select('id, status, mfi_institution_id, listing:listings(asking_price)')
-      .not('mfi_institution_id', 'is', null),
-    supabaseAdmin
-      .from('mfi_application_offers')
-      .select('id, status, buyer_response, mfi_institution_id'),
-    supabaseAdmin
-      .from('profiles')
-      .select('id, full_name, email, status, mfi_institution_id')
-      .eq('role', 'mfi_partner'),
+      .order('name')
+      .limit(PARTNER_LIST_LIMIT),
+    fetchPartnerStats(),
   ]);
 
   const rows = (institutions ?? []) as Array<{
@@ -49,38 +52,13 @@ export default async function AdminFinancePartnersPage() {
     created_at: string;
   }>;
 
-  const appRows = (applications ?? []) as unknown as Array<{
-    id: string;
-    status: string;
-    mfi_institution_id: string | null;
-    listing?: { asking_price?: number | string | null } | null;
-  }>;
-  const offerRows = (offers ?? []) as Array<{
-    id: string;
-    status: string;
-    buyer_response: string | null;
-    mfi_institution_id: string;
-  }>;
-  const profileRows = (partnerProfiles ?? []) as Array<{
-    id: string;
-    full_name: string | null;
-    email: string;
-    status: string;
-    mfi_institution_id: string | null;
-  }>;
-
-  const activePartners = rows.filter((row) => row.active).length;
-  const linkedUsers = profileRows.filter((profile) => profile.status === 'active').length;
-  const assignedApps = appRows.length;
-  const disbursedValue = appRows
-    .filter((app) => app.status === 'disbursed')
-    .reduce((sum, app) => sum + Number(app.listing?.asking_price ?? 0), 0);
+  const totals = partnerStats.totals;
 
   const stats = [
-    { label: 'Partenaires actifs', value: activePartners.toLocaleString('fr-FR'), href: '/admin/finance/partners' },
-    { label: 'Utilisateurs MFI lies', value: linkedUsers.toLocaleString('fr-FR'), href: '/admin/users' },
-    { label: 'Dossiers assignes', value: assignedApps.toLocaleString('fr-FR'), href: '/admin/applications' },
-    { label: 'Valeur decaissee', value: formatXAF(disbursedValue), href: '/admin/finance?status=disbursed' },
+    { label: 'Partenaires actifs', value: totals.active_partners.toLocaleString('fr-FR'), href: '/admin/finance/partners' },
+    { label: 'Utilisateurs MFI lies', value: totals.linked_users.toLocaleString('fr-FR'), href: '/admin/users' },
+    { label: 'Dossiers assignes', value: totals.assigned_applications.toLocaleString('fr-FR'), href: '/admin/applications' },
+    { label: 'Valeur decaissee', value: formatXAF(totalDisbursedValue(partnerStats)), href: '/admin/finance?status=disbursed' },
   ];
 
   return (
@@ -144,15 +122,11 @@ export default async function AdminFinancePartnersPage() {
                 <td colSpan={7} className="px-4 py-10 text-center text-gray-400">Aucun partenaire finance</td>
               </tr>
             ) : rows.map((institution) => {
-              const institutionApps = appRows.filter((app) => app.mfi_institution_id === institution.id);
-              const institutionOffers = offerRows.filter((offer) => offer.mfi_institution_id === institution.id);
-              const users = profileRows.filter((profile) => profile.mfi_institution_id === institution.id);
-              const activeApplications = institutionApps.filter((app) => !['rejected', 'withdrawn', 'disbursed'].includes(app.status)).length;
-              const interestedOffers = institutionOffers.filter((offer) => offer.buyer_response === 'interested').length;
-              const primaryUserEmail = users[0]?.email ?? institution.contact_email;
-              const disbursed = institutionApps
-                .filter((app) => app.status === 'disbursed')
-                .reduce((sum, app) => sum + Number(app.listing?.asking_price ?? 0), 0);
+              const stat = institutionStats(partnerStats, institution.id);
+              const activeApplications = stat.active_applications;
+              const interestedOffers = stat.interested_offers;
+              const primaryUserEmail = partnerContactEmail(stat, institution.contact_email);
+              const disbursed = disbursedValue(stat);
               return (
                 <tr key={institution.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3">
@@ -164,16 +138,16 @@ export default async function AdminFinancePartnersPage() {
                     <p className="mt-1 text-xs text-gray-400">{institution.contact_phone ?? ''}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-semibold text-gray-900">{institutionApps.length}</p>
+                    <p className="font-semibold text-gray-900">{stat.applications}</p>
                     <p className="mt-1 text-xs text-gray-500">{activeApplications} actifs - {formatXAF(disbursed)} decaisse</p>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-semibold text-gray-900">{institutionOffers.length}</p>
+                    <p className="font-semibold text-gray-900">{stat.offers}</p>
                     <p className="mt-1 text-xs text-gray-500">{interestedOffers} interesse acheteur</p>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-semibold text-gray-900">{users.length}</p>
-                    <p className="mt-1 text-xs text-gray-500">{users[0]?.full_name ?? users[0]?.email ?? 'Aucun compte lie'}</p>
+                    <p className="font-semibold text-gray-900">{stat.users}</p>
+                    <p className="mt-1 text-xs text-gray-500">{stat.primary_user_name ?? 'Aucun compte lie'}</p>
                     {primaryUserEmail ? (
                       <Link
                         href={mfiRegisterHref(primaryUserEmail)}
