@@ -13,16 +13,36 @@
  * Nothing catches that: `tsc` and `next build` never contact the database, and
  * the pages look like the record simply is not there.
  *
- * Reads NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY from .env.local.
+ * Credentials come from the environment, or from .env.local when running
+ * locally. Run it with: npm run audit:queries / npm run audit:access
  */
 
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
+/**
+ * Credentials from the environment first, falling back to .env.local.
+ *
+ * Reading the file is the convenience for running this locally; the env-var
+ * path is what lets it run in CI, where there is no .env.local to read.
+ */
 function loadEnv(path = '.env.local') {
+  const fromProcess = {
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  };
+  if (fromProcess.NEXT_PUBLIC_SUPABASE_URL && fromProcess.SUPABASE_SERVICE_ROLE_KEY) return fromProcess;
+
+  let text;
+  try {
+    text = readFileSync(path, 'utf8');
+  } catch {
+    return fromProcess;
+  }
   return Object.fromEntries(
-    readFileSync(path, 'utf8')
+    text
       .split('\n')
       .filter((l) => l.includes('=') && !l.trim().startsWith('#'))
       .map((l) => {
@@ -62,7 +82,7 @@ const PAIR = /\.from\(\s*'(\w+)'\s*\)((?:[^;{}]|\n)*?)\.select\(\s*(['"`])([\s\S
 
 const env = loadEnv();
 if (!env.NEXT_PUBLIC_SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.error('Missing Supabase keys in .env.local');
+  console.error('Missing Supabase credentials: set them in the environment or .env.local');
   process.exit(2);
 }
 const db = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
