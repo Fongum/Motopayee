@@ -173,6 +173,83 @@ for (const c of columnChecks.values()) {
   if (error) columnFailures.push({ ...c, code: error.code, message: error.message });
 }
 
+/**
+ * Columns written by insert() and update().
+ *
+ * A typo here is worse than in a filter: the write fails at runtime on a path
+ * that reads fine, and nothing in the type system objects because the payload
+ * is a plain object. Only literal keys are visible — a spread carries names
+ * that cannot be seen statically, so those are counted and reported as skipped
+ * rather than passed over in silence.
+ */
+const WRITE = /\.(insert|update|upsert)\(\s*\{/g;
+const writeChecks = new Map();
+let spreads = 0;
+
+for (const file of sources()) {
+  const src = readFileSync(file, 'utf8');
+  let m;
+  const FROM = /\.from\(\s*'(\w+)'\s*\)/g;
+  while ((m = FROM.exec(src))) {
+    const table = m[1];
+    const tail = chainFrom(src, m.index + m[0].length - 1);
+    WRITE.lastIndex = 0;
+    let w;
+    while ((w = WRITE.exec(tail))) {
+      // The object literal starts at the brace the match ended on.
+      const objStart = tail.indexOf('{', w.index);
+      let depth = 0;
+      let i = objStart;
+      for (; i < tail.length; i += 1) {
+        if (tail[i] === '{') depth += 1;
+        else if (tail[i] === '}') { depth -= 1; if (depth === 0) break; }
+      }
+      const body = tail.slice(objStart + 1, i);
+      if (body.includes('...')) spreads += 1;
+      // Top-level `key:` pairs only.
+      let d = 0;
+      for (const segment of body.split('\n')) {
+        const key = /^\s*(\w+)\s*:/.exec(segment);
+        const opens = (segment.match(/[{[(]/g) || []).length;
+        const closes = (segment.match(/[}\])]/g) || []).length;
+        if (key && d === 0) writeChecks.set(`${table}.${key[1]}`, { table, column: key[1], file: file.replace(/\\/g, '/') });
+        d += opens - closes;
+      }
+    }
+  }
+}
+
+const writeFailures = [];
+for (const c of writeChecks.values()) {
+  const { error } = await db.from(c.table).select(c.column).limit(1);
+  if (error) writeFailures.push({ ...c, code: error.code, message: error.message });
+}
+
+/**
+ * RPC names are listed, not verified — and that is deliberate.
+ *
+ * Calling `.rpc(name)` with no arguments cannot distinguish "no such function"
+ * from "exists, but takes arguments": PostgREST answers PGRST202 for both, with
+ * the identical message "Could not find the function public.X without
+ * parameters". A non-null `hint` sometimes names a near-miss, but a made-up name
+ * with no similar function returns `hint: null` too, so that signal is not
+ * dependable either.
+ *
+ * A first version of this check filtered on that message and could therefore
+ * never fail — a mutation renaming a real RPC to `..._typo` passed clean. A
+ * check that cannot fail is worse than no check, so it is gone. Verifying these
+ * needs the real argument names, which means calling each one properly.
+ */
+const rpcNames = new Map();
+for (const file of sources()) {
+  const src = readFileSync(file, 'utf8');
+  const re = /\.rpc\(\s*'(\w+)'/g;
+  let m;
+  while ((m = re.exec(src))) {
+    if (!rpcNames.has(m[1])) rpcNames.set(m[1], file.replace(/\\/g, '/'));
+  }
+}
+
 console.log(`Checked ${queries.length} distinct literal select(s) across app/ and lib/.`);
 console.log(`Skipped ${skipped} interpolated select(s) — not reconstructable statically.\n`);
 
@@ -198,6 +275,36 @@ if (columnFailures.length === 0) {
   }
 }
 
-const total = failures.length + columnFailures.length;
+console.log(`\nChecked ${writeChecks.size} distinct insert/update column(s), across ${spreads} payload(s) that also spread.`);
+if (writeFailures.length === 0) {
+  console.log('Every one exists on its table.');
+} else {
+  console.log('\n=== WRITTEN COLUMNS THAT DO NOT EXIST ===');
+  for (const c of writeFailures) {
+    console.log(`${c.file}  [${c.code}]  ${c.table}.${c.column}`);
+    console.log(`  ${c.message.slice(0, 110)}`);
+  }
+}
+
+console.log(`\n${rpcNames.size} RPC name(s) called, NOT verified here (see the note in this file):`);
+console.log(`  ${Array.from(rpcNames.keys()).sort().join(', ')}`);
+
+const checked = queries.length + columnChecks.size + writeChecks.size;
+const total = failures.length + columnFailures.length + writeFailures.length;
+
+/**
+ * This makes roughly one request per check, so a run is several hundred round
+ * trips. Back-to-back runs can trip Supabase's rate limiting, and the failures
+ * then arrive as a wall of plausible-looking schema errors — one run reported
+ * 192 broken queries that were all fine thirty seconds later. Treat a large
+ * failure fraction as an infrastructure problem, not as findings.
+ */
+if (total > checked * 0.25) {
+  console.log(`\n!! ${total} of ${checked} checks failed.`);
+  console.log('!! That fraction almost certainly means rate limiting or a connection');
+  console.log('!! problem, not that much broken code. Wait a moment and re-run before');
+  console.log('!! believing any of it.');
+  process.exit(2);
+}
 console.log(`\n${total} failing quer${total === 1 ? 'y' : 'ies'}.`);
 process.exit(total === 0 ? 0 : 1);
