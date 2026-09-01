@@ -99,6 +99,80 @@ for (const q of queries) {
   if (error) failures.push({ ...q, code: error.code, message: error.message });
 }
 
+/**
+ * Columns named in filters and ordering, which fail the same way.
+ *
+ * `.eq('typo_column', x)` raises 42703 at runtime — the select can be perfectly
+ * valid and the query still dies, and the same `error => notFound()` handlers
+ * turn it into a 404. Existence is checked by selecting the column.
+ *
+ * Dotted paths (`vehicle.make`, `media.asset_type`) address an embedded
+ * resource and are skipped: they are valid as filters but not as a select.
+ */
+const FILTER = /\.(?:eq|neq|gt|gte|lt|lte|like|ilike|is|in|contains|order)\(\s*'([\w.]+)'/g;
+const columnChecks = new Map();
+
+/**
+ * The remainder of one method chain, starting just after the select.
+ *
+ * Consumes `.method(...)` calls with balanced parentheses and stops at the first
+ * thing that is not one. Reading to the next `;` instead — which is what this
+ * did first — swallows every sibling query in a `Promise.all([...])` array and
+ * attributes their filters to the wrong table. That produced 82 confident false
+ * positives, all of them claiming columns like `payments.source` were missing.
+ */
+function chainFrom(src, start) {
+  let i = start;
+  // Finish the select's own argument list.
+  let depth = 1;
+  while (i < src.length && depth > 0) {
+    if (src[i] === '(') depth += 1;
+    else if (src[i] === ')') depth -= 1;
+    i += 1;
+  }
+  const begin = i;
+  for (;;) {
+    const rest = src.slice(i);
+    const next = /^\s*\.\w+\s*\(/.exec(rest);
+    if (!next) break;
+    i += next[0].length;
+    depth = 1;
+    while (i < src.length && depth > 0) {
+      if (src[i] === '(') depth += 1;
+      else if (src[i] === ')') depth -= 1;
+      i += 1;
+    }
+  }
+  return src.slice(begin, i);
+}
+
+for (const file of sources()) {
+  const src = readFileSync(file, 'utf8');
+  let m;
+  PAIR.lastIndex = 0;
+  while ((m = PAIR.exec(src))) {
+    const [whole, table, gap] = m;
+    if (gap.includes('.from(')) continue;
+    const tail = chainFrom(src, m.index + whole.length);
+    let f;
+    FILTER.lastIndex = 0;
+    while ((f = FILTER.exec(tail))) {
+      const column = f[1];
+      if (column.includes('.')) continue;
+      const key = `${table}.${column}`;
+      if (!columnChecks.has(key)) {
+        columnChecks.set(key, { table, column, file: file.replace(/\\/g, '/') });
+      }
+    }
+  }
+}
+
+const columnFailures = [];
+for (const c of columnChecks.values()) {
+  const { error } = await db.from(c.table).select(c.column).limit(1);
+  if (error) columnFailures.push({ ...c, code: error.code, message: error.message });
+}
+
 console.log(`Checked ${queries.length} distinct literal select(s) across app/ and lib/.`);
 console.log(`Skipped ${skipped} interpolated select(s) — not reconstructable statically.\n`);
 
@@ -113,5 +187,17 @@ if (failures.length === 0) {
   }
 }
 
-console.log(`\n${failures.length} failing quer${failures.length === 1 ? 'y' : 'ies'}.`);
-process.exit(failures.length === 0 ? 0 : 1);
+console.log(`\nChecked ${columnChecks.size} distinct filter/order column(s).`);
+if (columnFailures.length === 0) {
+  console.log('Every one exists on its table.');
+} else {
+  console.log('\n=== COLUMNS THAT DO NOT EXIST ===');
+  for (const c of columnFailures) {
+    console.log(`${c.file}  [${c.code}]  ${c.table}.${c.column}`);
+    console.log(`  ${c.message.slice(0, 110)}`);
+  }
+}
+
+const total = failures.length + columnFailures.length;
+console.log(`\n${total} failing quer${total === 1 ? 'y' : 'ies'}.`);
+process.exit(total === 0 ? 0 : 1);
