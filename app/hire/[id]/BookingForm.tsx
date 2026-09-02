@@ -3,10 +3,18 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { HireListing } from '@/lib/types';
+import { bookingTotal } from '@/lib/hire-pricing';
 
 function formatXAF(amount: number): string {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
 }
+
+// 'mois' is invariant in French — it does not take a plural s.
+const UNIT_LABEL: Record<'month' | 'week' | 'day', { one: string; many: string }> = {
+  month: { one: 'mois', many: 'mois' },
+  week: { one: 'semaine', many: 'semaines' },
+  day: { one: 'jour', many: 'jours' },
+};
 
 export default function BookingForm({ listing }: { listing: HireListing }) {
   const router = useRouter();
@@ -19,19 +27,16 @@ export default function BookingForm({ listing }: { listing: HireListing }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Calculate estimate
+  // Priced by the same module the booking route uses, so the quote below is
+  // exactly what gets charged.
   let totalDays = 0;
-  let estimate = 0;
   if (startDate && endDate) {
     const diff = new Date(endDate).getTime() - new Date(startDate).getTime();
-    totalDays = Math.ceil(diff / (1000 * 60 * 60 * 24));
-    if (totalDays > 0) {
-      estimate = listing.daily_rate * totalDays;
-      if (hireType === 'with_driver' && listing.driver_daily_rate) {
-        estimate += listing.driver_daily_rate * totalDays;
-      }
-    }
+    totalDays = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
   }
+  const driverRate = hireType === 'with_driver' ? listing.driver_daily_rate : null;
+  const quote = bookingTotal(listing, totalDays, driverRate);
+  const estimate = quote.total;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -121,14 +126,18 @@ export default function BookingForm({ listing }: { listing: HireListing }) {
       {/* Estimate */}
       {totalDays > 0 && (
         <div className="bg-gray-50 rounded-xl p-3 space-y-1">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">{totalDays} jour{totalDays > 1 ? 's' : ''} x {formatXAF(listing.daily_rate)}</span>
-            <span className="font-medium">{formatXAF(listing.daily_rate * totalDays)}</span>
-          </div>
-          {hireType === 'with_driver' && listing.driver_daily_rate && (
+          {quote.lines.map((line) => (
+            <div key={line.unit} className="flex justify-between text-sm">
+              <span className="text-gray-500">
+                {line.quantity} {line.quantity > 1 ? UNIT_LABEL[line.unit].many : UNIT_LABEL[line.unit].one} x {formatXAF(line.unitPrice)}
+              </span>
+              <span className="font-medium">{formatXAF(line.amount)}</span>
+            </div>
+          ))}
+          {quote.driver && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Chauffeur x {totalDays}</span>
-              <span className="font-medium">{formatXAF(listing.driver_daily_rate * totalDays)}</span>
+              <span className="text-gray-500">Chauffeur x {quote.driver.quantity}</span>
+              <span className="font-medium">{formatXAF(quote.driver.amount)}</span>
             </div>
           )}
           {listing.deposit_amount > 0 && (

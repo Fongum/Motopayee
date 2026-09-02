@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAuth } from '@/lib/auth/middleware';
 import { parseBody, optionalText } from '@/lib/validation';
+import { bookingTotal } from '@/lib/hire-pricing';
 
 // Dates are calendar days (YYYY-MM-DD). They are parsed to real Date objects so
 // an unparseable value is rejected here rather than silently producing NaN day
@@ -94,10 +95,11 @@ export async function POST(
     return NextResponse.json({ error: 'This listing requires a driver' }, { status: 400 });
   }
 
-  // Calculate total
-  let totalAmount = listing.daily_rate * totalDays;
+  // Priced by lib/hire-pricing so the renter is charged exactly what the
+  // booking form quoted. This used to be daily_rate * days regardless of the
+  // weekly and monthly rates the owner set and the listing advertised.
   const driverRate = selectedHireType === 'with_driver' ? (listing.driver_daily_rate ?? 0) : 0;
-  totalAmount += driverRate * totalDays;
+  const { total: totalAmount } = bookingTotal(listing, totalDays, driverRate);
 
   const { data: booking, error } = await supabaseAdmin
     .from('hire_bookings')
