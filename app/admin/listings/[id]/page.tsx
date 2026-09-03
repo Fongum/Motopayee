@@ -203,6 +203,24 @@ export default async function AdminListingDetailPage({ params }: { params: { id:
           {listing.status === 'pricing_review' && isAdminRole(user.role) && (
             <PublishButton listingId={listing.id} />
           )}
+          {/* A vehicle that has sold has to leave the browse results. Until
+              now nothing could move a listing out of "published" at all. */}
+          {listing.status === 'published' && isAdminRole(user.role) && (
+            <StatusActionButton
+              listingId={listing.id}
+              targetStatus="sold"
+              label="Marquer comme vendu"
+              className="bg-[#1a3a6b] text-white hover:bg-[#132a4d]"
+            />
+          )}
+          {listing.status !== 'sold' && listing.status !== 'withdrawn' && isAdminRole(user.role) && (
+            <StatusActionButton
+              listingId={listing.id}
+              targetStatus="withdrawn"
+              label="Retirer l'annonce"
+              className="border border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+            />
+          )}
         </div>
       </div>
     </div>

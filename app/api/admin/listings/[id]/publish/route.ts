@@ -6,13 +6,30 @@ import { logFailure } from '@/lib/logger';
 
 interface RouteParams { params: { id: string } }
 
+/**
+ * Where a listing may go next.
+ *
+ * `published` had no entry, and a missing key is an empty list, so every
+ * transition out of it was rejected: a vehicle that sold could not be marked
+ * sold and stayed in the browse results indefinitely. `sold` and `withdrawn`
+ * are both in the table's check constraint and both have labels in the seller
+ * portal — they were simply unreachable.
+ *
+ * `ownership_verified` could not reach `media_done` either, though the field
+ * agent's upload route performs exactly that transition when an agent marks
+ * photography done. The two definitions of the workflow disagreed; the schema's
+ * own ordering, and the field route, put media_done straight after ownership
+ * verification.
+ */
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  ownership_submitted: ['ownership_verified'],
-  ownership_verified: ['inspection_scheduled'],
-  inspection_scheduled: ['media_done', 'inspected'],
-  media_done: ['inspection_scheduled', 'inspected'],
-  inspected: ['pricing_review', 'published'],
-  pricing_review: ['published'],
+  ownership_submitted: ['ownership_verified', 'withdrawn'],
+  // Photography and inspection can happen in either order.
+  ownership_verified: ['media_done', 'inspection_scheduled', 'withdrawn'],
+  inspection_scheduled: ['media_done', 'inspected', 'withdrawn'],
+  media_done: ['inspection_scheduled', 'inspected', 'withdrawn'],
+  inspected: ['pricing_review', 'published', 'withdrawn'],
+  pricing_review: ['published', 'withdrawn'],
+  published: ['sold', 'withdrawn'],
 };
 
 export async function POST(request: Request, { params }: RouteParams) {
