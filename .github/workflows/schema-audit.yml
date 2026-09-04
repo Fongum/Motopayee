@@ -1,0 +1,69 @@
+name: Schema audit
+
+# Separate from CI on purpose. These checks talk to the live database, so they
+# cannot run on every pull request the way lint, tsc and the unit tests do:
+# they need credentials, and a fork's PR does not get them.
+#
+# What they catch is the class of bug that the ordinary pipeline cannot see at
+# all — a query the database rejects. Seven routes once embedded a table
+# PostgREST could not resolve, and every one answered 404 from the day it was
+# written while tsc, next build and the test suite all stayed green.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Mondays, 06:00 UTC. Weekly is enough: this catches drift between the code
+    # and the schema, which changes at the pace migrations are applied.
+    - cron: '0 6 * * 1'
+
+concurrency:
+  group: schema-audit
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Skip rather than fail when the repository has no credentials. A weekly
+      # job that always fails is a job everyone learns to ignore.
+      - name: Check for credentials
+        id: creds
+        env:
+          URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -n "$URL" ] && [ -n "$SERVICE_KEY" ] && [ -n "$ANON_KEY" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping. Set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY as repository secrets to enable this audit."
+          fi
+
+      - name: Every query runs against the live schema
+        if: steps.creds.outputs.present == 'true'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npm run audit:queries
+
+      - name: Anon key sees nothing it should not
+        if: steps.creds.outputs.present == 'true'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npm run audit:access

@@ -1,4 +1,8 @@
 import Link from 'next/link';
+import TruncationNotice from '../../../(components)/TruncationNotice';
+
+/** Rows the table renders; the notice shows the true matching count. */
+const IMPORT_LIST_LIMIT = 200;
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAdminPage } from '@/lib/auth/admin-access';
 
@@ -32,7 +36,8 @@ export default async function AdminImportOrdersPage({
   let query = supabaseAdmin
     .from('import_orders')
     .select('*, buyer:profiles!buyer_id(full_name, email), request:import_requests(make, model)', { count: 'exact' })
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(IMPORT_LIST_LIMIT);
 
   if (searchParams.status) {
     query = query.eq('status', searchParams.status);
@@ -83,6 +88,8 @@ export default async function AdminImportOrdersPage({
         ))}
       </div>
 
+
+      <TruncationNotice shown={orders.length} total={count} noun="commandes" />
       <div className="overflow-hidden rounded-[2rem] border border-gray-200 bg-white shadow-sm">
         <table className="w-full text-sm">
           <thead className="border-b border-gray-200 bg-gray-50">

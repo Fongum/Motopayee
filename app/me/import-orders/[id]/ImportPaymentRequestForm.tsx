@@ -9,6 +9,13 @@ type Props = {
   depositAmount: number;
   buyerPhone?: string | null;
   existingPayments?: ImportPayment[];
+  /**
+   * Which payment this form starts. Defaults to the deposit so the existing
+   * call site keeps working unchanged; the purchase balance passes its own.
+   */
+  paymentType?: 'reservation_deposit' | 'purchase_balance';
+  /** What to call it in messages, e.g. "deposit" or "balance". */
+  paymentNoun?: string;
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -33,6 +40,8 @@ export default function ImportPaymentRequestForm({
   depositAmount,
   buyerPhone,
   existingPayments = [],
+  paymentType = 'reservation_deposit',
+  paymentNoun = 'deposit',
 }: Props) {
   const [provider, setProvider] = useState<'mtn_momo' | 'orange_money'>('mtn_momo');
   const [phone, setPhone] = useState(buyerPhone ?? '');
@@ -52,11 +61,11 @@ export default function ImportPaymentRequestForm({
       const response = await fetch(`/api/imports/orders/${orderId}/payments/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider, phone }),
+        body: JSON.stringify({ provider, phone, payment_type: paymentType }),
       });
       const data = await response.json();
       if (!response.ok) {
-        setMessage({ type: 'error', text: data.error ?? 'Unable to request deposit payment.' });
+        setMessage({ type: 'error', text: data.error ?? `Unable to request ${paymentNoun} payment.` });
       } else {
         const instructions = data.payment?.meta?.instructions as string | undefined;
         setMessage({

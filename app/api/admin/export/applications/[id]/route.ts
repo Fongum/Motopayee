@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { requireVerifier } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
+import { fetchDocumentsFor } from '@/lib/documents.server';
+import { DOCUMENT_STAFF_COLUMNS } from '@/lib/documents';
 
 interface RouteParams { params: { id: string } }
 
@@ -20,8 +22,7 @@ export async function GET(request: Request, { params }: RouteParams) {
         media:media_assets(id, asset_type, display_order, caption)
       ),
       buyer:profiles!buyer_id(id, email, full_name, phone, city, zone),
-      verifier:profiles!verifier_id(id, email, full_name),
-      documents(*)
+      verifier:profiles!verifier_id(id, email, full_name)
     `)
     .eq('id', params.id)
     .single();
@@ -29,6 +30,10 @@ export async function GET(request: Request, { params }: RouteParams) {
   if (error || !app) {
     return NextResponse.json({ error: 'Application not found.' }, { status: 404 });
   }
+
+  // Fetched separately: documents is polymorphic and cannot be embedded. The
+  // MFI packet lists them, so this endpoint genuinely needs them.
+  const documents = await fetchDocumentsFor('application', params.id, DOCUMENT_STAFF_COLUMNS);
 
   const listing = app.listing as Record<string, unknown> | null;
   const inspection = listing
@@ -74,7 +79,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       : null,
     vehicle: listing ? (listing.vehicle as Record<string, unknown> | null) : null,
     inspection: inspection ?? null,
-    documents: (app.documents ?? []).map((d: Record<string, unknown>) => ({
+    documents: documents.map((d) => ({
       id: d.id,
       doc_type: d.doc_type,
       filename: d.filename,

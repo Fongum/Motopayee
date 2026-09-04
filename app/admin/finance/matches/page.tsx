@@ -1,8 +1,8 @@
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
+import { OPEN_LEAD_STATUSES } from '@/lib/launch-lead-metrics';
 
-const OPEN_LEAD_STATUSES = ['new', 'contacted', 'interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding'];
 
 function formatXAF(amount: number) {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);

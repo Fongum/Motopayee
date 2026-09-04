@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import Navbar from '../(components)/Navbar';
 import Footer from '../(components)/Footer';
 import { supabaseAdmin } from '@/lib/auth/server';
+import { shapeListingMedia } from '@/lib/listing-query';
+import type { ListingQuery } from '@/lib/listing-query';
 import type { Listing, HireListing } from '@/lib/types';
 
 export const metadata: Metadata = {
@@ -95,11 +97,19 @@ export default async function ComparePage({
   }
 
   // Listing comparison
-  const { data } = await supabaseAdmin
+  // The comparison table reads across the whole vehicle spec, so this one keeps
+  // the wide select — but it renders `media[0]` as the thumbnail, so the embed
+  // still has to be ordered and photo-only.
+  const comparisonQuery = supabaseAdmin
     .from('listings')
     .select('*, vehicle:vehicles(*), media:media_assets(*), seller:profiles!seller_id(full_name, is_verified)')
     .in('id', ids)
     .eq('status', 'published');
+
+  const { data } = await (shapeListingMedia(
+    comparisonQuery as unknown as ListingQuery,
+    { mediaLimit: 1 }
+  ) as unknown as typeof comparisonQuery);
   const listings = (data ?? []) as unknown as Listing[];
   if (listings.length < 2) notFound();
 

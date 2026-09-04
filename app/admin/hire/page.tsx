@@ -1,8 +1,12 @@
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAdminPage } from '@/lib/auth/admin-access';
 import type { HireListing } from '@/lib/types';
+import TruncationNotice from '../../(components)/TruncationNotice';
 import AdminHireActions from './AdminHireActions';
 import Link from 'next/link';
+
+/** Rows per section. The headings show the true matching count alongside. */
+const HIRE_ADMIN_LIST_LIMIT = 200;
 
 function formatXAF(amount: number): string {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
@@ -19,17 +23,25 @@ const STATUS_FR: Record<string, { label: string; cls: string }> = {
 export default async function AdminHirePage() {
   await requireAdminPage('hire');
 
-  const { data: pendingData } = await supabaseAdmin
-    .from('hire_listings')
-    .select('*, owner:profiles!owner_id(full_name, email, phone)', { count: 'exact' })
-    .eq('status', 'pending_review')
-    .order('created_at', { ascending: true });
-
-  const { data: publishedData } = await supabaseAdmin
-    .from('hire_listings')
-    .select('*, owner:profiles!owner_id(full_name, email, phone)', { count: 'exact' })
-    .eq('status', 'published')
-    .order('created_at', { ascending: false });
+  // Both queries already asked for an exact count and then threw it away, so
+  // the section headings counted the rows that came back rather than the rows
+  // that matched — indistinguishable until PostgREST truncated at 1000 and the
+  // review queue quietly stopped growing.
+  const [{ data: pendingData, count: pendingTotal }, { data: publishedData, count: publishedTotal }] =
+    await Promise.all([
+      supabaseAdmin
+        .from('hire_listings')
+        .select('*, owner:profiles!owner_id(full_name, email, phone)', { count: 'exact' })
+        .eq('status', 'pending_review')
+        .order('created_at', { ascending: true })
+        .limit(HIRE_ADMIN_LIST_LIMIT),
+      supabaseAdmin
+        .from('hire_listings')
+        .select('*, owner:profiles!owner_id(full_name, email, phone)', { count: 'exact' })
+        .eq('status', 'published')
+        .order('created_at', { ascending: false })
+        .limit(HIRE_ADMIN_LIST_LIMIT),
+    ]);
 
   const pending = (pendingData ?? []) as unknown as HireListing[];
   const published = (publishedData ?? []) as unknown as HireListing[];
@@ -53,7 +65,8 @@ export default async function AdminHirePage() {
 
       {/* Pending review */}
       <section className="mb-10">
-        <h2 className="text-sm font-bold text-gray-500 uppercase mb-4">En attente d&apos;examen ({pending.length})</h2>
+        <h2 className="text-sm font-bold text-gray-500 uppercase mb-4">En attente d&apos;examen ({pendingTotal ?? pending.length})</h2>
+        <TruncationNotice shown={pending.length} total={pendingTotal} noun="vehicules" />
         {pending.length === 0 ? (
           <p className="text-gray-400 text-sm">Aucune annonce en attente.</p>
         ) : (
@@ -89,7 +102,8 @@ export default async function AdminHirePage() {
 
       {/* Published */}
       <section>
-        <h2 className="text-sm font-bold text-gray-500 uppercase mb-4">Publiés ({published.length})</h2>
+        <h2 className="text-sm font-bold text-gray-500 uppercase mb-4">Publiés ({publishedTotal ?? published.length})</h2>
+        <TruncationNotice shown={published.length} total={publishedTotal} noun="vehicules" />
         {published.length === 0 ? (
           <p className="text-gray-400 text-sm">Aucune annonce publiée.</p>
         ) : (

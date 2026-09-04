@@ -1,9 +1,34 @@
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
+import TruncationNotice from '../../../(components)/TruncationNotice';
 import type { HireBooking } from '@/lib/types';
 import BookingAdminActions from './BookingAdminActions';
 import { calculateHireServiceFee } from '@/lib/hire-service-fees';
+import {
+  bookingCount,
+  bookingListSelect,
+  feeAmount,
+  feeCount,
+  fullyPaidValue,
+  inProgressBookingCount,
+  isFeeStatus,
+  liveBookingValue,
+} from '@/lib/hire-bookings-dashboard';
+import { fetchBookingTotals, fetchFeeTotals } from '@/lib/hire-bookings-dashboard.server';
+import { firstEmbedded } from '@/lib/finance-dashboard';
+
+/** Rows the bookings table renders. Capped, with the total shown alongside. */
+const BOOKING_LIST_LIMIT = 200;
+
+type FeeRow = {
+  id: string;
+  hire_booking_id: string;
+  fee_rate_percent: number;
+  fee_amount_xaf: number | string;
+  status: string;
+  paid_at: string | null;
+};
 
 function formatXAF(amount: number): string {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
@@ -47,6 +72,7 @@ type BookingRow = HireBooking & {
   hire_listing?: { id: string; make: string; model: string; year: number; city: string; plate_number?: string | null } | null;
   renter?: { full_name: string | null; email: string | null; phone: string | null } | null;
   owner?: { full_name: string | null; email: string | null; phone: string | null } | null;
+  fee?: FeeRow | FeeRow[] | null;
 };
 
 export default async function AdminHireBookingsPage({
@@ -56,87 +82,55 @@ export default async function AdminHireBookingsPage({
 }) {
   await requireAdminPage('hire');
 
-  const feeFilter = ['expected', 'invoiced', 'paid', 'waived', 'refunded'].includes(searchParams.fee ?? '')
-    ? searchParams.fee
-    : null;
-  let feeFilteredBookingIds: string[] | null = null;
-
-  if (feeFilter) {
-    const { data: filteredFees } = await supabaseAdmin
-      .from('hire_service_fees')
-      .select('hire_booking_id')
-      .eq('status', feeFilter);
-
-    feeFilteredBookingIds = Array.from(new Set((filteredFees ?? []).map((fee) => fee.hire_booking_id as string)));
-  }
-
+  const feeFilter = isFeeStatus(searchParams.fee) ? searchParams.fee : null;
+  // The fee rides an inner join when filtered on, so there is no pre-query
+  // resolving booking ids into an unbounded `.in()` list.
   let query = supabaseAdmin
     .from('hire_bookings')
-    .select(`
-      *,
-      hire_listing:hire_listings(id, make, model, year, city, plate_number),
-      renter:profiles!renter_id(full_name, email, phone),
-      owner:profiles!owner_id(full_name, email, phone)
-    `)
-    .order('created_at', { ascending: false });
+    .select(bookingListSelect(feeFilter !== null), { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .limit(BOOKING_LIST_LIMIT);
 
   if (searchParams.status && STATUS_FR[searchParams.status]) {
     query = query.eq('status', searchParams.status);
   }
 
   if (feeFilter) {
-    query = feeFilteredBookingIds && feeFilteredBookingIds.length > 0
-      ? query.in('id', feeFilteredBookingIds)
-      : query.eq('id', '00000000-0000-0000-0000-000000000000');
+    query = query.eq('fee.status', feeFilter);
   }
 
-  const { data } = await query;
+  const { data, count: matchingBookingCount } = await query;
   const bookings = (data ?? []) as unknown as BookingRow[];
-  const bookingIds = bookings.map((booking) => booking.id);
-  const { data: feeData } = bookingIds.length > 0
-    ? await supabaseAdmin
-        .from('hire_service_fees')
-        .select('id, hire_booking_id, fee_rate_percent, fee_amount_xaf, status, paid_at')
-        .in('hire_booking_id', bookingIds)
-    : { data: [] };
-  const { data: allFeeData } = await supabaseAdmin
-    .from('hire_service_fees')
-    .select('status, fee_amount_xaf');
 
+  // The fee arrives embedded in the row, so the second query keyed by booking
+  // id is gone.
   const feesByBooking = new Map(
-    ((feeData ?? []) as unknown as Array<{
-      id: string;
-      hire_booking_id: string;
-      fee_rate_percent: number;
-      fee_amount_xaf: number;
-      status: string;
-      paid_at: string | null;
-    }>).map((fee) => [fee.hire_booking_id, fee])
+    bookings
+      .map((booking) => firstEmbedded(booking.fee))
+      .filter((fee): fee is FeeRow => fee !== null)
+      .map((fee) => [fee.hire_booking_id, fee])
   );
-  const feeRows = (allFeeData ?? []) as Array<{ status: string; fee_amount_xaf: number | string | null }>;
-  const feeAmountByStatus = (status: string) => feeRows
-    .filter((fee) => fee.status === status)
-    .reduce((sum, fee) => sum + Number(fee.fee_amount_xaf ?? 0), 0);
-  const feeCountByStatus = (status: string) => feeRows.filter((fee) => fee.status === status).length;
 
-  const activeValue = bookings
-    .filter((booking) => ['pending', 'confirmed', 'active'].includes(booking.status))
-    .reduce((total, booking) => total + Number(booking.total_amount ?? 0), 0);
-  const paidValue = bookings
-    .filter((booking) => booking.payment_status === 'fully_paid')
-    .reduce((total, booking) => total + Number(booking.total_amount ?? 0), 0);
-  const expectedFees = feeAmountByStatus('expected');
-  const invoicedFees = feeAmountByStatus('invoiced');
-  const collectedFees = feeAmountByStatus('paid');
+  // Totalled in Postgres (migration 038): the fee revenue used to be reduced
+  // over the whole table fetched unbounded, and the booking values over
+  // whichever page the table rendered. Both truncated at 1000 rows.
+  const [feeTotals, bookingTotals] = await Promise.all([
+    fetchFeeTotals(),
+    fetchBookingTotals(),
+  ]);
+
+  const expectedFees = feeAmount(feeTotals, 'expected');
+  const invoicedFees = feeAmount(feeTotals, 'invoiced');
+  const collectedFees = feeAmount(feeTotals, 'paid');
 
   const stats = [
-    { label: 'Demandes', value: bookings.filter((booking) => booking.status === 'pending').length, color: 'text-amber-600' },
-    { label: 'Actives', value: bookings.filter((booking) => ['confirmed', 'active'].includes(booking.status)).length, color: 'text-blue-700' },
-    { label: 'Valeur active', value: formatXAF(activeValue), color: 'text-gray-900' },
-    { label: 'Payees', value: formatXAF(paidValue), color: 'text-green-700' },
-    { label: 'Frais a facturer', value: `${feeCountByStatus('expected')} - ${formatXAF(expectedFees)}`, color: 'text-amber-700' },
-    { label: 'Frais factures', value: `${feeCountByStatus('invoiced')} - ${formatXAF(invoicedFees)}`, color: 'text-blue-700' },
-    { label: 'Frais encaisses', value: `${feeCountByStatus('paid')} - ${formatXAF(collectedFees)}`, color: 'text-green-700' },
+    { label: 'Demandes', value: bookingCount(bookingTotals, 'pending'), color: 'text-amber-600' },
+    { label: 'Actives', value: inProgressBookingCount(bookingTotals), color: 'text-blue-700' },
+    { label: 'Valeur active', value: formatXAF(liveBookingValue(bookingTotals)), color: 'text-gray-900' },
+    { label: 'Payees', value: formatXAF(fullyPaidValue(bookingTotals)), color: 'text-green-700' },
+    { label: 'Frais a facturer', value: `${feeCount(feeTotals, 'expected')} - ${formatXAF(expectedFees)}`, color: 'text-amber-700' },
+    { label: 'Frais factures', value: `${feeCount(feeTotals, 'invoiced')} - ${formatXAF(invoicedFees)}`, color: 'text-blue-700' },
+    { label: 'Frais encaisses', value: `${feeCount(feeTotals, 'paid')} - ${formatXAF(collectedFees)}`, color: 'text-green-700' },
   ];
 
   return (
@@ -199,7 +193,9 @@ export default async function AdminHireBookingsPage({
         ))}
       </div>
 
-      <div className="space-y-3">
+      <TruncationNotice shown={bookings.length} total={matchingBookingCount} noun="reservations" totalsAreComplete />
+
+            <div className="space-y-3">
         {bookings.length === 0 ? (
           <div className="rounded-2xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-400">
             Aucune reservation a afficher.

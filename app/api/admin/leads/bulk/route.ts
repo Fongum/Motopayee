@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/auth/server';
 import { recordLeadActivity } from '@/lib/launch-lead-activities';
 import { QUICK_LEAD_ACTIVITY_TEMPLATES } from '@/lib/launch-lead-playbooks';
 import { z } from 'zod';
+import { LEAD_STATUSES } from '@/lib/launch-lead-metrics';
 
 const QUICK_ACTIVITY_IDS = QUICK_LEAD_ACTIVITY_TEMPLATES.map((template) => template.id) as [string, ...string[]];
 
@@ -12,7 +13,7 @@ const schema = z.object({
   visible_lead_ids: z.array(z.string().uuid()).max(100).default([]),
   selection_scope: z.enum(['selected', 'visible']).default('selected'),
   assigned_to: z.string().uuid().optional().or(z.literal('')).or(z.literal('__no_change')),
-  status: z.enum(['new', 'contacted', 'interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding', 'converted', 'not_fit', 'closed']).optional().or(z.literal('')).or(z.literal('__no_change')),
+  status: z.enum(LEAD_STATUSES).optional().or(z.literal('')).or(z.literal('__no_change')),
   priority: z.enum(['low', 'normal', 'high']).optional().or(z.literal('')).or(z.literal('__no_change')),
   campaign_action: z.enum(['__no_change', 'set', 'clear']).default('__no_change'),
   campaign_name: z.string().trim().max(120).optional(),

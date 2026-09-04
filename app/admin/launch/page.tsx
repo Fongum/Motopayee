@@ -8,9 +8,10 @@ import {
   weekStartKey,
   WEEKLY_METRICS,
 } from '@/lib/launch-metrics';
+import { PARTNER_ENGAGED_STATUSES, isOpenLeadStatus } from '@/lib/launch-lead-metrics';
 
-const OPEN_LEAD_STATUSES = ['new', 'contacted', 'interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding'];
-const ACTIVE_PARTNER_STATUSES = ['interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding', 'converted'];
+// Shared with the admin dashboard, which asks the same question.
+const ACTIVE_PARTNER_STATUSES: readonly string[] = PARTNER_ENGAGED_STATUSES;
 
 const TYPE_LABELS: Record<string, string> = {
   seller: 'Vendeurs',
@@ -225,7 +226,7 @@ export default async function AdminLaunchPage() {
       updatedAt: stored?.updated_at ?? null,
     };
   });
-  const openLeads = leadRows.filter((lead) => OPEN_LEAD_STATUSES.includes(lead.status));
+  const openLeads = leadRows.filter((lead) => isOpenLeadStatus(lead.status));
   const dueToday = openLeads.filter((lead) => {
     if (!lead.next_follow_up_at) return false;
     const followUp = new Date(lead.next_follow_up_at);

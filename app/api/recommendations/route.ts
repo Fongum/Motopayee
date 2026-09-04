@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAuth } from '@/lib/auth/middleware';
+import { shapeListingMedia } from '@/lib/listing-query';
+import type { ListingQuery } from '@/lib/listing-query';
+import { shapeHireMedia } from '@/lib/hire-query';
+import type { HireQuery } from '@/lib/hire-query';
 
 // GET /api/recommendations — personalized vehicle recommendations
 export async function GET(request: Request) {
@@ -53,22 +57,34 @@ export async function GET(request: Request) {
   const excludeIds = Array.from(new Set([...viewedListingIds, ...favListingIds]));
 
   // Recommend listings with similar makes, excluding already viewed/favourited
-  const query = supabaseAdmin
+  const baseQuery = supabaseAdmin
     .from('listings')
     .select('id, asking_price, zone, price_band, vehicle:vehicles(make, model, year, mileage_km, fuel_type), media:media_assets(id)')
     .eq('status', 'published')
     .order('created_at', { ascending: false })
     .limit(10);
 
+  // The carousel takes media[0] as its thumbnail, so the embed needs ordering
+  // and has to exclude videos, which share the table.
+  const query = shapeListingMedia(
+    baseQuery as unknown as ListingQuery,
+    { mediaLimit: 1 }
+  ) as unknown as typeof baseQuery;
+
   if (preferredMakes.length > 0) {
     // Fetch by preferred makes first
-    const { data: byMake } = await supabaseAdmin
+    const byMakeQuery = supabaseAdmin
       .from('listings')
       .select('id, asking_price, zone, price_band, vehicle:vehicles!inner(make, model, year, mileage_km, fuel_type), media:media_assets(id)')
       .eq('status', 'published')
       .in('vehicle.make', preferredMakes)
       .order('created_at', { ascending: false })
       .limit(10);
+
+    const { data: byMake } = await (shapeListingMedia(
+      byMakeQuery as unknown as ListingQuery,
+      { mediaLimit: 1 }
+    ) as unknown as typeof byMakeQuery);
 
     const filtered = (byMake ?? []).filter(
       (l: Record<string, unknown>) => !excludeIds.includes(l.id as string)
@@ -88,13 +104,17 @@ export async function GET(request: Request) {
   // Recommend hire listings
   let hireRecommendations: Record<string, unknown>[] = [];
   if (viewedHireIds.length > 0) {
-    const { data: hires } = await supabaseAdmin
+    const hiresQuery = supabaseAdmin
       .from('hire_listings')
       .select('*, owner:profiles!owner_id(full_name, is_verified), media:hire_listing_media(id, storage_path, bucket, display_order)')
       .eq('status', 'published')
       .eq('availability', 'available')
       .order('created_at', { ascending: false })
       .limit(6);
+
+    const { data: hires } = await (shapeHireMedia(
+      hiresQuery as unknown as HireQuery
+    ) as unknown as typeof hiresQuery);
 
     hireRecommendations = (hires ?? []).filter(
       (h: Record<string, unknown>) => !viewedHireIds.includes(h.id as string)

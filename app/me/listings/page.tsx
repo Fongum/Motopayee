@@ -2,6 +2,8 @@ import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import type { Listing } from '@/lib/types';
+import TruncationNotice from '../../(components)/TruncationNotice';
+import { PORTAL_LIST_LIMIT } from '@/lib/portal-lists';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Brouillon',
@@ -33,11 +35,14 @@ export default async function SellerListingsPage() {
   const user = await getCurrentUser();
   if (!user || !['seller_individual', 'seller_dealer'].includes(user.role)) redirect('/login');
 
-  const { data: listings } = await supabaseAdmin
+  // A dealer's inventory is the one portal list that realistically grows past
+  // the point where an unbounded select stops returning everything.
+  const { data: listings, count: totalListings } = await supabaseAdmin
     .from('listings')
-    .select('*, vehicle:vehicles(make, model, year)')
+    .select('*, vehicle:vehicles(make, model, year)', { count: 'exact' })
     .eq('seller_id', user.id)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(PORTAL_LIST_LIMIT);
 
   const items = (listings ?? []) as unknown as Listing[];
 
@@ -46,7 +51,9 @@ export default async function SellerListingsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Mes annonces</h1>
-          <p className="text-gray-500 text-sm mt-1">{items.length} annonce{items.length !== 1 ? 's' : ''}</p>
+          <p className="text-gray-500 text-sm mt-1">
+            {totalListings ?? items.length} annonce{(totalListings ?? items.length) !== 1 ? 's' : ''}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {user.role === 'seller_dealer' && (
@@ -65,6 +72,8 @@ export default async function SellerListingsPage() {
           </Link>
         </div>
       </div>
+
+      <TruncationNotice shown={items.length} total={totalListings} noun="annonces" />
 
       {items.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center">

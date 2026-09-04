@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import ListingCard from '../../(components)/ListingCard';
+import { LISTING_CARD_SELECT, shapeListingMedia } from '@/lib/listing-query';
+import type { ListingQuery } from '@/lib/listing-query';
 import type { Listing } from '@/lib/types';
 
 export const metadata: Metadata = {
@@ -13,13 +15,20 @@ export default async function FavouritesPage() {
   const user = await getCurrentUser();
   if (!user || user.role !== 'buyer') redirect('/login');
 
-  const { data: favRows } = await supabaseAdmin
+  // Same card shape as /listings, so the thumbnail here is the same primary
+  // photo the buyer saw when they saved the vehicle.
+  const favouritesQuery = supabaseAdmin
     .from('favourites')
-    .select(
-      'created_at, listing:listings(*, vehicle:vehicles(*), media:media_assets(*), seller:profiles!seller_id(is_verified))'
-    )
+    .select(`created_at, listing:listings(${LISTING_CARD_SELECT})`)
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
+
+  const shaped = shapeListingMedia(
+    favouritesQuery as unknown as ListingQuery,
+    { mediaLimit: 1, mediaPath: 'listing.media' }
+  ) as unknown as typeof favouritesQuery;
+
+  const { data: favRows } = await shaped;
 
   const listings = ((favRows ?? []) as unknown as { listing: Listing }[])
     .map((r) => r.listing)
