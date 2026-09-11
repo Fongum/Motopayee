@@ -320,7 +320,7 @@ export default async function HireDetailPage({ params }: Props) {
                   )}
                   {listing.deposit_amount > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Caution</span>
+                      <span className="text-gray-500">Caution (versée au propriétaire)</span>
                       <span className="font-semibold">{formatXAF(listing.deposit_amount)}</span>
                     </div>
                   )}

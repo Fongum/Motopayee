@@ -140,16 +140,25 @@ export default function BookingForm({ listing }: { listing: HireListing }) {
               <span className="font-medium">{formatXAF(quote.driver.amount)}</span>
             </div>
           )}
-          {listing.deposit_amount > 0 && (
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Caution</span>
-              <span className="font-medium">{formatXAF(listing.deposit_amount)}</span>
-            </div>
-          )}
           <div className="flex justify-between text-sm font-bold border-t border-gray-200 pt-1 mt-1">
             <span>Total estimé</span>
             <span className="text-[#1a3a6b]">{formatXAF(estimate)}</span>
           </div>
+          {/* The deposit is held by the vehicle owner, not by MotoPayee, and is
+              not part of this total. It used to sit above the total line among
+              the rental charges, so the figures did not add up and a renter
+              could reasonably read it as something MotoPayee collects. */}
+          {listing.deposit_amount > 0 && (
+            <div className="mt-2 border-t border-gray-200 pt-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Caution (hors total)</span>
+                <span className="font-medium">{formatXAF(listing.deposit_amount)}</span>
+              </div>
+              <p className="mt-1 text-xs text-gray-400">
+                Versée directement au propriétaire, qui la conserve et la restitue selon ses conditions. MotoPayee ne la détient pas.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
