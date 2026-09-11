@@ -62,12 +62,32 @@ function routeVerbs(): Map<string, Set<string>> {
 
 const verbsByRoute = routeVerbs();
 
+/** How many `[param]` segments a route has. Fewer is more specific. */
+function dynamicSegments(route: string): number {
+  return route.split('/').filter((s) => s.startsWith('[')).length;
+}
+
+/**
+ * The route Next.js would actually serve for this path.
+ *
+ * Taking the first regex match is wrong, and wrong in a way that only shows up
+ * on some machines: `/api/seller/listings/[id]` matches
+ * `/api/seller/listings/bulk`, because `bulk` is one path segment. Which of the
+ * two won depended on `readdirSync` order, so this test passed on Windows and
+ * failed on Linux — it reported the bulk upload as posting to a route that
+ * exports GET and PATCH, which is the `[id]` route, and there was no bug at all.
+ *
+ * Next.js prefers a static segment over a dynamic one, so candidates are ranked
+ * by how few dynamic segments they have. Ties go to the longer path.
+ */
 function resolveRoute(path: string): { route: string; verbs: Set<string> } | null {
-  for (const [route, verbs] of Array.from(verbsByRoute)) {
-    const re = new RegExp(`^${route.replace(/\[[^\]]+\]/g, '[^/]+').replace(/\//g, '\\/')}$`);
-    if (re.test(path)) return { route, verbs };
-  }
-  return null;
+  const candidates = Array.from(verbsByRoute)
+    .filter(([route]) => new RegExp(`^${route.replace(/\[[^\]]+\]/g, '[^/]+').replace(/\//g, '\\/')}$`).test(path))
+    .sort((a, b) => dynamicSegments(a[0]) - dynamicSegments(b[0]) || b[0].length - a[0].length);
+
+  if (!candidates.length) return null;
+  const [route, verbs] = candidates[0];
+  return { route, verbs };
 }
 
 const normalise = (p: string) => p.replace(/\$\{[^}]*\}/g, 'X');
@@ -152,6 +172,20 @@ describe('API call sites', () => {
         `${verb} ${path} -> exports [${Array.from(hit!.verbs).join(', ')}] (${file})`
       );
     expect(mismatched).toEqual([]);
+  });
+
+  it('prefers a static route over a dynamic one that also matches', () => {
+    // `/api/seller/listings/[id]` matches `/api/seller/listings/bulk` as a
+    // regex, and picking whichever came first made this suite pass on Windows
+    // and fail on Linux. Next.js serves the static route.
+    const hit = resolveRoute('/api/seller/listings/bulk');
+    expect(hit?.route).toBe('/api/seller/listings/bulk');
+    expect(hit?.verbs.has('POST')).toBe(true);
+  });
+
+  it('still resolves a genuinely dynamic path to its dynamic route', () => {
+    const hit = resolveRoute('/api/seller/listings/X');
+    expect(hit?.route).toBe('/api/seller/listings/[id]');
   });
 
   it('resolves a meaningful number of calls to their verbs', () => {
