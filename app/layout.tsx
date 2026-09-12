@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     default: 'MotoPayee — Achetez, vendez et financez votre véhicule au Cameroun',
     template: '%s | MotoPayee',
   },
-  description: 'La marketplace automobile #1 au Cameroun. Véhicules inspectés, prix transparents et financement facilité via nos IMF partenaires.',
+  description: "Marketplace automobile au Cameroun. Annonces revues par MotoPayee, prix transparents, financement soumis à l'accord de nos IMF partenaires.",
   keywords: ['voiture Cameroun', 'achat véhicule Douala', 'financement auto Yaoundé', 'marketplace automobile', 'MotoPayee'],
   authors: [{ name: 'MotoPayee' }],
   creator: 'MotoPayee',

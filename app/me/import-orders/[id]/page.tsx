@@ -262,6 +262,30 @@ export default async function ImportOrderDetailPage({
         </section>
 
         <aside className="space-y-6">
+          {/* The balance funds the purchase itself. It had no way to be paid:
+              the payment route only ever accepted a reservation deposit, so a
+              buyer paid the deposit and then could go no further. */}
+          {['deposit_paid', 'purchase_authorized'].includes(order.status) &&
+            Math.round(Number(order.purchase_amount_due ?? 0)) > 0 && (
+            <div className="rounded-[2rem] border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-gray-900">Purchase balance</h2>
+              <p className="mt-2 text-sm leading-6 text-gray-500">
+                Pay the balance so the partner can complete the purchase. This is the accepted quote total less the deposit already paid.
+              </p>
+              <div className="mt-5">
+                <ImportPaymentRequestForm
+                  orderId={order.id}
+                  orderStatus={order.status}
+                  depositAmount={Math.round(Number(order.purchase_amount_due ?? 0))}
+                  buyerPhone={profile?.phone}
+                  existingPayments={payments}
+                  paymentType="purchase_balance"
+                  paymentNoun="balance"
+                />
+              </div>
+            </div>
+          )}
+
           <div className="rounded-[2rem] border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-gray-900">Deposit payment</h2>
             <p className="mt-2 text-sm leading-6 text-gray-500">

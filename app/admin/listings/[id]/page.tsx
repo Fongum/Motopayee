@@ -4,6 +4,8 @@ import { isAdminRole } from '@/lib/auth/roles';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Inspection, Listing } from '@/lib/types';
+import { fetchDocumentsFor } from '@/lib/documents.server';
+import { DOCUMENT_STAFF_COLUMNS } from '@/lib/documents';
 
 function formatXAF(amount: number) {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
@@ -18,7 +20,6 @@ export default async function AdminListingDetailPage({ params }: { params: { id:
       *,
       vehicle:vehicles(*),
       seller:profiles!seller_id(id, email, full_name, phone),
-      documents(*),
       field_agent:profiles!field_agent_id(id, email, full_name),
       inspector:profiles!inspector_id(id, email, full_name),
       verifier:profiles!verifier_id(id, email, full_name),
@@ -35,8 +36,11 @@ export default async function AdminListingDetailPage({ params }: { params: { id:
     inspector?: { id: string; email: string; full_name?: string } | null;
     verifier?: { id: string; email: string; full_name?: string } | null;
     inspections?: Inspection[];
-    documents?: Array<{ id: string; filename: string; doc_type: string }>;
+    documents?: Array<{ id: string; filename: string; doc_type: string; verified?: boolean }>;
   };
+
+  // Fetched separately: documents is polymorphic and cannot be embedded.
+  listing.documents = await fetchDocumentsFor('listing', params.id, DOCUMENT_STAFF_COLUMNS) as unknown as typeof listing.documents;
   const v = listing.vehicle;
   const latestInspection = (listing.inspections ?? []).length > 0
     ? [...(listing.inspections ?? [])].sort((a, b) => (
@@ -165,8 +169,28 @@ export default async function AdminListingDetailPage({ params }: { params: { id:
                 <div>
                   <span className="font-medium text-gray-800">{doc.filename}</span>
                   <span className="ml-2 text-gray-400 text-xs">{doc.doc_type.replace(/_/g, ' ')}</span>
+                  {doc.verified && (
+                    <span className="ml-2 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                      Revu
+                    </span>
+                  )}
                 </div>
-                <SignedUrlButton docId={doc.id} />
+                <div className="flex items-center gap-2">
+                  <SignedUrlButton docId={doc.id} />
+                  {/* documents.verified existed since migration 003 with nothing
+                      to write it, so the policy's "Documents Checked" label could
+                      never be earned. */}
+                  {!doc.verified && (
+                    <form method="POST" action={`/api/admin/documents/${doc.id}/verify`}>
+                      <button
+                        type="submit"
+                        className="rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                      >
+                        Marquer revu
+                      </button>
+                    </form>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -198,6 +222,24 @@ export default async function AdminListingDetailPage({ params }: { params: { id:
           )}
           {listing.status === 'pricing_review' && isAdminRole(user.role) && (
             <PublishButton listingId={listing.id} />
+          )}
+          {/* A vehicle that has sold has to leave the browse results. Until
+              now nothing could move a listing out of "published" at all. */}
+          {listing.status === 'published' && isAdminRole(user.role) && (
+            <StatusActionButton
+              listingId={listing.id}
+              targetStatus="sold"
+              label="Marquer comme vendu"
+              className="bg-[#1a3a6b] text-white hover:bg-[#132a4d]"
+            />
+          )}
+          {listing.status !== 'sold' && listing.status !== 'withdrawn' && isAdminRole(user.role) && (
+            <StatusActionButton
+              listingId={listing.id}
+              targetStatus="withdrawn"
+              label="Retirer l'annonce"
+              className="border border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+            />
           )}
         </div>
       </div>

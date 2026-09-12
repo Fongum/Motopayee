@@ -44,11 +44,20 @@ export default async function MFIApplicationDetailPage({
       (profile as { mfi_institution_id: string | null } | null)?.mfi_institution_id ?? null;
   }
 
+  // Named columns rather than `*`. This page is read by staff at an external
+  // finance partner, and `listings(*)` pulled MotoPayee's own valuation —
+  // mve_low, mve_high, suggested_price — plus the vehicle's VIN and inspection
+  // notes. None of it is rendered and none of it crosses into a client
+  // component today, so nothing leaked; it was fetched for no reason, and a
+  // later change that passed this object to a client component would have
+  // handed all of it to the partner's browser.
   const { data, error } = await supabaseAdmin
     .from('financing_applications')
     .select(`
-      *,
-      listing:listings(*, vehicle:vehicles(*)),
+      id, status, income_grade, down_payment_percent, max_tenor,
+      manual_review_required, mfi_institution_id, submitted_at, decided_at,
+      disbursed_at, created_at,
+      listing:listings(id, asking_price, zone, vehicle:vehicles(make, model, year)),
       buyer:profiles!buyer_id(id, email, full_name, phone, city, zone)
     `)
     .eq('id', params.id)
@@ -94,7 +103,11 @@ export default async function MFIApplicationDetailPage({
   const { data: offerRows } = institutionId
     ? await supabaseAdmin
       .from('mfi_application_offers')
-      .select('*')
+      .select(`
+        id, status, buyer_response, buyer_responded_at, notes,
+        proposed_down_payment_percent, proposed_interest_rate_percent,
+        proposed_tenor_months
+      `)
       .eq('application_id', params.id)
       .eq('mfi_institution_id', institutionId)
       .limit(1)

@@ -33,3 +33,20 @@ jobs:
 
       - name: Unit tests
         run: npm test
+
+      # `next build` is not the same check as tsc. It lints test files that
+      # `npm run lint` does not reach, so an unused `_`-prefixed binding passes
+      # lint and tsc and fails only here — which happened during this branch.
+      # It also runs on Linux, and a route-resolution bug in one of these tests
+      # was green on Windows and red here for five pushes. Running the build is
+      # what Vercel does; CI should find it first.
+      - name: Production build
+        run: npm run build
+        env:
+          # Build-time only. NEXT_PUBLIC_* are inlined at build, so the build
+          # needs values present — these are placeholders, not real credentials,
+          # and nothing in the build contacts Supabase.
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: placeholder-service-key
+          NEXT_PUBLIC_APP_URL: https://example.invalid

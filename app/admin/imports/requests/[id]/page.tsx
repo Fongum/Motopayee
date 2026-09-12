@@ -86,9 +86,36 @@ export default async function AdminImportRequestDetailPage({
           </h1>
           <p className="mt-1 text-sm text-gray-500">Buyer request for assisted import sourcing.</p>
         </div>
-        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-          {STATUS_LABELS[request.status] ?? request.status}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+            {STATUS_LABELS[request.status] ?? request.status}
+          </span>
+          {/* "Reviewing" had a filter chip on the list and no way to be set, so
+              that tab was always empty. Picking a request up is the step
+              between submitted and a quote going out. */}
+          {request.status === 'submitted' && (
+            <form method="POST" action={`/api/admin/imports/requests/${request.id}`}>
+              <input type="hidden" name="status" value="reviewing" />
+              <button
+                type="submit"
+                className="rounded-lg bg-[#1a3a6b] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#132a4d]"
+              >
+                Prendre en charge
+              </button>
+            </form>
+          )}
+          {request.status === 'reviewing' && (
+            <form method="POST" action={`/api/admin/imports/requests/${request.id}`}>
+              <input type="hidden" name="status" value="submitted" />
+              <button
+                type="submit"
+                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                Remettre en file
+              </button>
+            </form>
+          )}
+        </div>
       </div>
       {orderData && (
         <div className="rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-sm text-green-800">

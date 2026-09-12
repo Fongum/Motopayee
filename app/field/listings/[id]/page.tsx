@@ -11,7 +11,7 @@ export default function FieldMediaPage({ params }: { params: { id: string } }) {
   const [order, setOrder] = useState(0);
 
   useEffect(() => {
-    fetch(`/api/admin/listings-basic/${params.id}`)
+    fetch(`/api/field/listings/${params.id}`)
       .then((r) => r.ok ? r.json() : null)
       .then((d) => setListing(d?.listing ?? null))
       .catch(() => {});

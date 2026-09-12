@@ -7,15 +7,19 @@ import { supabaseAdmin } from '@/lib/auth/server';
 import { requestMomoPayment, requestOrangePayment } from '@/lib/mobilemoney';
 import { updateImportPaymentStatus } from '@/lib/import-payments';
 import { parseBody, phoneSchema } from '@/lib/validation';
+import { BUYER_PAYABLE_TYPES, PAYMENT_RULES, checkPayable } from '@/lib/import-payment-types';
 
 interface RouteParams {
   params: { id: string };
 }
 
-// The deposit amount is read from the order, never from the client.
-const depositSchema = z.object({
+// The amount is read from the order, never from the client. The type is the
+// only thing the buyer chooses, and it is validated against the rules in
+// lib/import-payment-types.
+const paymentSchema = z.object({
   phone: phoneSchema,
   provider: z.enum(['mtn_momo', 'orange_money']),
+  payment_type: z.enum(BUYER_PAYABLE_TYPES).default('reservation_deposit'),
 });
 
 export async function POST(request: Request, { params }: RouteParams) {
@@ -24,10 +28,10 @@ export async function POST(request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const parsed = await parseBody(depositSchema, request, 'Demande de dépôt invalide.');
+  const parsed = await parseBody(paymentSchema, request, 'Demande de paiement invalide.');
   if (!parsed.success) return parsed.response;
 
-  const { phone, provider } = parsed.data;
+  const { phone, provider, payment_type: paymentType } = parsed.data;
 
   const { data: order } = await supabaseAdmin
     .from('import_orders')
@@ -39,30 +43,28 @@ export async function POST(request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: 'Import order not found.' }, { status: 404 });
   }
 
-  if (!['deposit_pending', 'quote_sent'].includes(order.status)) {
-    return NextResponse.json({ error: 'Reservation deposit is not available for this order status.' }, { status: 400 });
+  const payable = checkPayable(paymentType, order);
+  if (!payable.ok) {
+    return NextResponse.json({ error: payable.error }, { status: payable.status });
   }
-
-  const amount = Math.round(Number(order.reservation_deposit_amount ?? 0));
-  if (amount <= 0) {
-    return NextResponse.json({ error: 'This order does not have a deposit amount configured.' }, { status: 400 });
-  }
+  const amount = payable.amount;
 
   const { data: existing } = await supabaseAdmin
     .from('import_payments')
     .select('id, status')
     .eq('order_id', params.id)
-    .eq('payment_type', 'reservation_deposit')
+    .eq('payment_type', paymentType)
     .in('status', ['pending', 'processing', 'successful'])
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
 
   if (existing) {
+    const label = PAYMENT_RULES[paymentType].label;
     if (existing.status === 'successful') {
-      return NextResponse.json({ error: 'Reservation deposit already paid.' }, { status: 409 });
+      return NextResponse.json({ error: `${label} already paid.` }, { status: 409 });
     }
-    return NextResponse.json({ error: 'A reservation deposit payment is already in progress.' }, { status: 409 });
+    return NextResponse.json({ error: `A ${label.toLowerCase()} payment is already in progress.` }, { status: 409 });
   }
 
   const paymentId = randomUUID();
@@ -75,7 +77,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       amount,
       provider,
       phone,
-      payment_type: 'reservation_deposit',
+      payment_type: paymentType,
       status: 'pending',
     })
     .select('*')
@@ -85,7 +87,10 @@ export async function POST(request: Request, { params }: RouteParams) {
     // 23505 = unique violation from the partial index (migration 014): a
     // concurrent request already created an in-flight deposit. Don't double-charge.
     if ((error as { code?: string } | null)?.code === '23505') {
-      return NextResponse.json({ error: 'A reservation deposit payment is already in progress.' }, { status: 409 });
+      return NextResponse.json(
+        { error: `A ${PAYMENT_RULES[paymentType].label.toLowerCase()} payment is already in progress.` },
+        { status: 409 }
+      );
     }
     reportError('Failed to create import payment record.', { source: 'api/imports/payments/request', cause: error });
     return NextResponse.json({ error: 'Failed to create import payment record.' }, { status: 500 });

@@ -3,11 +3,13 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import Navbar from '../../(components)/Navbar';
 import Footer from '../../(components)/Footer';
-import PriceBandBadge from '../../(components)/PriceBandBadge';
 import ZoneBadge from '../../(components)/ZoneBadge';
 import FavouriteButton from '../../(components)/FavouriteButton';
 import ViewTracker from '../../(components)/ViewTracker';
 import { supabaseAdmin, getCurrentUser } from '@/lib/auth/server';
+import { shapeListingMedia } from '@/lib/listing-query';
+import { fetchDocumentsFor } from '@/lib/documents.server';
+import type { ListingQuery } from '@/lib/listing-query';
 import type { Inspection, Listing } from '@/lib/types';
 import FinancingCalculator from '../../(components)/FinancingCalculator';
 import WhatsAppContactButton from '../../(components)/WhatsAppContactButton';
@@ -30,13 +32,34 @@ type PublicListing = Listing & {
 };
 
 async function getListing(id: string): Promise<PublicListing | null> {
-  const { data } = await supabaseAdmin
+  const query = supabaseAdmin
     .from('listings')
     .select('*, vehicle:vehicles(*), media:media_assets(*), seller:profiles!seller_id(is_verified, full_name, phone, avg_rating, total_reviews), inspections(*)')
     .eq('id', id)
-    .eq('status', 'published')
-    .single();
-  return data as unknown as PublicListing | null;
+    .eq('status', 'published');
+
+  // The gallery and the OpenGraph image both take `media[0]`, so the seller's
+  // chosen lead photo has to come back first — and a video must not stand in
+  // for it. No limit: the gallery wants every photo, in order.
+  const shaped = shapeListingMedia(
+    query as unknown as ListingQuery,
+    {}
+  ) as unknown as typeof query;
+
+  const { data } = await shaped.single();
+  if (!data) return null;
+
+  // Fetched separately — documents is polymorphic and cannot be embedded. This
+  // is what lets the "Documents revus" badge be earned per listing rather than
+  // implied by publication.
+  const listing = data as unknown as PublicListing;
+  listing.documents = (await fetchDocumentsFor('listing', id)).map((doc) => ({
+    id: doc.id,
+    doc_type: doc.doc_type,
+    filename: doc.filename,
+    verified: doc.verified,
+  }));
+  return listing;
 }
 
 interface ReviewData {
@@ -220,8 +243,8 @@ export default async function ListingDetailPage({
             {/* Seller trust badge */}
             <SellerTrustBadge
               isVerified={listing.seller?.is_verified ?? false}
-              avgRating={(listing.seller as unknown as { avg_rating: number | null })?.avg_rating ?? null}
-              totalReviews={(listing.seller as unknown as { total_reviews: number })?.total_reviews ?? 0}
+              avgRating={listing.seller?.avg_rating ?? null}
+              totalReviews={listing.seller?.total_reviews ?? 0}
             />
 
             <ListingTrustBadges listing={listing} />
@@ -230,13 +253,12 @@ export default async function ListingDetailPage({
             <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-2xl font-bold text-gray-900">{formatXAF(listing.asking_price)}</p>
-                {listing.price_band && <PriceBandBadge band={listing.price_band} />}
+
               </div>
-              {listing.suggested_price && (
-                <p className="text-sm text-gray-500">
-                  Prix estimé: {formatXAF(listing.mve_low ?? 0)} – {formatXAF(listing.mve_high ?? 0)}
-                </p>
-              )}
+              {/* The estimated range is not published. See ListingCard: the model
+                  values every vehicle from one base price, so this range said the
+                  same thing about a Corolla and a Mercedes. It is still stored and
+                  still shown to staff. */}
             </div>
 
             {/* Financing badge */}

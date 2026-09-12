@@ -135,6 +135,13 @@ export interface Listing {
   vehicle?: Vehicle;
   seller?: Profile;
   media?: MediaAsset[];
+  /**
+   * Attached separately, never embedded: documents is polymorphic
+   * (entity_type/entity_id) so PostgREST cannot join it. Present only where a
+   * caller fetched it, which is why the documents badge appears on the detail
+   * page and not on grid cards.
+   */
+  documents?: Array<{ id: string; doc_type: string; filename: string | null; verified: boolean }>;
 }
 
 // --------------- Media Asset ---------------

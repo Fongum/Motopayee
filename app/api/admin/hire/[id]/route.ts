@@ -31,6 +31,24 @@ export async function PATCH(
   const { status, availability } = parsed.data;
   const updates: Record<string, unknown> = {};
 
+  // "Location verifiee" states that MotoPayee reviewed the vehicle, owner,
+  // rates, deposit and terms, and the policy lists "Photos received" among its
+  // minimum requirements. Publishing did not check for any.
+  if (status === 'published') {
+    const { count: photoCount } = await supabaseAdmin
+      .from('hire_listing_media')
+      .select('id', { count: 'exact', head: true })
+      .eq('hire_listing_id', params.id)
+      .eq('asset_type', 'photo');
+
+    if (!photoCount) {
+      return NextResponse.json(
+        { error: 'Cannot publish without at least one photo — the verified-rental label requires photos.' },
+        { status: 400 }
+      );
+    }
+  }
+
   if (status) {
     updates.status = status;
     if (status === 'published') {

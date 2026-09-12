@@ -4,6 +4,9 @@ import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAuth } from '@/lib/auth/middleware';
 import { rateLimit } from '@/lib/rate-limit';
 import { parseBody } from '@/lib/validation';
+import { reportError } from '@/lib/error-reporting';
+import { fetchUnreadCounts } from '@/lib/unread-messages.server';
+import { unreadFor } from '@/lib/unread-messages';
 
 // A conversation hangs off at most one listing — a sale listing or a hire one.
 const createSchema = z
@@ -37,28 +40,20 @@ export async function GET(request: Request) {
     .or(`participant_a.eq.${userId},participant_b.eq.${userId}`)
     .order('last_message_at', { ascending: false });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  // Get unread counts per conversation
-  const convIds = (data ?? []).map((c: Record<string, unknown>) => c.id as string);
-  const { data: unreadData } = convIds.length > 0
-    ? await supabaseAdmin
-        .from('messages')
-        .select('conversation_id')
-        .in('conversation_id', convIds)
-        .neq('sender_id', userId)
-        .is('read_at', null)
-    : { data: [] };
-
-  const unreadMap: Record<string, number> = {};
-  for (const m of unreadData ?? []) {
-    const cid = (m as Record<string, unknown>).conversation_id as string;
-    unreadMap[cid] = (unreadMap[cid] ?? 0) + 1;
+  if (error) {
+    // The raw Postgres message used to be echoed to the caller, which leaks
+    // schema detail from a route any signed-in user can reach.
+    reportError(error, { source: 'api/conversations', route: '/api/conversations', userId });
+    return NextResponse.json({ error: 'Failed to load conversations.' }, { status: 500 });
   }
+
+  // Counted in Postgres (migration 042). This used to fetch every unread row
+  // and tally the array, which truncates at db-max-rows on a busy inbox.
+  const unread = await fetchUnreadCounts(userId);
 
   const conversations = (data ?? []).map((c: Record<string, unknown>) => ({
     ...c,
-    unread_count: unreadMap[c.id as string] ?? 0,
+    unread_count: unreadFor(unread, c.id as string),
     other_user: (c.participant_a as string) === userId ? c.participant_b_profile : c.participant_a_profile,
   }));
 
