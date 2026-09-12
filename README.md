@@ -82,6 +82,11 @@ AFRICASTALKING_SENDER_ID=
 OPS_ALERT_PHONE=
 ```
 
+`NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are needed at **build**
+time, not only at runtime: `lib/auth/server` constructs the Supabase client at
+module scope, so `next build` fails collecting page data without them. A hosting
+project missing them fails to build the same commit another project builds fine.
+
 Every integration here degrades quietly when its credentials are absent —
 payments return null, SMS logs a warning and returns, crons answer 401. Nothing
 crashes, so an unset variable looks exactly like a feature nobody uses. Run

@@ -21,9 +21,9 @@ import { readFileSync } from 'node:fs';
  */
 const VARS = [
   // ── Required for the app to function at all ──
-  { name: 'NEXT_PUBLIC_SUPABASE_URL', group: 'core', missing: 'Nothing can reach the database.' },
+  { name: 'NEXT_PUBLIC_SUPABASE_URL', group: 'core', build: true, missing: 'Nothing can reach the database, and `next build` fails outright — lib/auth/server constructs the client at module scope, so collecting page data throws "supabaseUrl is required".' },
   { name: 'NEXT_PUBLIC_SUPABASE_ANON_KEY', group: 'core', missing: 'Client-side Supabase calls fail.' },
-  { name: 'SUPABASE_SERVICE_ROLE_KEY', group: 'core', missing: 'Every server route and page fails to load data.' },
+  { name: 'SUPABASE_SERVICE_ROLE_KEY', group: 'core', build: true, missing: 'Every server route and page fails to load data, and `next build` fails for the same reason as the URL above.' },
   { name: 'NEXT_PUBLIC_APP_URL', group: 'core', missing: 'Absolute links in emails and share URLs point nowhere.' },
 
   // ── Scheduled work ──
@@ -89,7 +89,7 @@ for (const [group, title] of Object.entries(GROUPS)) {
     const set = isSet(v.name);
     if (!set && !v.optional) missingRequired += 1;
     const mark = set ? '  set    ' : v.optional ? '  unset  ' : '  MISSING';
-    console.log(`${mark} ${v.name}`);
+    console.log(`${mark} ${v.name}${v.build ? '   [required at BUILD time]' : ''}`);
     if (!set) console.log(`           ${v.missing}`);
   }
 }
@@ -100,4 +100,9 @@ console.log(
     : `${missingRequired} required variable(s) missing — the features above are silently inert.`}`
 );
 console.log('Values are never printed. "set" means present in the environment or .env.local.');
+console.log(
+  'Variables marked [required at BUILD time] must exist on the deployment platform,\n' +
+  'not just at runtime. A Vercel project missing them fails to build with\n' +
+  '"supabaseUrl is required" while a project that has them builds the same commit fine.'
+);
 process.exit(0);
