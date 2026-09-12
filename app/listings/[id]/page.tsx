@@ -3,7 +3,6 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import Navbar from '../../(components)/Navbar';
 import Footer from '../../(components)/Footer';
-import PriceBandBadge from '../../(components)/PriceBandBadge';
 import ZoneBadge from '../../(components)/ZoneBadge';
 import FavouriteButton from '../../(components)/FavouriteButton';
 import ViewTracker from '../../(components)/ViewTracker';
@@ -241,13 +240,12 @@ export default async function ListingDetailPage({
             <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-2xl font-bold text-gray-900">{formatXAF(listing.asking_price)}</p>
-                {listing.price_band && <PriceBandBadge band={listing.price_band} />}
+
               </div>
-              {listing.suggested_price && (
-                <p className="text-sm text-gray-500">
-                  Prix estimé: {formatXAF(listing.mve_low ?? 0)} – {formatXAF(listing.mve_high ?? 0)}
-                </p>
-              )}
+              {/* The estimated range is not published. See ListingCard: the model
+                  values every vehicle from one base price, so this range said the
+                  same thing about a Corolla and a Mercedes. It is still stored and
+                  still shown to staff. */}
             </div>
 
             {/* Financing badge */}

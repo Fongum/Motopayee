@@ -143,8 +143,6 @@ export default async function ComparePage({
             <tbody className="divide-y divide-gray-100">
               {([
                 ['Prix', (l: Listing) => formatXAF(l.asking_price)],
-                ['Prix estimé', (l: Listing) => l.suggested_price ? formatXAF(l.suggested_price) : '—'],
-                ['Band de prix', (l: Listing) => l.price_band === 'green' ? 'Bon prix' : l.price_band === 'yellow' ? 'Prix correct' : l.price_band === 'red' ? 'Prix élevé' : '—'],
                 ['Année', (l: Listing) => l.vehicle ? String(l.vehicle.year) : '—'],
                 ['Kilométrage', (l: Listing) => l.vehicle ? `${l.vehicle.mileage_km.toLocaleString('fr-FR')} km` : '—'],
                 ['Carburant', (l: Listing) => l.vehicle ? (FUEL_FR[l.vehicle.fuel_type] ?? l.vehicle.fuel_type) : '—'],

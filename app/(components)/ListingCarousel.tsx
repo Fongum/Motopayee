@@ -25,12 +25,6 @@ function formatXAF(n: number) {
   return `${n} XAF`;
 }
 
-const BAND_COLORS: Record<string, string> = {
-  green: 'text-green-600',
-  yellow: 'text-amber-500',
-  red: 'text-red-500',
-};
-
 export default function ListingCarousel({
   listings,
   title,
@@ -91,7 +85,8 @@ export default function ListingCarousel({
         >
           {listings.map((listing) => {
             const v = listing.vehicle;
-            const bandColor = listing.price_band ? BAND_COLORS[listing.price_band] ?? 'text-gray-600' : 'text-gray-600';
+            // Price is no longer coloured by band. See ListingCard for why.
+            const bandColor = 'text-gray-900';
             return (
               <Link
                 key={listing.id}

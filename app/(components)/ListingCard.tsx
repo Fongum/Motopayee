@@ -14,19 +14,23 @@ function formatXAF(amount: number): string {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
 }
 
-const BAND: Record<string, { label: string; cls: string }> = {
-  green:  { label: 'Bon prix',       cls: 'bg-green-50 text-green-700 border-green-200' },
-  yellow: { label: 'Prix correct',   cls: 'bg-amber-50 text-amber-700 border-amber-200' },
-  red:    { label: 'Prix élevé',     cls: 'bg-red-50 text-red-600 border-red-200' },
-};
-
 const FUEL_FR: Record<string, string> = {
   petrol: 'Essence', diesel: 'Diesel', electric: 'Électrique', hybrid: 'Hybride', other: 'Autre',
 };
 
 export default function ListingCard({ listing }: Props) {
   const v = listing.vehicle;
-  const band = listing.price_band ? BAND[listing.price_band] : null;
+  /*
+   * The price band is no longer shown publicly. lib/pricing values every
+   * vehicle from one base price — BASE_PRICES holds only DEFAULT — so make and
+   * model do not affect the estimate, and the depreciation floor gives every
+   * vehicle from 2020 or older the same 3,150,000 XAF. On that basis a 2018
+   * vehicle asking 5,000,000 was labelled "Prix élevé" to every buyer.
+   *
+   * The band is still computed, still stored, still shown to staff, and still
+   * feeds financing eligibility. What is withdrawn is the public claim about a
+   * seller's price, which the model cannot currently support.
+   */
   const hasPhoto = listing.media && listing.media.length > 0;
 
   return (
@@ -113,11 +117,7 @@ export default function ListingCard({ listing }: Props) {
 
         <div className="flex items-center justify-between">
           <p className="text-base font-extrabold text-gray-900">{formatXAF(listing.asking_price)}</p>
-          {band && (
-            <span className={`text-[10px] font-semibold border px-2 py-0.5 rounded-full ${band.cls}`}>
-              {band.label}
-            </span>
-          )}
+
         </div>
 
         <ListingTrustBadges listing={listing} />
