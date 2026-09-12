@@ -19,7 +19,10 @@ function Badge({ badge }: { badge: TrustBadge }) {
 export function getListingTrustBadges(listing: Listing): TrustBadge[] {
   const badges: TrustBadge[] = [];
 
-  if (!listing.status || listing.status === 'published') {
+  // Requires the status, rather than asserting the claim when it is absent.
+  // Every caller selects it today, but a trust label defaulting to true on
+  // missing data is the wrong way round: no evidence should mean no badge.
+  if (listing.status === 'published') {
     badges.push({
       label: 'MotoPayee revu',
       title: 'MotoPayee a revu les informations de base avant publication.',
@@ -57,7 +60,8 @@ export function getListingTrustBadges(listing: Listing): TrustBadge[] {
 export function getHireTrustBadges(listing: HireListing): TrustBadge[] {
   const badges: TrustBadge[] = [];
 
-  if (!listing.status || listing.status === 'published') {
+  // Same: no status, no claim.
+  if (listing.status === 'published') {
     badges.push({
       label: 'Location verifiee',
       title: 'MotoPayee a revu le vehicule, le proprietaire, les tarifs, la caution et les conditions avant publication.',

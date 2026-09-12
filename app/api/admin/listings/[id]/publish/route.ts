@@ -70,6 +70,26 @@ export async function POST(request: Request, { params }: RouteParams) {
     );
   }
 
+  // "MotoPayee revu" is shown on every published listing, and
+  // docs/trust-verification-policy.md lists "Photos are usable" among that
+  // label's minimum requirements. The pipeline did not enforce it: a listing
+  // could reach published via inspection_scheduled -> inspected without ever
+  // passing media_done, and then carry a review badge with no photographs.
+  if (targetStatus === 'published') {
+    const { count: photoCount } = await supabaseAdmin
+      .from('media_assets')
+      .select('id', { count: 'exact', head: true })
+      .eq('listing_id', params.id)
+      .eq('asset_type', 'photo');
+
+    if (!photoCount) {
+      return NextResponse.json(
+        { error: 'Cannot publish without at least one photo — the review label requires usable photos.' },
+        { status: 400 }
+      );
+    }
+  }
+
   const updates: Record<string, unknown> = { status: targetStatus };
   if (targetStatus === 'published') updates.published_at = new Date().toISOString();
 
