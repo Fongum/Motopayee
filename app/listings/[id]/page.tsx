@@ -8,6 +8,7 @@ import FavouriteButton from '../../(components)/FavouriteButton';
 import ViewTracker from '../../(components)/ViewTracker';
 import { supabaseAdmin, getCurrentUser } from '@/lib/auth/server';
 import { shapeListingMedia } from '@/lib/listing-query';
+import { fetchDocumentsFor } from '@/lib/documents.server';
 import type { ListingQuery } from '@/lib/listing-query';
 import type { Inspection, Listing } from '@/lib/types';
 import FinancingCalculator from '../../(components)/FinancingCalculator';
@@ -46,7 +47,19 @@ async function getListing(id: string): Promise<PublicListing | null> {
   ) as unknown as typeof query;
 
   const { data } = await shaped.single();
-  return data as unknown as PublicListing | null;
+  if (!data) return null;
+
+  // Fetched separately — documents is polymorphic and cannot be embedded. This
+  // is what lets the "Documents revus" badge be earned per listing rather than
+  // implied by publication.
+  const listing = data as unknown as PublicListing;
+  listing.documents = (await fetchDocumentsFor('listing', id)).map((doc) => ({
+    id: doc.id,
+    doc_type: doc.doc_type,
+    filename: doc.filename,
+    verified: doc.verified,
+  }));
+  return listing;
 }
 
 interface ReviewData {

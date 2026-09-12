@@ -36,7 +36,7 @@ export default async function AdminListingDetailPage({ params }: { params: { id:
     inspector?: { id: string; email: string; full_name?: string } | null;
     verifier?: { id: string; email: string; full_name?: string } | null;
     inspections?: Inspection[];
-    documents?: Array<{ id: string; filename: string; doc_type: string }>;
+    documents?: Array<{ id: string; filename: string; doc_type: string; verified?: boolean }>;
   };
 
   // Fetched separately: documents is polymorphic and cannot be embedded.
@@ -169,8 +169,28 @@ export default async function AdminListingDetailPage({ params }: { params: { id:
                 <div>
                   <span className="font-medium text-gray-800">{doc.filename}</span>
                   <span className="ml-2 text-gray-400 text-xs">{doc.doc_type.replace(/_/g, ' ')}</span>
+                  {doc.verified && (
+                    <span className="ml-2 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                      Revu
+                    </span>
+                  )}
                 </div>
-                <SignedUrlButton docId={doc.id} />
+                <div className="flex items-center gap-2">
+                  <SignedUrlButton docId={doc.id} />
+                  {/* documents.verified existed since migration 003 with nothing
+                      to write it, so the policy's "Documents Checked" label could
+                      never be earned. */}
+                  {!doc.verified && (
+                    <form method="POST" action={`/api/admin/documents/${doc.id}/verify`}>
+                      <button
+                        type="submit"
+                        className="rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                      >
+                        Marquer revu
+                      </button>
+                    </form>
+                  )}
+                </div>
               </div>
             ))}
           </div>

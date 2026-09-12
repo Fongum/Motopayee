@@ -81,3 +81,34 @@ describe('a trust label never defaults to true', () => {
     expect(BADGES).not.toMatch(/caution.*(protég|garanti)/i);
   });
 });
+
+describe('documents checked', () => {
+  const badges = read('app', '(components)', 'TrustLabelBadges.tsx');
+
+  it('is defined by the policy and listed in the dashboard spec', () => {
+    expect(POLICY).toMatch(/## Documents Checked[\s\S]*?Ownership or authority-to-sell document received/);
+    expect(read('docs', 'launch-dashboard-specification.md')).toMatch(/### Trust Labels[\s\S]*?Documents checked/);
+  });
+
+  it('requires a document staff actually marked reviewed', () => {
+    // Not implied by publication. Every published listing has passed
+    // ownership_verified, so keying off status would make this universal — the
+    // blanket-claim trap the price band fell into.
+    expect(badges).toMatch(/listing\.documents\?\.some\(\(doc\) => doc\.verified\)/);
+    expect(badges).toContain('Documents revus');
+  });
+
+  it('has something that can write documents.verified', () => {
+    // The column existed from migration 003 with no writer, which is why the
+    // label could never be earned.
+    const route = read('app', 'api', 'admin', 'documents', '[id]', 'verify', 'route.ts');
+    expect(route).toMatch(/verified: true/);
+    expect(route).toMatch(/verified_by: auth\.user\.id/);
+    expect(route).toMatch(/verified_at/);
+  });
+
+  it('records the review in the audit log', () => {
+    const route = read('app', 'api', 'admin', 'documents', '[id]', 'verify', 'route.ts');
+    expect(route).toMatch(/action: 'document_verified'/);
+  });
+});

@@ -38,6 +38,17 @@ export function getListingTrustBadges(listing: Listing): TrustBadge[] {
     });
   }
 
+  // Earned per listing, not implied by publication: the policy's meaning is
+  // "MotoPayee has reviewed available ownership or vehicle documents", so it
+  // requires a document that staff actually marked as reviewed.
+  if (listing.documents?.some((doc) => doc.verified)) {
+    badges.push({
+      label: 'Documents revus',
+      title: 'MotoPayee a revu les documents de propriete ou du vehicule disponibles.',
+      className: 'border-indigo-200 bg-indigo-50 text-indigo-700',
+    });
+  }
+
   if (listing.vehicle?.condition_grade) {
     badges.push({
       label: 'Inspecte',
