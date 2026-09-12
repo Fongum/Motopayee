@@ -20,10 +20,10 @@ import type { Listing } from '@/lib/types';
 
 export const metadata: Metadata = {
   title: 'Véhicules disponibles — MotoPayee',
-  description: 'Parcourez des centaines de véhicules inspectés et vérifiés au Cameroun. Filtrez par marque, zone, prix, kilométrage et carburant. Financement disponible.',
+  description: 'Parcourez des annonces revues par MotoPayee au Cameroun. Filtrez par marque, zone, prix, kilométrage et carburant. Inspection et éligibilité au financement indiquées par annonce.',
   openGraph: {
     title: 'Acheter un véhicule au Cameroun — MotoPayee',
-    description: 'Marketplace automobile #1 au Cameroun. Véhicules inspectés, prix transparents, financement facilité.',
+    description: 'Marketplace automobile au Cameroun. Annonces revues, prix transparents, financement soumis à l\'accord d\'un partenaire.',
     type: 'website',
   },
 };
@@ -81,8 +81,8 @@ export default async function ListingsPage({ searchParams }: { searchParams: Raw
             <h1 className="text-2xl md:text-3xl font-extrabold text-white mb-1">Véhicules disponibles</h1>
             <p className="text-blue-300/80 text-sm">
               {total > 0
-                ? `${total} véhicule${total > 1 ? 's' : ''} inspecté${total > 1 ? 's' : ''}, vérifié${total > 1 ? 's' : ''} et prêt${total > 1 ? 's' : ''} à financer`
-                : 'Tous nos véhicules sont inspectés, vérifiés et prêts à financer'}
+                ? `${total} annonce${total > 1 ? 's' : ''} revue${total > 1 ? 's' : ''} par MotoPayee — inspection et financement indiqués sur chaque annonce`
+                : 'Annonces revues par MotoPayee. L\'inspection, la vérification et l\'éligibilité au financement sont indiquées sur chaque annonce.'}
             </p>
           </div>
         </div>

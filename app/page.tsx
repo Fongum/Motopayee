@@ -145,7 +145,7 @@ export default async function HomePage() {
                 votre véhicule
               </h1>
               <p className="text-blue-200/80 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-                Véhicules inspectés, prix transparents, location avec ou sans chauffeur, import assisté et financement rapide avec des partenaires locaux.
+                Annonces revues, prix transparents, location avec ou sans chauffeur, import assisté et financement soumis à l&apos;accord de partenaires locaux.
               </p>
             </div>
 
@@ -177,7 +177,7 @@ export default async function HomePage() {
                 {
                   href: '/listings',
                   title: 'Acheter',
-                  desc: 'Parcourez des véhicules inspectés et vérifiés avec prix de marché transparent',
+                  desc: 'Parcourez des annonces revues par MotoPayee — inspection indiquée par annonce',
                   icon: (
                     <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -367,7 +367,7 @@ export default async function HomePage() {
                 </div>
                 <div className="space-y-4">
                   {[
-                    { step: '1', text: 'Parcourez nos annonces inspectées et vérifiées' },
+                    { step: '1', text: 'Parcourez nos annonces revues par MotoPayee' },
                     { step: '2', text: 'Vérifiez votre éligibilité au financement' },
                     { step: '3', text: 'Déposez vos documents, réponse sous 72h' },
                   ].map((s) => (
@@ -471,7 +471,7 @@ export default async function HomePage() {
                   <span className="text-[#f5a623]">partout au Cameroun</span>
                 </h2>
                 <p className="text-blue-200/70 text-sm leading-relaxed mb-8 max-w-md">
-                  Besoin d&apos;un véhicule pour quelques jours ? Louez directement auprès de propriétaires vérifiés.
+                  Besoin d&apos;un véhicule pour quelques jours ? Louez auprès de propriétaires dont le statut de vérification est indiqué sur chaque annonce.
                   Avec ou sans chauffeur, à des tarifs transparents.
                 </p>
                 <div className="flex flex-wrap gap-4">
@@ -539,7 +539,7 @@ export default async function HomePage() {
                     </div>
                     <div>
                       <p className="text-2xl font-extrabold text-[#1a3a6b] leading-none">{counts.vehicles > 0 ? `${counts.vehicles}+` : '500+'}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">Véhicules vérifiés</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Annonces revues</p>
                     </div>
                   </div>
                 </div>
@@ -547,13 +547,13 @@ export default async function HomePage() {
               <div>
                 <span className="text-[#3d9e3d] text-xs font-bold uppercase tracking-widest">Pourquoi MotoPayee</span>
                 <h2 className="text-3xl md:text-4xl font-extrabold text-[#1a3a6b] mt-3 mb-5">La confiance au centre<br />de chaque transaction</h2>
-                <p className="text-gray-500 mb-8 leading-relaxed text-sm">Notre équipe assure que chaque véhicule est inspecté, chaque document vérifié et chaque location/vente se déroule en toute sécurité.</p>
+                <p className="text-gray-500 mb-8 leading-relaxed text-sm">Notre équipe revoit chaque annonce avant publication. L&apos;inspection et la vérification des documents ne sont pas systématiques : elles sont indiquées sur les annonces concernées.</p>
                 <div className="space-y-5">
                   {[
                     { title: 'Inspection professionnelle', desc: 'Rapport en 12 points par nos agents certifiés.', bg: 'bg-[#f0faf0]', color: 'text-[#3d9e3d]', icon: (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>) },
                     { title: 'Prix de marché transparent', desc: 'Estimation MVE pour chaque annonce — pas de mauvaise surprise.', bg: 'bg-amber-50', color: 'text-[#f5a623]', icon: (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>) },
                     { title: 'Financement sous 72h', desc: 'Traitement express avec nos IMF partenaires.', bg: 'bg-blue-50', color: 'text-[#1a3a6b]', icon: (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>) },
-                    { title: 'Location sécurisée', desc: 'Propriétaires vérifiés, réservation en ligne, conditions claires.', bg: 'bg-purple-50', color: 'text-purple-600', icon: (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>) },
+                    { title: 'Location encadrée', desc: 'Statut du propriétaire indiqué, réservation en ligne, conditions claires.', bg: 'bg-purple-50', color: 'text-purple-600', icon: (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>) },
                   ].map((f) => (
                     <div key={f.title} className="flex items-start gap-4">
                       <div className={`w-10 h-10 ${f.bg} ${f.color} rounded-xl flex items-center justify-center flex-shrink-0`}>{f.icon}</div>
