@@ -47,14 +47,14 @@ export default function LeadCaptureForm({
       });
       const data = await response.json();
       if (!response.ok) {
-        setError(data?.error ?? 'Submission failed.');
+        setError(data?.error ?? "Envoi échoué.");
         setState('error');
         return;
       }
       event.currentTarget.reset();
       setState('success');
     } catch {
-      setError('Network error.');
+      setError('Erreur réseau.');
       setState('error');
     }
   }
@@ -117,7 +117,7 @@ export default function LeadCaptureForm({
       <button
         type="submit"
         disabled={state === 'submitting'}
-        className="w-full rounded-xl bg-[#3d9e3d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#2d8a2d] disabled:opacity-60"
+        className="w-full rounded-xl bg-brand-green px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-green-dark disabled:opacity-60"
       >
         {state === 'submitting' ? 'Envoi...' : 'Envoyer'}
       </button>

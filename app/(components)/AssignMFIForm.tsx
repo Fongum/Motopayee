@@ -72,7 +72,7 @@ export default function AssignMFIForm({ applicationId, currentMFIId, institution
       <button
         type="submit"
         disabled={loading || !selectedId}
-        className="text-sm font-semibold bg-[#1a3a6b] text-white px-4 py-2 rounded-lg hover:bg-[#142d54] disabled:opacity-50"
+        className="text-sm font-semibold bg-brand-navy text-white px-4 py-2 rounded-lg hover:bg-brand-navy-dark disabled:opacity-50"
       >
         {loading ? '...' : 'Assigner'}
       </button>

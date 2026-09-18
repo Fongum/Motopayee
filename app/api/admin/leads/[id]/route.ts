@@ -3,11 +3,12 @@ import { requireStaff } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { recordLeadActivity } from '@/lib/launch-lead-activities';
 import { z } from 'zod';
+import { LEAD_STATUSES } from '@/lib/launch-lead-metrics';
 
 interface RouteParams { params: { id: string } }
 
 const schema = z.object({
-  status: z.enum(['new', 'contacted', 'interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding', 'converted', 'not_fit', 'closed']).optional(),
+  status: z.enum(LEAD_STATUSES).optional(),
   priority: z.enum(['low', 'normal', 'high']).optional(),
   assigned_to: z.string().uuid().optional().or(z.literal('')),
   next_follow_up_at: z.string().optional(),

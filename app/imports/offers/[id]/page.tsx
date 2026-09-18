@@ -51,7 +51,7 @@ export default async function ImportOfferDetailPage({
       <Navbar />
       <main className="min-h-screen bg-gray-50 py-10">
         <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
-          <Link href="/imports" className="inline-flex text-sm font-medium text-[#1a3a6b] hover:text-[#3d9e3d] transition-colors">
+          <Link href="/imports" className="inline-flex text-sm font-medium text-brand-navy hover:text-brand-green transition-colors">
             Back to import offers
           </Link>
 
@@ -79,14 +79,14 @@ export default async function ImportOfferDetailPage({
                 <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">
                   {offer.source_country} {offer.source_type}
                 </span>
-                <h1 className="mt-4 text-3xl font-bold text-[#1a3a6b]">{offer.headline}</h1>
+                <h1 className="mt-4 text-3xl font-bold text-brand-navy">{offer.headline}</h1>
                 <p className="mt-3 text-sm leading-7 text-gray-600">
                   {offer.condition_summary || 'MotoPayee sourced offer backed by a trusted US partner. Final purchase only happens after quote acceptance.'}
                 </p>
 
                 <div className="mt-6 rounded-2xl bg-gray-50 p-5">
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Estimated landed total</p>
-                  <p className="mt-1 text-3xl font-bold text-[#1a3a6b]">{formatXAF(offer.total_estimated_xaf)}</p>
+                  <p className="mt-1 text-3xl font-bold text-brand-navy">{formatXAF(offer.total_estimated_xaf)}</p>
                   <p className="mt-2 text-xs text-gray-500">Includes logistics estimates and MotoPayee fee. Customs remain estimates until final processing.</p>
                 </div>
 
@@ -116,7 +116,7 @@ export default async function ImportOfferDetailPage({
                 <div className="mt-6 flex flex-wrap gap-3">
                   <Link
                     href={requestHref}
-                    className="rounded-xl bg-[#3d9e3d] px-5 py-3 text-sm font-semibold text-white hover:bg-[#2d8a2d]"
+                    className="rounded-xl bg-brand-green px-5 py-3 text-sm font-semibold text-white hover:bg-brand-green-dark"
                   >
                     Request this vehicle
                   </Link>

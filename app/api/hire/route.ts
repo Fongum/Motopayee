@@ -2,57 +2,36 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAuth, requireSeller } from '@/lib/auth/middleware';
 import { parseBody } from '@/lib/validation';
+import { reportError } from '@/lib/error-reporting';
+import { HIRE_CARD_SELECT, applyHireSearch, hireRange, parseHireSearch } from '@/lib/hire-query';
+import type { HireQuery, RawHireParams } from '@/lib/hire-query';
 import { createHireListingSchema } from '@/lib/hire-schemas';
 import { recordLeadActivity } from '@/lib/launch-lead-activities';
 import type { HireListing } from '@/lib/types';
 
 // GET /api/hire — Browse published hire listings (public)
 export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
-  const pageSize = 20;
-  const offset = (page - 1) * pageSize;
+  const raw: RawHireParams = Object.fromEntries(request.nextUrl.searchParams.entries());
+  const params = parseHireSearch(raw);
+  const [from, to] = hireRange(params.page);
 
-  let q = supabaseAdmin
+  const query = supabaseAdmin
     .from('hire_listings')
-    .select('*, owner:profiles!owner_id(full_name, is_verified, phone), media:hire_listing_media(*)', { count: 'exact' })
+    .select(HIRE_CARD_SELECT, { count: 'exact' })
     .eq('status', 'published');
 
-  // Filters
-  const city = searchParams.get('city');
-  const zone = searchParams.get('zone');
-  const make = searchParams.get('make');
-  const hireType = searchParams.get('hire_type');
-  const minPrice = searchParams.get('min_price');
-  const maxPrice = searchParams.get('max_price');
-  const fuelType = searchParams.get('fuel_type');
-  const transmission = searchParams.get('transmission');
-  const seats = searchParams.get('min_seats');
-  const available = searchParams.get('available');
+  // Shared with the /hire page so the two cannot drift apart again.
+  const shaped = applyHireSearch(query as unknown as HireQuery, params) as unknown as typeof query;
+  const { data, count, error } = await shaped.range(from, to);
 
-  if (city)         q = q.ilike('city', `%${city}%`);
-  if (zone)         q = q.eq('zone', zone);
-  if (make)         q = q.ilike('make', `%${make}%`);
-  if (hireType)     q = q.in('hire_type', [hireType, 'both']);
-  if (minPrice)     q = q.gte('daily_rate', parseInt(minPrice));
-  if (maxPrice)     q = q.lte('daily_rate', parseInt(maxPrice));
-  if (fuelType)     q = q.eq('fuel_type', fuelType);
-  if (transmission) q = q.eq('transmission', transmission);
-  if (seats)        q = q.gte('seats', parseInt(seats));
-  if (available === 'true') q = q.eq('availability', 'available');
-
-  // Sort
-  const sort = searchParams.get('sort');
-  switch (sort) {
-    case 'price_asc':  q = q.order('daily_rate', { ascending: true }); break;
-    case 'price_desc': q = q.order('daily_rate', { ascending: false }); break;
-    default:           q = q.order('created_at', { ascending: false }); break;
+  if (error) {
+    // The raw Postgres message used to be echoed to the caller, which leaks
+    // schema detail on a public, unauthenticated endpoint.
+    reportError(error, { source: 'api/hire', route: '/api/hire' });
+    return NextResponse.json({ error: 'Failed to fetch hire listings.' }, { status: 500 });
   }
 
-  const { data, count, error } = await q.range(offset, offset + pageSize - 1);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  return NextResponse.json({ listings: data as unknown as HireListing[], total: count ?? 0 });
+  return NextResponse.json({ listings: (data ?? []) as unknown as HireListing[], total: count ?? 0 });
 }
 
 // POST /api/hire — Create a hire listing (sellers only)

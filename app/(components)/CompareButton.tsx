@@ -34,8 +34,8 @@ export default function CompareButton({ item, compact }: Props) {
         onClick={toggle}
         className={`w-8 h-8 rounded-full flex items-center justify-center transition ${
           active
-            ? 'bg-[#1a3a6b] text-white'
-            : 'bg-black/40 text-white hover:bg-[#1a3a6b]'
+            ? 'bg-brand-navy text-white'
+            : 'bg-black/40 text-white hover:bg-brand-navy'
         }`}
         title={active ? 'Retirer de la comparaison' : 'Ajouter à la comparaison'}
       >
@@ -51,8 +51,8 @@ export default function CompareButton({ item, compact }: Props) {
       onClick={toggle}
       className={`inline-flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-xl border transition ${
         active
-          ? 'bg-[#1a3a6b] text-white border-[#1a3a6b]'
-          : 'border-gray-300 text-gray-600 hover:border-[#1a3a6b] hover:text-[#1a3a6b]'
+          ? 'bg-brand-navy text-white border-brand-navy'
+          : 'border-gray-300 text-gray-600 hover:border-brand-navy hover:text-brand-navy'
       }`}
     >
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

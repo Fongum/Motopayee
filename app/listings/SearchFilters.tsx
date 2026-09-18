@@ -57,7 +57,7 @@ export default function SearchFilters({ total }: { total: number }) {
             <select
               name="make"
               defaultValue={sp.get('make') ?? ''}
-              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#3d9e3d] focus:ring-1 focus:ring-[#3d9e3d]"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green"
             >
               <option value="">Toutes les marques</option>
               {MAKES.map((m) => <option key={m} value={m}>{m}</option>)}
@@ -70,7 +70,7 @@ export default function SearchFilters({ total }: { total: number }) {
             <select
               name="zone"
               defaultValue={sp.get('zone') ?? ''}
-              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#3d9e3d] focus:ring-1 focus:ring-[#3d9e3d]"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green"
             >
               <option value="">Toutes les zones</option>
               <option value="A">Zone A — Grandes villes</option>
@@ -87,7 +87,7 @@ export default function SearchFilters({ total }: { total: number }) {
               name="min_price"
               defaultValue={sp.get('min_price') ?? ''}
               placeholder="0"
-              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#3d9e3d] focus:ring-1 focus:ring-[#3d9e3d]"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green"
             />
           </div>
           <div className="flex-1 min-w-[120px]">
@@ -97,7 +97,7 @@ export default function SearchFilters({ total }: { total: number }) {
               name="max_price"
               defaultValue={sp.get('max_price') ?? ''}
               placeholder="Illimité"
-              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#3d9e3d] focus:ring-1 focus:ring-[#3d9e3d]"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green"
             />
           </div>
 
@@ -107,7 +107,7 @@ export default function SearchFilters({ total }: { total: number }) {
             <select
               name="sort"
               defaultValue={sp.get('sort') ?? 'newest'}
-              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#3d9e3d] focus:ring-1 focus:ring-[#3d9e3d]"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green"
             >
               {SORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
@@ -116,7 +116,7 @@ export default function SearchFilters({ total }: { total: number }) {
           {/* Submit */}
           <button
             type="submit"
-            className="bg-[#3d9e3d] text-white font-bold px-6 py-2.5 rounded-xl hover:bg-[#2d8a2d] transition flex items-center gap-2 whitespace-nowrap"
+            className="bg-brand-green text-white font-bold px-6 py-2.5 rounded-xl hover:bg-brand-green-dark transition flex items-center gap-2 whitespace-nowrap"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -130,14 +130,14 @@ export default function SearchFilters({ total }: { total: number }) {
           <button
             type="button"
             onClick={() => setOpen(!open)}
-            className="flex items-center gap-2 text-sm font-semibold text-[#1a3a6b] hover:text-[#3d9e3d] transition"
+            className="flex items-center gap-2 text-sm font-semibold text-brand-navy hover:text-brand-green transition"
           >
             <svg className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
             Filtres avancés
             {activeAdvanced > 0 && (
-              <span className="bg-[#3d9e3d] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+              <span className="bg-brand-green text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                 {activeAdvanced}
               </span>
             )}
@@ -145,7 +145,7 @@ export default function SearchFilters({ total }: { total: number }) {
           <div className="flex items-center gap-4">
             <SaveSearchButton searchType="listing" />
             <p className="text-sm text-gray-500">
-              <span className="font-bold text-[#1a3a6b]">{total}</span> véhicule{total !== 1 ? 's' : ''}
+              <span className="font-bold text-brand-navy">{total}</span> véhicule{total !== 1 ? 's' : ''}
             </p>
             {hasAnyFilter && (
               <button
@@ -171,7 +171,7 @@ export default function SearchFilters({ total }: { total: number }) {
               <select
                 name="min_year"
                 defaultValue={sp.get('min_year') ?? ''}
-                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#3d9e3d] focus:ring-1 focus:ring-[#3d9e3d]"
+                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green"
               >
                 <option value="">Toute</option>
                 {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
@@ -182,7 +182,7 @@ export default function SearchFilters({ total }: { total: number }) {
               <select
                 name="max_year"
                 defaultValue={sp.get('max_year') ?? ''}
-                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#3d9e3d] focus:ring-1 focus:ring-[#3d9e3d]"
+                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green"
               >
                 <option value="">Toute</option>
                 {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
@@ -195,7 +195,7 @@ export default function SearchFilters({ total }: { total: number }) {
               <select
                 name="max_mileage"
                 defaultValue={sp.get('max_mileage') ?? ''}
-                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#3d9e3d] focus:ring-1 focus:ring-[#3d9e3d]"
+                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green"
               >
                 <option value="">Illimité</option>
                 <option value="30000">Moins de 30 000 km</option>
@@ -212,7 +212,7 @@ export default function SearchFilters({ total }: { total: number }) {
               <select
                 name="fuel_type"
                 defaultValue={sp.get('fuel_type') ?? ''}
-                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#3d9e3d] focus:ring-1 focus:ring-[#3d9e3d]"
+                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green"
               >
                 <option value="">Tous</option>
                 {FUEL_TYPES.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
@@ -225,7 +225,7 @@ export default function SearchFilters({ total }: { total: number }) {
               <select
                 name="condition_grade"
                 defaultValue={sp.get('condition_grade') ?? ''}
-                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#3d9e3d] focus:ring-1 focus:ring-[#3d9e3d]"
+                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green"
               >
                 <option value="">Tous</option>
                 <option value="A">A — Excellent</option>
@@ -237,13 +237,13 @@ export default function SearchFilters({ total }: { total: number }) {
 
             {/* Financeable */}
             <div className="flex-1 min-w-[150px] flex items-end">
-              <label className="flex items-center gap-3 cursor-pointer select-none py-2.5 px-3 bg-white border border-gray-300 rounded-xl w-full hover:border-[#3d9e3d] transition">
+              <label className="flex items-center gap-3 cursor-pointer select-none py-2.5 px-3 bg-white border border-gray-300 rounded-xl w-full hover:border-brand-green transition">
                 <input
                   type="checkbox"
                   name="financeable"
                   value="true"
                   defaultChecked={sp.get('financeable') === 'true'}
-                  className="w-4 h-4 rounded text-[#3d9e3d] focus:ring-[#3d9e3d]"
+                  className="w-4 h-4 rounded text-brand-green focus:ring-brand-green"
                 />
                 <span className="text-sm font-medium text-gray-700">Finançable uniquement</span>
               </label>

@@ -20,9 +20,13 @@ export default async function SellerListingDetailPage({ params }: { params: { id
   const user = await getCurrentUser();
   if (!user || !['seller_individual', 'seller_dealer'].includes(user.role)) redirect('/login');
 
+  // The previous select embedded `documents(*)`. documents is polymorphic with
+  // no foreign key here, so PostgREST rejected it with PGRST200 and the error
+  // branch below 404'd this page for every seller. Nothing on the page renders
+  // documents, so the embed was dead weight as well as fatal.
   const { data, error } = await supabaseAdmin
     .from('listings')
-    .select('*, vehicle:vehicles(*), documents(*)')
+    .select('*, vehicle:vehicles(*)')
     .eq('id', params.id)
     .eq('seller_id', user.id)
     .single();

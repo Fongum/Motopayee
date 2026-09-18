@@ -65,7 +65,7 @@ export default function ReviewForm({ entityType, entityId, reviewedId }: Props) 
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           maxLength={100}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#3d9e3d]"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-green"
           placeholder="En un mot..."
         />
       </div>
@@ -77,7 +77,7 @@ export default function ReviewForm({ entityType, entityId, reviewedId }: Props) 
           onChange={(e) => setComment(e.target.value)}
           rows={3}
           maxLength={1000}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#3d9e3d] resize-none"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-green resize-none"
           placeholder="Partagez votre expérience..."
         />
       </div>
@@ -87,7 +87,7 @@ export default function ReviewForm({ entityType, entityId, reviewedId }: Props) 
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-[#1a3a6b] text-white font-semibold py-2.5 rounded-xl hover:bg-[#15305a] transition disabled:opacity-50 text-sm"
+        className="w-full bg-brand-navy text-white font-semibold py-2.5 rounded-xl hover:bg-brand-navy-dark transition disabled:opacity-50 text-sm"
       >
         {loading ? 'Envoi...' : 'Publier mon avis'}
       </button>

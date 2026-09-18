@@ -1,9 +1,26 @@
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
+import TruncationNotice from '../../(components)/TruncationNotice';
 import { buildContactUrl } from '@/lib/whatsapp';
 import { QUICK_LEAD_ACTIVITY_TEMPLATES, buildLeadOutreachMessage } from '@/lib/launch-lead-playbooks';
 import { DEFAULT_RESPONSE_SLA_MINUTES, INBOUND_LEAD_TYPES } from '@/lib/inbound-response';
+import {
+  OPEN_LEAD_STATUSES,
+  STALE_LEAD_DAYS,
+  campaignLabel,
+  campaignPerformance as buildCampaignPerformance,
+  conversionRate as computeConversionRate,
+  topN,
+  windowStart,
+  workloadByStaff as buildWorkloadByStaff,
+} from '@/lib/launch-lead-metrics';
+import type { KeyCount } from '@/lib/launch-lead-metrics';
+import {
+  fetchActivityOutcomes,
+  fetchLeadMetrics,
+  fetchLeadWorkload,
+} from '@/lib/launch-lead-metrics.server';
 
 const TYPE_LABELS: Record<string, string> = {
   seller: 'Vendeur',
@@ -42,7 +59,15 @@ const STATUS_COLORS: Record<string, string> = {
   closed: 'bg-gray-100 text-gray-600',
 };
 
-const OPEN_STATUSES = ['new', 'contacted', 'interested', 'qualified', 'awaiting_assets', 'ready_for_listing', 'onboarding'];
+// One vocabulary, shared with the SQL metric functions it is passed into.
+const OPEN_STATUSES: readonly string[] = OPEN_LEAD_STATUSES;
+
+/**
+ * How many leads the table renders. Each row carries its full activity history,
+ * so this is the real payload driver on the page — and it is a deliberate cap
+ * now, announced to the user, rather than PostgREST quietly stopping at 1000.
+ */
+const LEAD_LIST_LIMIT = 200;
 
 const FILTERS = [
   { value: '', label: 'Tous' },
@@ -169,26 +194,6 @@ type LeadRow = {
   }>;
 };
 
-type LeadMetricRow = {
-  lead_type: string;
-  source: string;
-  campaign_name: string | null;
-  status: string;
-  created_at: string;
-};
-
-type LeadWorkloadRow = {
-  assigned_to: string | null;
-  campaign_name: string | null;
-  status: string;
-  created_at: string;
-  next_follow_up_at: string | null;
-};
-
-type ActivityMetricRow = {
-  meta: { outcome?: string | null } | null;
-};
-
 const CONVERSION_ACTIONS: Record<string, Array<{ label: string; href: string }>> = {
   seller: [
     { label: 'Nouvelle annonce admin', href: '/admin/listings/new' },
@@ -271,14 +276,6 @@ const CONVERSION_CHECKLISTS: Record<string, string[]> = {
   ],
 };
 
-function countBy<T extends string>(rows: LeadMetricRow[], key: (row: LeadMetricRow) => T) {
-  return rows.reduce<Record<T, number>>((acc, row) => {
-    const value = key(row);
-    acc[value] = (acc[value] ?? 0) + 1;
-    return acc;
-  }, {} as Record<T, number>);
-}
-
 function ageInDays(date: string) {
   return Math.max(0, Math.floor((Date.now() - new Date(date).getTime()) / (24 * 60 * 60 * 1000)));
 }
@@ -291,7 +288,7 @@ function leadSla(lead: Pick<LeadRow, 'status' | 'created_at' | 'next_follow_up_a
   if (lead.status === 'new' && ageDays >= 1) {
     return { label: `Nouveau ${ageDays}j`, className: 'bg-orange-50 text-orange-700' };
   }
-  if (OPEN_STATUSES.includes(lead.status) && ageDays >= 7) {
+  if (OPEN_STATUSES.includes(lead.status) && ageDays >= STALE_LEAD_DAYS) {
     return { label: `Aging ${ageDays}j`, className: 'bg-rose-50 text-rose-700' };
   }
   return { label: `${ageDays}j`, className: 'bg-gray-100 text-gray-600' };
@@ -304,10 +301,17 @@ export default async function AdminLeadsPage({
 }) {
   const user = await requireAdminPage('leads');
 
+  // Bounded explicitly. Unbounded, PostgREST stopped at db-max-rows and the
+  // page showed a silently truncated list; with an exact count it can at least
+  // say so out loud.
   let query = supabaseAdmin
     .from('launch_leads')
-    .select('*, assigned:profiles!assigned_to(full_name, email), activities:launch_lead_activities(id, action, summary, meta, created_at, actor:profiles!actor_id(full_name, email))')
-    .order('created_at', { ascending: false });
+    .select(
+      '*, assigned:profiles!assigned_to(full_name, email), activities:launch_lead_activities(id, action, summary, meta, created_at, actor:profiles!actor_id(full_name, email))',
+      { count: 'exact' }
+    )
+    .order('created_at', { ascending: false })
+    .limit(LEAD_LIST_LIMIT);
 
   if (searchParams.status && STATUS_LABELS[searchParams.status]) {
     query = query.eq('status', searchParams.status);
@@ -382,7 +386,7 @@ export default async function AdminLeadsPage({
     }
   }
 
-  const [{ data }, { data: staffData }] = await Promise.all([
+  const [{ data, count: matchingLeadCount }, { data: staffData }] = await Promise.all([
     query,
     supabaseAdmin
       .from('profiles')
@@ -392,25 +396,18 @@ export default async function AdminLeadsPage({
       .order('full_name'),
   ]);
 
-  const { data: metricData } = await supabaseAdmin
-    .from('launch_leads')
-    .select('lead_type, source, campaign_name, status, created_at')
-    .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
-
-  const { data: workloadData } = await supabaseAdmin
-    .from('launch_leads')
-    .select('assigned_to, campaign_name, status, created_at, next_follow_up_at')
-    .in('status', OPEN_STATUSES);
-
-  const { data: activityMetricData } = await supabaseAdmin
-    .from('launch_lead_activities')
-    .select('meta')
-    .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+  // Counted in Postgres (migration 036). These three panels used to fetch whole
+  // tables and tally them here with .filter()/.reduce(), which PostgREST
+  // truncated at 1000 rows — so every number below silently under-reported once
+  // the lead table outgrew that, with no error to notice.
+  const since = windowStart();
+  const [metrics, workload, outcomeRows] = await Promise.all([
+    fetchLeadMetrics(since),
+    fetchLeadWorkload(),
+    fetchActivityOutcomes(since),
+  ]);
 
   const leads = (data ?? []) as unknown as LeadRow[];
-  const metricRows = (metricData ?? []) as LeadMetricRow[];
-  const workloadRows = (workloadData ?? []) as LeadWorkloadRow[];
-  const activityMetricRows = (activityMetricData ?? []) as ActivityMetricRow[];
   const staff = (staffData ?? []) as Array<{ id: string; full_name: string | null; email: string; role: string }>;
   const openLeads = leads.filter((lead) => !['converted', 'not_fit', 'closed'].includes(lead.status));
   const dueLeads = openLeads.filter((lead) => lead.next_follow_up_at && new Date(lead.next_follow_up_at) <= new Date());
@@ -429,65 +426,29 @@ export default async function AdminLeadsPage({
     return followUp > endOfDay && followUp <= sevenDaysFromNow;
   });
   const agingNewLeads = openLeads.filter((lead) => lead.status === 'new' && ageInDays(lead.created_at) >= 1);
-  const staleLeads = openLeads.filter((lead) => ageInDays(lead.created_at) >= 7);
-  const unassignedOpenLeads = workloadRows.filter((lead) => !lead.assigned_to).length;
-  const staleWorkloadLeads = workloadRows.filter((lead) => ageInDays(lead.created_at) >= 7).length;
-  const workloadByStaff = staff.map((member) => {
-    const assignedRows = workloadRows.filter((lead) => lead.assigned_to === member.id);
-    const dueRows = assignedRows.filter((lead) => lead.next_follow_up_at && new Date(lead.next_follow_up_at) <= new Date());
-    return {
-      id: member.id,
-      name: member.full_name ?? member.email,
-      open: assignedRows.length,
-      due: dueRows.length,
-    };
-  }).sort((a, b) => b.open - a.open || b.due - a.due);
-  const sourceCounts = countBy(metricRows, (row) => row.source);
-  const campaignCounts = metricRows.reduce<Record<string, number>>((acc, row) => {
-    const campaign = row.campaign_name || 'Sans campagne';
-    acc[campaign] = (acc[campaign] ?? 0) + 1;
-    return acc;
-  }, {});
-  const campaignPerformance = Object.entries(
-    metricRows.reduce<Record<string, { total: number; open: number; converted: number }>>((acc, row) => {
-      const campaign = row.campaign_name || 'Sans campagne';
-      if (!acc[campaign]) acc[campaign] = { total: 0, open: 0, converted: 0 };
-      acc[campaign].total += 1;
-      if (!['converted', 'not_fit', 'closed'].includes(row.status)) acc[campaign].open += 1;
-      if (row.status === 'converted') acc[campaign].converted += 1;
-      return acc;
-    }, {})
-  )
-    .map(([campaign, values]) => {
-      const due = workloadRows.filter((lead) => {
-        const leadCampaign = lead.campaign_name || 'Sans campagne';
-        return leadCampaign === campaign && lead.next_follow_up_at && new Date(lead.next_follow_up_at) <= new Date();
-      }).length;
-      return {
-        campaign,
-        ...values,
-        due,
-        conversionRate: values.total > 0 ? Math.round((values.converted / values.total) * 100) : 0,
-      };
-    })
-    .sort((a, b) => b.total - a.total || b.converted - a.converted)
-    .slice(0, 8);
-  const typeCounts = countBy(metricRows, (row) => row.lead_type);
-  const statusCounts = countBy(metricRows, (row) => row.status);
-  const totalMetricLeads = metricRows.length;
-  const convertedMetricLeads = statusCounts.converted ?? 0;
-  const openMetricLeads = metricRows.filter((lead) => !['converted', 'not_fit', 'closed'].includes(lead.status)).length;
-  const conversionRate = totalMetricLeads > 0 ? Math.round((convertedMetricLeads / totalMetricLeads) * 100) : 0;
-  const topSources = Object.entries(sourceCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const topCampaigns = Object.entries(campaignCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const topTypes = Object.entries(typeCounts).sort((a, b) => b[1] - a[1]).slice(0, 6);
-  const outcomeCounts = activityMetricRows.reduce<Record<string, number>>((acc, activity) => {
-    const outcome = activity.meta?.outcome;
-    if (!outcome) return acc;
-    acc[outcome] = (acc[outcome] ?? 0) + 1;
-    return acc;
-  }, {});
-  const topOutcomes = Object.entries(outcomeCounts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const staleLeads = openLeads.filter((lead) => ageInDays(lead.created_at) >= STALE_LEAD_DAYS);
+  const unassignedOpenLeads = workload.unassigned;
+  const staleWorkloadLeads = workload.stale;
+  const workloadByStaff = buildWorkloadByStaff(staff, workload.by_staff);
+
+  // The database already returns these ordered by count, so the page only has
+  // to take the top slice and adapt them to the [label, count] tuples the JSX
+  // below was written against.
+  const asTuples = (rows: KeyCount[], limit: number): [string, number][] =>
+    topN(rows, limit).map((row) => [row.key, row.count]);
+
+  const campaignPerformance = buildCampaignPerformance(metrics.by_campaign, workload.due_by_campaign);
+  const totalMetricLeads = metrics.total;
+  const convertedMetricLeads = metrics.converted;
+  const openMetricLeads = metrics.open;
+  const conversionRate = computeConversionRate(metrics.converted, metrics.total);
+  const topSources = asTuples(metrics.by_source, 5);
+  const topCampaigns = topN(metrics.by_campaign, 5).map(
+    (row): [string, number] => [campaignLabel(row.campaign), row.total]
+  );
+  const topTypes = asTuples(metrics.by_type, 6);
+  const topOutcomes = asTuples(outcomeRows, 6);
+  const recordedOutcomes = outcomeRows.reduce((sum, row) => sum + row.count, 0);
 
   const stats = [
     { label: 'Ouverts', value: openLeads.length, color: 'text-blue-700' },
@@ -744,8 +705,11 @@ export default async function AdminLeadsPage({
             <h2 className="font-bold text-gray-900">Resultats de suivi</h2>
             <p className="mt-1 text-sm text-gray-500">Outcomes enregistres dans les 30 derniers jours.</p>
           </div>
+          {/* Counts activities that actually recorded an outcome, which is what
+              this panel breaks down. It previously showed every activity row,
+              so the total never matched the sum of the cards below it. */}
           <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
-            {activityMetricRows.length} activites
+            {recordedOutcomes} resultats
           </span>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -977,7 +941,9 @@ export default async function AdminLeadsPage({
         </div>
       </form>
 
-      <div className="space-y-3">
+      <TruncationNotice shown={leads.length} total={matchingLeadCount} noun="leads" />
+
+            <div className="space-y-3">
         {leads.length === 0 ? (
           <div className="rounded-2xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-400">
             Aucun lead a afficher.

@@ -3,10 +3,18 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { HireListing } from '@/lib/types';
+import { bookingTotal } from '@/lib/hire-pricing';
 
 function formatXAF(amount: number): string {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
 }
+
+// 'mois' is invariant in French — it does not take a plural s.
+const UNIT_LABEL: Record<'month' | 'week' | 'day', { one: string; many: string }> = {
+  month: { one: 'mois', many: 'mois' },
+  week: { one: 'semaine', many: 'semaines' },
+  day: { one: 'jour', many: 'jours' },
+};
 
 export default function BookingForm({ listing }: { listing: HireListing }) {
   const router = useRouter();
@@ -19,19 +27,16 @@ export default function BookingForm({ listing }: { listing: HireListing }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Calculate estimate
+  // Priced by the same module the booking route uses, so the quote below is
+  // exactly what gets charged.
   let totalDays = 0;
-  let estimate = 0;
   if (startDate && endDate) {
     const diff = new Date(endDate).getTime() - new Date(startDate).getTime();
-    totalDays = Math.ceil(diff / (1000 * 60 * 60 * 24));
-    if (totalDays > 0) {
-      estimate = listing.daily_rate * totalDays;
-      if (hireType === 'with_driver' && listing.driver_daily_rate) {
-        estimate += listing.driver_daily_rate * totalDays;
-      }
-    }
+    totalDays = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
   }
+  const driverRate = hireType === 'with_driver' ? listing.driver_daily_rate : null;
+  const quote = bookingTotal(listing, totalDays, driverRate);
+  const estimate = quote.total;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -77,7 +82,7 @@ export default function BookingForm({ listing }: { listing: HireListing }) {
             min={today}
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#3d9e3d]"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-green"
           />
         </div>
         <div>
@@ -88,7 +93,7 @@ export default function BookingForm({ listing }: { listing: HireListing }) {
             min={startDate || today}
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#3d9e3d]"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-green"
           />
         </div>
       </div>
@@ -99,7 +104,7 @@ export default function BookingForm({ listing }: { listing: HireListing }) {
           <select
             value={hireType}
             onChange={(e) => setHireType(e.target.value as 'self_drive' | 'with_driver')}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#3d9e3d]"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-green"
           >
             <option value="self_drive">Sans chauffeur</option>
             <option value="with_driver">Avec chauffeur</option>
@@ -114,33 +119,46 @@ export default function BookingForm({ listing }: { listing: HireListing }) {
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
           placeholder="Heure de prise en charge, lieu spécifique..."
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#3d9e3d] resize-none"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-green resize-none"
         />
       </div>
 
       {/* Estimate */}
       {totalDays > 0 && (
         <div className="bg-gray-50 rounded-xl p-3 space-y-1">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">{totalDays} jour{totalDays > 1 ? 's' : ''} x {formatXAF(listing.daily_rate)}</span>
-            <span className="font-medium">{formatXAF(listing.daily_rate * totalDays)}</span>
-          </div>
-          {hireType === 'with_driver' && listing.driver_daily_rate && (
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Chauffeur x {totalDays}</span>
-              <span className="font-medium">{formatXAF(listing.driver_daily_rate * totalDays)}</span>
+          {quote.lines.map((line) => (
+            <div key={line.unit} className="flex justify-between text-sm">
+              <span className="text-gray-500">
+                {line.quantity} {line.quantity > 1 ? UNIT_LABEL[line.unit].many : UNIT_LABEL[line.unit].one} x {formatXAF(line.unitPrice)}
+              </span>
+              <span className="font-medium">{formatXAF(line.amount)}</span>
             </div>
-          )}
-          {listing.deposit_amount > 0 && (
+          ))}
+          {quote.driver && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Caution</span>
-              <span className="font-medium">{formatXAF(listing.deposit_amount)}</span>
+              <span className="text-gray-500">Chauffeur x {quote.driver.quantity}</span>
+              <span className="font-medium">{formatXAF(quote.driver.amount)}</span>
             </div>
           )}
           <div className="flex justify-between text-sm font-bold border-t border-gray-200 pt-1 mt-1">
             <span>Total estimé</span>
-            <span className="text-[#1a3a6b]">{formatXAF(estimate)}</span>
+            <span className="text-brand-navy">{formatXAF(estimate)}</span>
           </div>
+          {/* The deposit is held by the vehicle owner, not by MotoPayee, and is
+              not part of this total. It used to sit above the total line among
+              the rental charges, so the figures did not add up and a renter
+              could reasonably read it as something MotoPayee collects. */}
+          {listing.deposit_amount > 0 && (
+            <div className="mt-2 border-t border-gray-200 pt-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Caution (hors total)</span>
+                <span className="font-medium">{formatXAF(listing.deposit_amount)}</span>
+              </div>
+              <p className="mt-1 text-xs text-gray-400">
+                Versée directement au propriétaire, qui la conserve et la restitue selon ses conditions. MotoPayee ne la détient pas.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -151,7 +169,7 @@ export default function BookingForm({ listing }: { listing: HireListing }) {
       <button
         type="submit"
         disabled={loading || totalDays < 1}
-        className="w-full bg-[#3d9e3d] text-white font-semibold py-3 rounded-xl hover:bg-[#2d8a2d] transition disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-brand-green text-white font-semibold py-3 rounded-xl hover:bg-brand-green-dark transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? 'Réservation en cours...' : 'Réserver ce véhicule'}
       </button>

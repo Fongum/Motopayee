@@ -39,10 +39,10 @@ export default function RecommendationCarousel() {
     <div className="mt-14">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <span className="text-[#f5a623] text-xs font-bold uppercase tracking-widest">Pour vous</span>
-          <h2 className="text-2xl font-extrabold text-[#1a3a6b] mt-1">Recommandations</h2>
+          <span className="text-brand-amber text-xs font-bold uppercase tracking-widest">Pour vous</span>
+          <h2 className="text-2xl font-extrabold text-brand-navy mt-1">Recommandations</h2>
         </div>
-        <Link href="/listings" className="text-sm font-semibold text-[#3d9e3d] flex items-center gap-1 hover:gap-2 transition-all">
+        <Link href="/listings" className="text-sm font-semibold text-brand-green flex items-center gap-1 hover:gap-2 transition-all">
           Tout voir
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -78,7 +78,7 @@ export default function RecommendationCarousel() {
               <p className="text-xs text-gray-400 mt-0.5">
                 {l.vehicle ? `${l.vehicle.mileage_km.toLocaleString()} km` : ''}
               </p>
-              <p className="text-sm font-extrabold text-[#1a3a6b] mt-2">{formatXAF(l.asking_price)}</p>
+              <p className="text-sm font-extrabold text-brand-navy mt-2">{formatXAF(l.asking_price)}</p>
             </div>
           </Link>
         ))}

@@ -97,7 +97,7 @@ export default function BulkUploadForm() {
       <button
         type="submit"
         disabled={loading || !csv.trim()}
-        className="w-full bg-[#1a3a6b] text-white text-sm font-semibold py-3 rounded-xl hover:bg-[#142d54] disabled:opacity-50"
+        className="w-full bg-brand-navy text-white text-sm font-semibold py-3 rounded-xl hover:bg-brand-navy-dark disabled:opacity-50"
       >
         {loading ? 'Téléversement...' : 'Importer les annonces'}
       </button>

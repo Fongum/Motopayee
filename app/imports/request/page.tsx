@@ -41,16 +41,16 @@ export default async function ImportRequestPage({
       <Navbar />
       <main className="min-h-screen bg-gray-50 py-12">
         <div className="mx-auto flex max-w-5xl flex-col gap-8 px-4 sm:px-6 lg:px-8">
-          <section className="rounded-[2rem] bg-[#102544] px-8 py-10 text-white shadow-xl">
+          <section className="rounded-[2rem] bg-brand-navy-dark px-8 py-10 text-white shadow-xl">
             <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-blue-100">
-              Assisted Import
+              Import assisté
             </span>
             <h1 className="mt-5 max-w-3xl text-3xl font-bold leading-tight sm:text-4xl">
-              Tell MotoPayee what you want to import from the United States.
+              Dites à MotoPayee ce que vous souhaitez importer des États-Unis.
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-blue-100 sm:text-base">
-              Submit your target vehicle, budget, and preferences. We will review the request, work with our trusted US
-              sourcing partner, and send you a structured quote before any purchase is made.
+              Indiquez le véhicule visé, votre budget et vos préférences. Nous examinerons la demande, travaillerons avec notre
+              partenaire d&apos;approvisionnement américain de confiance, et vous envoyons un devis structuré avant tout achat.
             </p>
           </section>
 
@@ -60,44 +60,44 @@ export default async function ImportRequestPage({
                 <>
                   {linkedOffer?.data && (
                     <div className="mb-6 rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-sm text-green-800">
-                      Requesting a quote for <span className="font-semibold">{linkedOffer.data.headline}</span>. You can adjust the criteria before sending.
+                      Demande de devis pour <span className="font-semibold">{linkedOffer.data.headline}</span>. Vous pouvez ajuster les critères avant d&apos;envoyer.
                     </div>
                   )}
                   <ImportRequestForm initialValues={initialValues} />
                 </>
               ) : !user ? (
                 <div className="space-y-4">
-                  <h2 className="text-xl font-semibold text-gray-900">Buyer account required</h2>
+                  <h2 className="text-xl font-semibold text-gray-900">Compte acheteur requis</h2>
                   <p className="text-sm leading-7 text-gray-600">
-                    This flow is reserved for buyer accounts because requests become part of your MotoPayee purchase history.
+                    Ce parcours est réservé aux comptes acheteurs car les demandes font partie de votre historique d&apos;achat MotoPayee.
                   </p>
                   <div className="flex flex-wrap gap-3">
                     <Link
                       href="/login"
-                      className="rounded-xl bg-[#1a3a6b] px-5 py-3 text-sm font-semibold text-white hover:bg-[#132b50]"
+                      className="rounded-xl bg-brand-navy px-5 py-3 text-sm font-semibold text-white hover:bg-brand-navy-dark"
                     >
-                      Login
+                      Connexion
                     </Link>
                     <Link
                       href="/register?role=buyer"
                       className="rounded-xl border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                     >
-                      Create buyer account
+                      Créer un compte acheteur
                     </Link>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <h2 className="text-xl font-semibold text-gray-900">Switch to a buyer account</h2>
+                  <h2 className="text-xl font-semibold text-gray-900">Passez sur un compte acheteur</h2>
                   <p className="text-sm leading-7 text-gray-600">
-                    Your current account role is <span className="font-semibold capitalize">{user.role.replace(/_/g, ' ')}</span>.
-                    Import requests can only be submitted from buyer accounts.
+                    Votre compte actuel a le rôle <span className="font-semibold capitalize">{user.role.replace(/_/g, ' ')}</span>.
+                    Les demandes d&apos;import ne peuvent être envoyées que depuis un compte acheteur.
                   </p>
                   <Link
                     href="/"
-                    className="inline-flex rounded-xl bg-[#1a3a6b] px-5 py-3 text-sm font-semibold text-white hover:bg-[#132b50]"
+                    className="inline-flex rounded-xl bg-brand-navy px-5 py-3 text-sm font-semibold text-white hover:bg-brand-navy-dark"
                   >
-                    Back to home
+                    Retour à l&apos;accueil
                   </Link>
                 </div>
               )}
@@ -105,20 +105,20 @@ export default async function ImportRequestPage({
 
             <aside className="space-y-5">
               <div className="rounded-[2rem] border border-gray-200 bg-white p-6 shadow-sm">
-                <h2 className="text-lg font-semibold text-gray-900">What happens next</h2>
+                <h2 className="text-lg font-semibold text-gray-900">La suite</h2>
                 <ol className="mt-4 space-y-3 text-sm leading-6 text-gray-600">
-                  <li>1. MotoPayee reviews your request.</li>
-                  <li>2. We source matching options with our US partner.</li>
-                  <li>3. You receive a quote with shipping and estimated customs.</li>
-                  <li>4. Nothing is purchased until you approve the quote.</li>
+                  <li>1. MotoPayee examine votre demande.</li>
+                  <li>2. Nous recherchons des options correspondantes avec notre partenaire américain.</li>
+                  <li>3. Vous recevez un devis incluant le transport et une estimation des douanes.</li>
+                  <li>4. Rien n&apos;est acheté avant que vous n&apos;approuviez le devis.</li>
                 </ol>
               </div>
 
               <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-6 shadow-sm">
                 <h2 className="text-lg font-semibold text-amber-900">Important</h2>
                 <p className="mt-3 text-sm leading-6 text-amber-800">
-                  Clearing in Cameroon can remain buyer-managed, but shipping dates, port charges, and customs estimates still
-                  depend on official processing and documents.
+                  Le dédouanement au Cameroun peut rester géré par l&apos;acheteur, mais les dates d&apos;expédition, frais portuaires et
+                  estimations douanières dépendent toujours du traitement officiel et des documents requis.
                 </p>
               </div>
             </aside>

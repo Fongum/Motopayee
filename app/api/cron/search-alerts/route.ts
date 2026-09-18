@@ -3,8 +3,14 @@ import { supabaseAdmin } from '@/lib/auth/server';
 import { matchListings, matchHireListings } from '@/lib/search-matcher';
 import { logger } from '@/lib/logger';
 
-// POST /api/cron/search-alerts — daily cron: check saved searches for new matches
-export async function POST(request: Request) {
+/**
+ * /api/cron/search-alerts — daily: notify on new listings matching a saved
+ * search.
+ *
+ * Vercel invokes crons with GET, so both verbs are exported. Like the price
+ * alerts, this was never scheduled, so saved searches never notified anyone.
+ */
+async function handle(request: Request) {
   // Verify cron secret
   const authHeader = request.headers.get('authorization');
   if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -67,3 +73,6 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ processed: searches.length, notified });
 }
+
+export const GET = handle;
+export const POST = handle;

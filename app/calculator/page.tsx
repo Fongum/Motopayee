@@ -63,7 +63,7 @@ export default function CalculatorPage() {
       <Navbar />
       <main className="bg-gray-50 min-h-screen">
         {/* Hero */}
-        <div className="bg-[#1a3a6b] py-12 px-4">
+        <div className="bg-brand-navy py-12 px-4">
           <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-white/10 text-blue-200 text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -95,7 +95,7 @@ export default function CalculatorPage() {
                 <div className="space-y-4">
                   {STEPS.map(({ n, title, desc }) => (
                     <div key={n} className="flex gap-3">
-                      <div className="w-7 h-7 rounded-full bg-[#1a3a6b] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-brand-navy text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
                         {n}
                       </div>
                       <div>
@@ -107,7 +107,7 @@ export default function CalculatorPage() {
                 </div>
                 <Link
                   href="/listings"
-                  className="mt-5 block w-full text-center bg-[#3d9e3d] text-white text-sm font-semibold py-3 rounded-xl hover:bg-[#2d8a2d] transition"
+                  className="mt-5 block w-full text-center bg-brand-green text-white text-sm font-semibold py-3 rounded-xl hover:bg-brand-green-dark transition"
                 >
                   Parcourir les véhicules
                 </Link>

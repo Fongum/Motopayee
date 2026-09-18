@@ -1,4 +1,8 @@
 import Link from 'next/link';
+import TruncationNotice from '../../../(components)/TruncationNotice';
+
+/** Rows the table renders; the notice shows the true matching count. */
+const IMPORT_LIST_LIMIT = 200;
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAdminPage } from '@/lib/auth/admin-access';
 import type { ImportOffer } from '@/lib/types';
@@ -23,10 +27,11 @@ const STATUS_COLORS: Record<string, string> = {
 export default async function AdminImportOffersPage() {
   await requireAdminPage('imports');
 
-  const { data } = await supabaseAdmin
+  const { data, count: offerTotal } = await supabaseAdmin
     .from('import_offers')
-    .select('*')
-    .order('created_at', { ascending: false });
+    .select('*', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .limit(IMPORT_LIST_LIMIT);
 
   const offers = (data ?? []) as ImportOffer[];
 
@@ -60,9 +65,11 @@ export default async function AdminImportOffersPage() {
         <section className="rounded-[2rem] border border-gray-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Current offers</h2>
-            <span className="text-xs font-medium text-gray-400">{offers.length} total</span>
+            <span className="text-xs font-medium text-gray-400">{offerTotal ?? offers.length} total</span>
           </div>
 
+
+          <TruncationNotice shown={offers.length} total={offerTotal} noun="offres" />
           {offers.length === 0 ? (
             <p className="mt-5 text-sm text-gray-500">No offers created yet.</p>
           ) : (

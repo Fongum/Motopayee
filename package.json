@@ -8,7 +8,11 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "audit:queries": "node scripts/audit-query-shapes.mjs",
+    "audit:access": "node scripts/audit-anon-access.mjs",
+    "audit": "npm run audit:queries && npm run audit:access",
+    "check:env": "node scripts/check-env.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",

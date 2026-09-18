@@ -2,8 +2,15 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { logger } from '@/lib/logger';
 
-// POST /api/cron/price-alerts — daily cron: check for price drops
-export async function POST(request: Request) {
+/**
+ * /api/cron/price-alerts — daily: notify watchers when a listing drops below
+ * their threshold.
+ *
+ * Vercel invokes crons with GET, so both verbs are exported. Without the GET
+ * this route answered 405 to the scheduler; it was also not scheduled at all,
+ * so every price alert a buyer created sat unfired.
+ */
+async function handle(request: Request) {
   const authHeader = request.headers.get('authorization');
   if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -51,3 +58,6 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ processed: alerts.length, notified });
 }
+
+export const GET = handle;
+export const POST = handle;

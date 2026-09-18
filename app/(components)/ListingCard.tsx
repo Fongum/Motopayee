@@ -14,25 +14,29 @@ function formatXAF(amount: number): string {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
 }
 
-const BAND: Record<string, { label: string; cls: string }> = {
-  green:  { label: 'Bon prix',       cls: 'bg-green-50 text-green-700 border-green-200' },
-  yellow: { label: 'Prix correct',   cls: 'bg-amber-50 text-amber-700 border-amber-200' },
-  red:    { label: 'Prix élevé',     cls: 'bg-red-50 text-red-600 border-red-200' },
-};
-
 const FUEL_FR: Record<string, string> = {
   petrol: 'Essence', diesel: 'Diesel', electric: 'Électrique', hybrid: 'Hybride', other: 'Autre',
 };
 
 export default function ListingCard({ listing }: Props) {
   const v = listing.vehicle;
-  const band = listing.price_band ? BAND[listing.price_band] : null;
+  /*
+   * The price band is no longer shown publicly. lib/pricing values every
+   * vehicle from one base price — BASE_PRICES holds only DEFAULT — so make and
+   * model do not affect the estimate, and the depreciation floor gives every
+   * vehicle from 2020 or older the same 3,150,000 XAF. On that basis a 2018
+   * vehicle asking 5,000,000 was labelled "Prix élevé" to every buyer.
+   *
+   * The band is still computed, still stored, still shown to staff, and still
+   * feeds financing eligibility. What is withdrawn is the public claim about a
+   * seller's price, which the model cannot currently support.
+   */
   const hasPhoto = listing.media && listing.media.length > 0;
 
   return (
     <Link
       href={`/listings/${listing.id}`}
-      className="group block bg-white rounded-2xl border border-gray-200 shadow-card hover:border-[#3d9e3d]/40 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
+      className="group block bg-white rounded-2xl border border-gray-200 shadow-card hover:border-brand-green/40 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
     >
       {/* Photo */}
       <div className="relative h-44 bg-gray-100 overflow-hidden">
@@ -57,11 +61,11 @@ export default function ListingCard({ listing }: Props) {
 
         {/* Overlay badges */}
         <div className="absolute top-2 left-2 flex gap-1.5">
-          <span className="bg-[#1a3a6b] text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
+          <span className="bg-brand-navy text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
             Zone {listing.zone}
           </span>
           {listing.financeable && (
-            <span className="bg-[#3d9e3d] text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
+            <span className="bg-brand-green text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
               Finançable
             </span>
           )}
@@ -89,7 +93,7 @@ export default function ListingCard({ listing }: Props) {
 
       {/* Info */}
       <div className="p-4">
-        <h3 className="font-bold text-[#1a3a6b] group-hover:text-[#3d9e3d] transition-colors leading-tight text-sm mb-1">
+        <h3 className="font-bold text-brand-navy group-hover:text-brand-green transition-colors leading-tight text-sm mb-1">
           {v ? `${v.year} ${v.make} ${v.model}` : 'Véhicule'}
         </h3>
 
@@ -113,11 +117,7 @@ export default function ListingCard({ listing }: Props) {
 
         <div className="flex items-center justify-between">
           <p className="text-base font-extrabold text-gray-900">{formatXAF(listing.asking_price)}</p>
-          {band && (
-            <span className={`text-[10px] font-semibold border px-2 py-0.5 rounded-full ${band.cls}`}>
-              {band.label}
-            </span>
-          )}
+
         </div>
 
         <ListingTrustBadges listing={listing} />
@@ -131,11 +131,8 @@ export default function ListingCard({ listing }: Props) {
               <span className="text-[10px] font-semibold text-blue-600">Vérifié</span>
             </div>
           )}
-          {(listing.seller as unknown as { avg_rating: number | null })?.avg_rating != null && (
-            <StarRating
-              rating={(listing.seller as unknown as { avg_rating: number }).avg_rating}
-              count={(listing.seller as unknown as { total_reviews: number }).total_reviews}
-            />
+          {listing.seller?.avg_rating != null && (
+            <StarRating rating={listing.seller.avg_rating} count={listing.seller.total_reviews} />
           )}
         </div>
       </div>

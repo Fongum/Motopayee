@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import Navbar from '../(components)/Navbar';
 import Footer from '../(components)/Footer';
 import { supabaseAdmin } from '@/lib/auth/server';
+import { shapeListingMedia } from '@/lib/listing-query';
+import type { ListingQuery } from '@/lib/listing-query';
 import type { Listing, HireListing } from '@/lib/types';
 
 export const metadata: Metadata = {
@@ -48,7 +50,7 @@ export default async function ComparePage({
                   <th className="text-left p-3 bg-gray-50 rounded-tl-xl w-40"></th>
                   {listings.map((l) => (
                     <th key={l.id} className="p-3 bg-gray-50 text-center min-w-[200px]">
-                      <a href={`/hire/${l.id}`} className="text-[#1a3a6b] hover:text-[#3d9e3d] font-bold">
+                      <a href={`/hire/${l.id}`} className="text-brand-navy hover:text-brand-green font-bold">
                         {l.year} {l.make} {l.model}
                       </a>
                       {l.media && l.media.length > 0 && (
@@ -95,11 +97,19 @@ export default async function ComparePage({
   }
 
   // Listing comparison
-  const { data } = await supabaseAdmin
+  // The comparison table reads across the whole vehicle spec, so this one keeps
+  // the wide select — but it renders `media[0]` as the thumbnail, so the embed
+  // still has to be ordered and photo-only.
+  const comparisonQuery = supabaseAdmin
     .from('listings')
     .select('*, vehicle:vehicles(*), media:media_assets(*), seller:profiles!seller_id(full_name, is_verified)')
     .in('id', ids)
     .eq('status', 'published');
+
+  const { data } = await (shapeListingMedia(
+    comparisonQuery as unknown as ListingQuery,
+    { mediaLimit: 1 }
+  ) as unknown as typeof comparisonQuery);
   const listings = (data ?? []) as unknown as Listing[];
   if (listings.length < 2) notFound();
 
@@ -115,7 +125,7 @@ export default async function ComparePage({
                 <th className="text-left p-3 bg-gray-50 rounded-tl-xl w-40"></th>
                 {listings.map((l) => (
                   <th key={l.id} className="p-3 bg-gray-50 text-center min-w-[200px]">
-                    <a href={`/listings/${l.id}`} className="text-[#1a3a6b] hover:text-[#3d9e3d] font-bold">
+                    <a href={`/listings/${l.id}`} className="text-brand-navy hover:text-brand-green font-bold">
                       {l.vehicle ? `${l.vehicle.year} ${l.vehicle.make} ${l.vehicle.model}` : 'Véhicule'}
                     </a>
                     {l.media && l.media.length > 0 && (
@@ -133,8 +143,6 @@ export default async function ComparePage({
             <tbody className="divide-y divide-gray-100">
               {([
                 ['Prix', (l: Listing) => formatXAF(l.asking_price)],
-                ['Prix estimé', (l: Listing) => l.suggested_price ? formatXAF(l.suggested_price) : '—'],
-                ['Band de prix', (l: Listing) => l.price_band === 'green' ? 'Bon prix' : l.price_band === 'yellow' ? 'Prix correct' : l.price_band === 'red' ? 'Prix élevé' : '—'],
                 ['Année', (l: Listing) => l.vehicle ? String(l.vehicle.year) : '—'],
                 ['Kilométrage', (l: Listing) => l.vehicle ? `${l.vehicle.mileage_km.toLocaleString('fr-FR')} km` : '—'],
                 ['Carburant', (l: Listing) => l.vehicle ? (FUEL_FR[l.vehicle.fuel_type] ?? l.vehicle.fuel_type) : '—'],

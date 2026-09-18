@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRef } from 'react';
+import { BRAND } from '@/lib/brand-colors';
 
 interface CarouselListing {
   id: string;
@@ -25,17 +26,11 @@ function formatXAF(n: number) {
   return `${n} XAF`;
 }
 
-const BAND_COLORS: Record<string, string> = {
-  green: 'text-green-600',
-  yellow: 'text-amber-500',
-  red: 'text-red-500',
-};
-
 export default function ListingCarousel({
   listings,
   title,
   seeAllHref,
-  accent = '#3d9e3d',
+  accent = BRAND.green,
 }: {
   listings: CarouselListing[];
   title: string;
@@ -55,7 +50,7 @@ export default function ListingCarousel({
     <div>
       {/* Section header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold text-[#1a3a6b] flex items-center gap-2">
+        <h2 className="text-lg font-bold text-brand-navy flex items-center gap-2">
           <span className="w-1 h-5 rounded-full inline-block" style={{ backgroundColor: accent }} />
           {title}
         </h2>
@@ -91,7 +86,8 @@ export default function ListingCarousel({
         >
           {listings.map((listing) => {
             const v = listing.vehicle;
-            const bandColor = listing.price_band ? BAND_COLORS[listing.price_band] ?? 'text-gray-600' : 'text-gray-600';
+            // Price is no longer coloured by band. See ListingCard for why.
+            const bandColor = 'text-gray-900';
             return (
               <Link
                 key={listing.id}
@@ -99,7 +95,7 @@ export default function ListingCarousel({
                 className="flex-shrink-0 w-40 group/card hover:-translate-y-1 transition-transform"
               >
                 {/* Image */}
-                <div className="w-40 h-28 bg-gray-100 rounded-xl overflow-hidden relative mb-2 border border-gray-200 group-hover/card:border-[#3d9e3d] transition-colors">
+                <div className="w-40 h-28 bg-gray-100 rounded-xl overflow-hidden relative mb-2 border border-gray-200 group-hover/card:border-brand-green transition-colors">
                   {listing.media && listing.media.length > 0 ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -116,15 +112,15 @@ export default function ListingCarousel({
                     </div>
                   )}
                   {/* Zone badge */}
-                  <span className="absolute top-1.5 left-1.5 bg-[#1a3a6b] text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+                  <span className="absolute top-1.5 left-1.5 bg-brand-navy text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
                     Zone {listing.zone}
                   </span>
                   {listing.financeable && (
-                    <span className="absolute top-1.5 right-1.5 bg-[#3d9e3d] text-white text-[10px] font-bold px-1.5 py-0.5 rounded">F</span>
+                    <span className="absolute top-1.5 right-1.5 bg-brand-green text-white text-[10px] font-bold px-1.5 py-0.5 rounded">F</span>
                   )}
                 </div>
                 {/* Info */}
-                <p className="text-[11px] font-bold text-[#1a3a6b] uppercase leading-tight group-hover/card:text-[#3d9e3d] transition-colors">
+                <p className="text-[11px] font-bold text-brand-navy uppercase leading-tight group-hover/card:text-brand-green transition-colors">
                   {v?.make ?? '—'} {v?.model ?? ''}
                 </p>
                 <p className="text-[11px] text-gray-500 mt-0.5">

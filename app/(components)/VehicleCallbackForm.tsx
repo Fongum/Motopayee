@@ -106,7 +106,7 @@ export default function VehicleCallbackForm({
         placeholder="Votre nom"
         autoComplete="name"
         required
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d9e3d]"
+        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
       />
       <input
         name="phone"
@@ -114,13 +114,13 @@ export default function VehicleCallbackForm({
         placeholder="Téléphone / WhatsApp"
         autoComplete="tel"
         required
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d9e3d]"
+        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
       />
       <textarea
         name="message"
         rows={2}
         placeholder="Message (optionnel)"
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d9e3d]"
+        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
       />
 
       {state === 'error' && <p className="text-xs text-red-600">{error}</p>}
@@ -128,7 +128,7 @@ export default function VehicleCallbackForm({
       <button
         type="submit"
         disabled={state === 'submitting'}
-        className="w-full rounded-xl bg-[#1a3a6b] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#142d54] disabled:opacity-60"
+        className="w-full rounded-xl bg-brand-navy px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-navy-dark disabled:opacity-60"
       >
         {state === 'submitting' ? 'Envoi…' : 'Demander un rappel'}
       </button>

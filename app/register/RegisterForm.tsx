@@ -69,7 +69,7 @@ export default function RegisterForm() {
   return (
     <div className="w-full max-w-md">
       <div className="bg-white border border-gray-200 rounded-2xl shadow-card p-8">
-        <h1 className="text-2xl font-bold text-[#1a3a6b] mb-2">Créer un compte</h1>
+        <h1 className="text-2xl font-bold text-brand-navy mb-2">Créer un compte</h1>
         <p className="text-gray-500 text-sm mb-8">Rejoignez MotoPayee gratuitement</p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -80,7 +80,7 @@ export default function RegisterForm() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d9e3d]/40 focus:border-[#3d9e3d] transition"
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/40 focus:border-brand-green transition"
               placeholder="Jean Dupont"
             />
           </div>
@@ -91,7 +91,7 @@ export default function RegisterForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d9e3d]/40 focus:border-[#3d9e3d] transition"
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/40 focus:border-brand-green transition"
               placeholder="votre@email.com"
             />
           </div>
@@ -103,7 +103,7 @@ export default function RegisterForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={8}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d9e3d]/40 focus:border-[#3d9e3d] transition"
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/40 focus:border-brand-green transition"
               placeholder="Minimum 8 caractères"
             />
           </div>
@@ -118,7 +118,7 @@ export default function RegisterForm() {
                     value={r.value}
                     checked={role === r.value}
                     onChange={() => setRole(r.value)}
-                    className="mt-0.5 accent-[#3d9e3d]"
+                    className="mt-0.5 accent-brand-green"
                   />
                   <span className="text-sm text-gray-700">{r.label}</span>
                 </label>
@@ -132,7 +132,7 @@ export default function RegisterForm() {
               type="text"
               value={referralCode}
               onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d9e3d]/40 focus:border-[#3d9e3d] transition uppercase tracking-wider"
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/40 focus:border-brand-green transition uppercase tracking-wider"
               placeholder="MP-XXXXXX"
             />
           </div>
@@ -146,7 +146,7 @@ export default function RegisterForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#3d9e3d] text-white font-semibold py-3 rounded-xl hover:bg-[#2d8a2d] disabled:opacity-50 transition shadow-sm"
+            className="w-full bg-brand-green text-white font-semibold py-3 rounded-xl hover:bg-brand-green-dark disabled:opacity-50 transition shadow-sm"
           >
             {loading ? 'Création...' : 'Créer mon compte'}
           </button>
@@ -154,7 +154,7 @@ export default function RegisterForm() {
 
         <p className="text-sm text-gray-500 text-center mt-6">
           Déjà un compte ?{' '}
-          <Link href="/login" className="text-[#1a3a6b] hover:text-[#3d9e3d] font-semibold transition-colors">
+          <Link href="/login" className="text-brand-navy hover:text-brand-green font-semibold transition-colors">
             Se connecter
           </Link>
         </p>

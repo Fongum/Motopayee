@@ -25,31 +25,31 @@ type Props = {
 };
 
 const BODY_TYPES: Array<{ value: '' | ImportBodyType; label: string }> = [
-  { value: '', label: 'Any body type' },
-  { value: 'sedan', label: 'Sedan' },
+  { value: '', label: 'Tout type de carrosserie' },
+  { value: 'sedan', label: 'Berline' },
   { value: 'suv', label: 'SUV' },
-  { value: 'pickup', label: 'Pickup' },
-  { value: 'hatchback', label: 'Hatchback' },
-  { value: 'van', label: 'Van' },
-  { value: 'coupe', label: 'Coupe' },
-  { value: 'wagon', label: 'Wagon' },
-  { value: 'other', label: 'Other' },
+  { value: 'pickup', label: 'Pick-up' },
+  { value: 'hatchback', label: 'Compacte' },
+  { value: 'van', label: 'Utilitaire' },
+  { value: 'coupe', label: 'Coupé' },
+  { value: 'wagon', label: 'Break' },
+  { value: 'other', label: 'Autre' },
 ];
 
 const FUEL_TYPES: Array<{ value: '' | FuelType; label: string }> = [
-  { value: '', label: 'Any fuel' },
-  { value: 'petrol', label: 'Petrol' },
+  { value: '', label: 'Tout carburant' },
+  { value: 'petrol', label: 'Essence' },
   { value: 'diesel', label: 'Diesel' },
-  { value: 'hybrid', label: 'Hybrid' },
-  { value: 'electric', label: 'Electric' },
-  { value: 'other', label: 'Other' },
+  { value: 'hybrid', label: 'Hybride' },
+  { value: 'electric', label: 'Électrique' },
+  { value: 'other', label: 'Autre' },
 ];
 
 const TRANSMISSIONS: Array<{ value: '' | TransmissionType; label: string }> = [
-  { value: '', label: 'Any transmission' },
-  { value: 'automatic', label: 'Automatic' },
-  { value: 'manual', label: 'Manual' },
-  { value: 'other', label: 'Other' },
+  { value: '', label: 'Toute transmission' },
+  { value: 'automatic', label: 'Automatique' },
+  { value: 'manual', label: 'Manuelle' },
+  { value: 'other', label: 'Autre' },
 ];
 
 const INITIAL_STATE: FormState = {
@@ -105,7 +105,7 @@ export default function ImportRequestForm({ initialValues }: Props) {
 
     const data = await response.json().catch(() => null);
     if (!response.ok) {
-      setError(data?.error ?? 'Unable to submit your import request.');
+      setError(data?.error ?? "Impossible d'envoyer votre demande d'import.");
       setSubmitting(false);
       return;
     }
@@ -122,7 +122,7 @@ export default function ImportRequestForm({ initialValues }: Props) {
         )}
         <div>
           <label htmlFor="make" className="block text-sm font-medium text-gray-700 mb-2">
-            Make
+            Marque
           </label>
           <input
             id="make"
@@ -130,26 +130,26 @@ export default function ImportRequestForm({ initialValues }: Props) {
             onChange={(event) => update('make', event.target.value)}
             required
             placeholder="Toyota"
-            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-[#1a3a6b] focus:outline-none"
+            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-brand-navy focus:outline-none"
           />
         </div>
 
         <div>
           <label htmlFor="model" className="block text-sm font-medium text-gray-700 mb-2">
-            Model
+            Modèle
           </label>
           <input
             id="model"
             value={form.model}
             onChange={(event) => update('model', event.target.value)}
             placeholder="RAV4"
-            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-[#1a3a6b] focus:outline-none"
+            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-brand-navy focus:outline-none"
           />
         </div>
 
         <div>
           <label htmlFor="yearMin" className="block text-sm font-medium text-gray-700 mb-2">
-            Minimum year
+            Année minimum
           </label>
           <input
             id="yearMin"
@@ -159,13 +159,13 @@ export default function ImportRequestForm({ initialValues }: Props) {
             value={form.yearMin}
             onChange={(event) => update('yearMin', event.target.value)}
             placeholder="2016"
-            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-[#1a3a6b] focus:outline-none"
+            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-brand-navy focus:outline-none"
           />
         </div>
 
         <div>
           <label htmlFor="yearMax" className="block text-sm font-medium text-gray-700 mb-2">
-            Maximum year
+            Année maximum
           </label>
           <input
             id="yearMax"
@@ -175,7 +175,7 @@ export default function ImportRequestForm({ initialValues }: Props) {
             value={form.yearMax}
             onChange={(event) => update('yearMax', event.target.value)}
             placeholder="2021"
-            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-[#1a3a6b] focus:outline-none"
+            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-brand-navy focus:outline-none"
           />
         </div>
 
@@ -192,19 +192,19 @@ export default function ImportRequestForm({ initialValues }: Props) {
             onChange={(event) => update('budgetMaxXaf', event.target.value)}
             required
             placeholder="12000000"
-            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-[#1a3a6b] focus:outline-none"
+            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-brand-navy focus:outline-none"
           />
         </div>
 
         <div>
           <label htmlFor="bodyType" className="block text-sm font-medium text-gray-700 mb-2">
-            Body type
+            Type de carrosserie
           </label>
           <select
             id="bodyType"
             value={form.bodyType}
             onChange={(event) => update('bodyType', event.target.value as FormState['bodyType'])}
-            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-[#1a3a6b] focus:outline-none"
+            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-brand-navy focus:outline-none"
           >
             {BODY_TYPES.map((option) => (
               <option key={option.label} value={option.value}>
@@ -216,13 +216,13 @@ export default function ImportRequestForm({ initialValues }: Props) {
 
         <div>
           <label htmlFor="fuelType" className="block text-sm font-medium text-gray-700 mb-2">
-            Fuel
+            Carburant
           </label>
           <select
             id="fuelType"
             value={form.fuelType}
             onChange={(event) => update('fuelType', event.target.value as FormState['fuelType'])}
-            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-[#1a3a6b] focus:outline-none"
+            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-brand-navy focus:outline-none"
           >
             {FUEL_TYPES.map((option) => (
               <option key={option.label} value={option.value}>
@@ -240,7 +240,7 @@ export default function ImportRequestForm({ initialValues }: Props) {
             id="transmission"
             value={form.transmission}
             onChange={(event) => update('transmission', event.target.value as FormState['transmission'])}
-            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-[#1a3a6b] focus:outline-none"
+            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-brand-navy focus:outline-none"
           >
             {TRANSMISSIONS.map((option) => (
               <option key={option.label} value={option.value}>
@@ -252,29 +252,29 @@ export default function ImportRequestForm({ initialValues }: Props) {
 
         <div>
           <label htmlFor="colorPreferences" className="block text-sm font-medium text-gray-700 mb-2">
-            Color preferences
+            Préférences de couleur
           </label>
           <input
             id="colorPreferences"
             value={form.colorPreferences}
             onChange={(event) => update('colorPreferences', event.target.value)}
-            placeholder="White, black, silver"
-            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-[#1a3a6b] focus:outline-none"
+            placeholder="Blanc, noir, argent"
+            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-brand-navy focus:outline-none"
           />
         </div>
       </div>
 
       <div>
         <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
-          Additional notes
+          Notes complémentaires
         </label>
         <textarea
           id="notes"
           value={form.notes}
           onChange={(event) => update('notes', event.target.value)}
           rows={5}
-          placeholder="Preferred mileage, title preference, auction-only, arrival deadline, etc."
-          className="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:border-[#1a3a6b] focus:outline-none"
+          placeholder="Kilométrage souhaité, préférence de titre, enchères uniquement, délai d'arrivée, etc."
+          className="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:border-brand-navy focus:outline-none"
         />
       </div>
 
@@ -286,17 +286,17 @@ export default function ImportRequestForm({ initialValues }: Props) {
 
       <div className="flex items-center justify-between gap-4 rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4">
         <div>
-          <p className="text-sm font-semibold text-[#1a3a6b]">US import request</p>
+          <p className="text-sm font-semibold text-brand-navy">Demande d&apos;import USA</p>
           <p className="text-xs text-gray-600">
-            MotoPayee will review your criteria and prepare a quote from our trusted US sourcing partner.
+            MotoPayee examinera vos critères et préparera un devis auprès de notre partenaire d&apos;approvisionnement américain de confiance.
           </p>
         </div>
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-xl bg-[#1a3a6b] px-5 py-3 text-sm font-semibold text-white hover:bg-[#132b50] disabled:opacity-60"
+          className="rounded-xl bg-brand-navy px-5 py-3 text-sm font-semibold text-white hover:bg-brand-navy-dark disabled:opacity-60"
         >
-          {submitting ? 'Submitting...' : 'Send request'}
+          {submitting ? 'Envoi...' : 'Envoyer la demande'}
         </button>
       </div>
     </form>

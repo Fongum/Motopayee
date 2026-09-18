@@ -134,7 +134,7 @@ export default function PaymentRequestForm({
                     <button
                       onClick={() => checkStatus(p.id)}
                       disabled={checkingId === p.id}
-                      className="text-xs text-[#1a3a6b] hover:text-[#3d9e3d] font-medium disabled:opacity-50"
+                      className="text-xs text-brand-navy hover:text-brand-green font-medium disabled:opacity-50"
                     >
                       {checkingId === p.id ? '...' : 'Vérifier'}
                     </button>
@@ -214,7 +214,7 @@ export default function PaymentRequestForm({
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#1a3a6b] text-white text-sm font-semibold py-2.5 rounded-lg hover:bg-[#142d54] disabled:opacity-50"
+            className="w-full bg-brand-navy text-white text-sm font-semibold py-2.5 rounded-lg hover:bg-brand-navy-dark disabled:opacity-50"
           >
             {loading ? 'Envoi...' : 'Envoyer la demande de paiement'}
           </button>

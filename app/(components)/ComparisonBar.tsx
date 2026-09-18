@@ -50,7 +50,7 @@ export default function ComparisonBar() {
           </button>
           <a
             href={compareUrl}
-            className="bg-[#1a3a6b] text-white font-bold text-sm px-4 py-2 rounded-xl hover:bg-[#15305a] transition"
+            className="bg-brand-navy text-white font-bold text-sm px-4 py-2 rounded-xl hover:bg-brand-navy-dark transition"
           >
             Comparer ({items.length})
           </a>

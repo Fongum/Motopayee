@@ -66,7 +66,7 @@ export default function PhotoGallery({ photos }: Props) {
             <button
               key={p.id}
               onClick={() => setLightboxIndex(i + 1)}
-              className="w-20 h-16 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden hover:ring-2 hover:ring-[#3d9e3d] transition"
+              className="w-20 h-16 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden hover:ring-2 hover:ring-brand-green transition"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

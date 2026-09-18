@@ -7,6 +7,8 @@ import type { FinancingApplication, MFIApplicationOffer, MFIInstitution, Payment
 import PaymentRequestForm from '@/app/(components)/PaymentRequestForm';
 import AssignMFIForm from '@/app/(components)/AssignMFIForm';
 import MFIOfferActions from './MFIOfferActions';
+import { fetchDocumentsFor } from '@/lib/documents.server';
+import { DOCUMENT_STAFF_COLUMNS } from '@/lib/documents';
 
 function formatXAF(amount: number) {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
@@ -46,8 +48,7 @@ export default async function AdminApplicationDetailPage({ params }: { params: {
         listing:listings(*, vehicle:vehicles(*)),
         buyer:profiles!buyer_id(id, email, full_name, phone, city, zone),
         verifier:profiles!verifier_id(id, email, full_name),
-        follow_up_actor:profiles!follow_up_actor_id(id, email, full_name),
-        documents(*)
+        follow_up_actor:profiles!follow_up_actor_id(id, email, full_name)
       `)
       .eq('id', params.id)
       .single(),
@@ -80,6 +81,9 @@ export default async function AdminApplicationDetailPage({ params }: { params: {
     verifier?: { id: string; email: string; full_name?: string } | null;
     follow_up_actor?: { id: string; email: string; full_name?: string } | null;
   };
+
+  // Fetched separately: documents is polymorphic and cannot be embedded.
+  app.documents = await fetchDocumentsFor('application', params.id, DOCUMENT_STAFF_COLUMNS) as unknown as typeof app.documents;
 
   const payments = (paymentsResult.data ?? []) as Payment[];
   const institutions = (institutionsResult.data ?? []) as Pick<MFIInstitution, 'id' | 'name' | 'code'>[];

@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import Navbar from '../../(components)/Navbar';
 import Footer from '../../(components)/Footer';
 import { supabaseAdmin, getCurrentUser } from '@/lib/auth/server';
+import { shapeHireMedia } from '@/lib/hire-query';
+import type { HireQuery } from '@/lib/hire-query';
 import type { HireListing } from '@/lib/types';
 import BookingForm from './BookingForm';
 import WhatsAppContactButton from '../../(components)/WhatsAppContactButton';
@@ -23,12 +25,19 @@ import { HireTrustBadges } from '../../(components)/TrustLabelBadges';
 type Props = { params: { id: string } };
 
 async function getListing(id: string) {
-  const { data } = await supabaseAdmin
+  // The owner's phone is selected deliberately here — this page is the contact
+  // surface. It is *not* selected on the browse grid, which never shows it.
+  const query = supabaseAdmin
     .from('hire_listings')
     .select('*, owner:profiles!owner_id(id, full_name, phone, is_verified, city, avg_rating, total_reviews), media:hire_listing_media(*)')
     .eq('id', id)
-    .eq('status', 'published')
-    .single();
+    .eq('status', 'published');
+
+  // The gallery renders `media` in array order, so the owner's chosen lead photo
+  // has to come back first, and a video must not be handed to an <img>.
+  const shaped = shapeHireMedia(query as unknown as HireQuery) as unknown as typeof query;
+
+  const { data } = await shaped.single();
   return data as unknown as HireListing | null;
 }
 
@@ -112,7 +121,7 @@ export default async function HireDetailPage({ params }: Props) {
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Breadcrumb */}
           <nav className="text-sm text-gray-400 mb-6">
-            <a href="/hire" className="hover:text-[#1a3a6b]">Location</a>
+            <a href="/hire" className="hover:text-brand-navy">Location</a>
             <span className="mx-2">/</span>
             <span className="text-gray-600">{listing.year} {listing.make} {listing.model}</span>
           </nav>
@@ -134,7 +143,7 @@ export default async function HireDetailPage({ params }: Props) {
               {/* Vehicle details */}
               <div className="bg-white rounded-2xl border border-gray-200 p-6">
                 <div className="flex items-start justify-between gap-3 mb-1">
-                  <h1 className="text-2xl font-extrabold text-[#1a3a6b]">
+                  <h1 className="text-2xl font-extrabold text-brand-navy">
                     {listing.year} {listing.make} {listing.model}
                   </h1>
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -222,7 +231,7 @@ export default async function HireDetailPage({ params }: Props) {
               <div className="bg-white rounded-2xl border border-gray-200 p-6">
                 <h2 className="text-sm font-bold text-gray-800 mb-3">Propriétaire</h2>
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-[#1a3a6b] rounded-full flex items-center justify-center text-white font-bold">
+                  <div className="w-10 h-10 bg-brand-navy rounded-full flex items-center justify-center text-white font-bold">
                     {listing.owner?.full_name?.[0] ?? '?'}
                   </div>
                   <div>
@@ -231,8 +240,8 @@ export default async function HireDetailPage({ params }: Props) {
                     </p>
                     <SellerTrustBadge
                       isVerified={listing.owner?.is_verified ?? false}
-                      avgRating={(listing.owner as unknown as { avg_rating: number | null })?.avg_rating ?? null}
-                      totalReviews={(listing.owner as unknown as { total_reviews: number })?.total_reviews ?? 0}
+                      avgRating={listing.owner?.avg_rating ?? null}
+                      totalReviews={listing.owner?.total_reviews ?? 0}
                     />
                   </div>
                 </div>
@@ -311,7 +320,7 @@ export default async function HireDetailPage({ params }: Props) {
                   )}
                   {listing.deposit_amount > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Caution</span>
+                      <span className="text-gray-500">Caution (versée au propriétaire)</span>
                       <span className="font-semibold">{formatXAF(listing.deposit_amount)}</span>
                     </div>
                   )}
