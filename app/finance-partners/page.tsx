@@ -47,7 +47,7 @@ const CRITERIA = [
 const CLARIFICATIONS = [
   'MotoPayee n\'est pas un prêteur.',
   'Le financement reste toujours soumis à la revue et à l\'approbation du partenaire.',
-  'MotoPayee ne promet pas de financement garanti aux acheteurs.',
+  'MotoPayee ne garantit aucun financement aux acheteurs.',
   'Le classement des partenaires doit tenir compte de l\'adéquation avec l\'acheteur, de la rapidité de réponse, du coût et de la fiabilité.',
 ];
 

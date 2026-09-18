@@ -40,6 +40,7 @@ const PUBLIC_ROUTES: Record<string, string> = {
   'auth/login': 'Signing in cannot require being signed in.',
   'auth/logout': 'Clearing cookies is safe for anyone to call.',
   'auth/register': 'Account creation is open to the public.',
+  'auth/forgot-password': 'Requesting a password reset cannot require being signed in; the route never reveals whether the email exists.',
   'calculator/eligibility': 'Financing calculator on the public marketing pages.',
   'listings': 'Public marketplace browse.',
   'listings/[id]': 'Public listing detail.',
