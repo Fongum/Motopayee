@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Navbar from '../(components)/Navbar';
 import Footer from '../(components)/Footer';
 import ListingCard from '../(components)/ListingCard';
+import FilterChips from '../(components)/FilterChips';
 import SearchFilters from './SearchFilters';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { reportError } from '@/lib/error-reporting';
@@ -26,6 +27,28 @@ export const metadata: Metadata = {
     description: 'Marketplace automobile au Cameroun. Annonces revues, prix transparents, financement soumis à l\'accord d\'un partenaire.',
     type: 'website',
   },
+};
+
+// ─── Filter chip labels ───────────────────────────────────────────────────────
+
+const FUEL_FR: Record<string, string> = {
+  petrol: 'Essence', diesel: 'Diesel', electric: 'Électrique', hybrid: 'Hybride', other: 'Autre',
+};
+const SORT_FR: Record<string, string> = {
+  newest: 'Plus récents', price_asc: 'Prix croissant', price_desc: 'Prix décroissant', mileage: 'Km le plus bas',
+};
+const CHIP_LABELS: Record<string, string | ((value: string) => string)> = {
+  make: (v) => `Marque : ${v}`,
+  zone: (v) => `Zone ${v}`,
+  min_price: (v) => `Prix min : ${Number(v).toLocaleString('fr-FR')} XAF`,
+  max_price: (v) => `Prix max : ${Number(v).toLocaleString('fr-FR')} XAF`,
+  sort: (v) => `Tri : ${SORT_FR[v] ?? v}`,
+  min_year: (v) => `Année min : ${v}`,
+  max_year: (v) => `Année max : ${v}`,
+  max_mileage: (v) => `Km max : ${Number(v).toLocaleString('fr-FR')}`,
+  fuel_type: (v) => `Carburant : ${FUEL_FR[v] ?? v}`,
+  condition_grade: (v) => `Grade : ${v}`,
+  financeable: () => 'Finançable uniquement',
 };
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
@@ -76,7 +99,7 @@ export default async function ListingsPage({ searchParams }: { searchParams: Raw
       <Navbar />
       <main className="bg-gray-50 min-h-screen">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#1a3a6b] to-[#0d1f3c] py-10 px-4">
+        <div className="bg-gradient-to-r from-brand-navy to-brand-navy-dark py-10 px-4">
           <div className="max-w-7xl mx-auto">
             <h1 className="text-2xl md:text-3xl font-extrabold text-white mb-1">Véhicules disponibles</h1>
             <p className="text-blue-300/80 text-sm">
@@ -96,17 +119,7 @@ export default async function ListingsPage({ searchParams }: { searchParams: Raw
           </Suspense>
 
           {/* Active filter chips */}
-          {Object.entries(searchParams).filter(([k, v]) => k !== 'page' && v).length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-5">
-              {Object.entries(searchParams)
-                .filter(([k, v]) => k !== 'page' && v)
-                .map(([k, v]) => (
-                  <span key={k} className="inline-flex items-center gap-1.5 bg-[#1a3a6b]/10 text-[#1a3a6b] text-xs font-semibold px-3 py-1 rounded-full">
-                    {k.replace(/_/g, ' ')}: {v}
-                  </span>
-                ))}
-            </div>
-          )}
+          <FilterChips basePath="/listings" searchParams={searchParams} labels={CHIP_LABELS} />
 
           {/* Grid */}
           {listings.length === 0 ? (
@@ -139,7 +152,7 @@ export default async function ListingsPage({ searchParams }: { searchParams: Raw
               {page > 1 && (
                 <a
                   href={pageHref(page - 1)}
-                  className="px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium bg-white hover:bg-gray-50 hover:border-[#3d9e3d] transition flex items-center gap-2"
+                  className="px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium bg-white hover:bg-gray-50 hover:border-brand-green transition flex items-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -157,8 +170,8 @@ export default async function ListingsPage({ searchParams }: { searchParams: Raw
                       href={pageHref(p)}
                       className={`w-9 h-9 flex items-center justify-center rounded-xl text-sm font-semibold transition ${
                         p === page
-                          ? 'bg-[#1a3a6b] text-white'
-                          : 'bg-white border border-gray-300 text-gray-700 hover:border-[#3d9e3d]'
+                          ? 'bg-brand-navy text-white'
+                          : 'bg-white border border-gray-300 text-gray-700 hover:border-brand-green'
                       }`}
                     >
                       {p}
@@ -169,7 +182,7 @@ export default async function ListingsPage({ searchParams }: { searchParams: Raw
               {page < totalPages && (
                 <a
                   href={pageHref(page + 1)}
-                  className="px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium bg-white hover:bg-gray-50 hover:border-[#3d9e3d] transition flex items-center gap-2"
+                  className="px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium bg-white hover:bg-gray-50 hover:border-brand-green transition flex items-center gap-2"
                 >
                   Suivant
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

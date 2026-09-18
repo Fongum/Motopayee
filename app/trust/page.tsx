@@ -60,7 +60,7 @@ export default function TrustPage() {
     <>
       <Navbar />
       <main className="bg-white">
-        <section className="bg-[#0d1f3c] px-4 py-16 sm:px-6 lg:px-8">
+        <section className="bg-brand-navy-dark px-4 py-16 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-5xl">
             <div className="mb-5 inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-green-200">
               Confiance MotoPayee
@@ -72,7 +72,7 @@ export default function TrustPage() {
               MotoPayee aide a reduire le risque en rendant les informations, les documents, les inspections et les statuts de financement plus clairs. Nous ne promettons pas que chaque annonce est verifiee ou inspectee.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/listings" className="inline-flex items-center justify-center rounded-xl bg-[#3d9e3d] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#2d8a2d]">
+              <Link href="/listings" className="inline-flex items-center justify-center rounded-xl bg-brand-green px-6 py-3 text-sm font-bold text-white transition hover:bg-brand-green-dark">
                 Voir les annonces
               </Link>
               <Link href="/inspection" className="inline-flex items-center justify-center rounded-xl border border-white/20 bg-white/10 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/15">
@@ -85,13 +85,13 @@ export default function TrustPage() {
         <section className="px-4 py-14 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-6xl">
             <div className="mb-8 max-w-2xl">
-              <span className="text-xs font-bold uppercase tracking-widest text-[#3d9e3d]">Labels</span>
-              <h2 className="mt-2 text-3xl font-extrabold text-[#1a3a6b]">Ce que chaque label signifie.</h2>
+              <span className="text-xs font-bold uppercase tracking-widest text-brand-green">Labels</span>
+              <h2 className="mt-2 text-3xl font-extrabold text-brand-navy">Ce que chaque label signifie.</h2>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               {labels.map((label) => (
                 <article key={label.name} className="rounded-xl border border-gray-200 bg-gray-50 p-6">
-                  <h3 className="text-lg font-bold text-[#1a3a6b]">{label.name}</h3>
+                  <h3 className="text-lg font-bold text-brand-navy">{label.name}</h3>
                   <div className="mt-4 grid gap-4 text-sm leading-6 sm:grid-cols-2">
                     <div>
                       <p className="font-semibold text-gray-900">Ce que cela veut dire</p>
@@ -111,20 +111,20 @@ export default function TrustPage() {
         <section className="bg-gray-50 px-4 py-14 sm:px-6 lg:px-8">
           <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-2">
             <div className="rounded-2xl border border-gray-200 bg-white p-6">
-              <h2 className="text-2xl font-extrabold text-[#1a3a6b]">Pour les acheteurs</h2>
+              <h2 className="text-2xl font-extrabold text-brand-navy">Pour les acheteurs</h2>
               <p className="mt-3 text-sm leading-6 text-gray-600">
                 Comparez les annonces selon leur niveau de confiance. Si un vehicule vous interesse mais n est pas inspecte, demandez une inspection MotoPayee avant de payer ou de vous engager.
               </p>
-              <Link href="/inspection" className="mt-5 inline-flex rounded-xl bg-[#1a3a6b] px-5 py-3 text-sm font-semibold text-white hover:bg-[#102847]">
+              <Link href="/inspection" className="mt-5 inline-flex rounded-xl bg-brand-navy px-5 py-3 text-sm font-semibold text-white hover:bg-brand-navy-dark">
                 Voir l offre inspection
               </Link>
             </div>
             <div className="rounded-2xl border border-gray-200 bg-white p-6">
-              <h2 className="text-2xl font-extrabold text-[#1a3a6b]">Pour les vendeurs</h2>
+              <h2 className="text-2xl font-extrabold text-brand-navy">Pour les vendeurs</h2>
               <p className="mt-3 text-sm leading-6 text-gray-600">
                 Une annonce gratuite peut etre publiee apres revue de base. Les documents, la verification vendeur et l inspection peuvent ensuite renforcer la confiance et aider les acheteurs serieux a avancer.
               </p>
-              <Link href="/sell" className="mt-5 inline-flex rounded-xl bg-[#3d9e3d] px-5 py-3 text-sm font-semibold text-white hover:bg-[#2d8a2d]">
+              <Link href="/sell" className="mt-5 inline-flex rounded-xl bg-brand-green px-5 py-3 text-sm font-semibold text-white hover:bg-brand-green-dark">
                 Vendre un vehicule
               </Link>
             </div>

@@ -50,7 +50,7 @@ export default async function ComparePage({
                   <th className="text-left p-3 bg-gray-50 rounded-tl-xl w-40"></th>
                   {listings.map((l) => (
                     <th key={l.id} className="p-3 bg-gray-50 text-center min-w-[200px]">
-                      <a href={`/hire/${l.id}`} className="text-[#1a3a6b] hover:text-[#3d9e3d] font-bold">
+                      <a href={`/hire/${l.id}`} className="text-brand-navy hover:text-brand-green font-bold">
                         {l.year} {l.make} {l.model}
                       </a>
                       {l.media && l.media.length > 0 && (
@@ -125,7 +125,7 @@ export default async function ComparePage({
                 <th className="text-left p-3 bg-gray-50 rounded-tl-xl w-40"></th>
                 {listings.map((l) => (
                   <th key={l.id} className="p-3 bg-gray-50 text-center min-w-[200px]">
-                    <a href={`/listings/${l.id}`} className="text-[#1a3a6b] hover:text-[#3d9e3d] font-bold">
+                    <a href={`/listings/${l.id}`} className="text-brand-navy hover:text-brand-green font-bold">
                       {l.vehicle ? `${l.vehicle.year} ${l.vehicle.make} ${l.vehicle.model}` : 'Véhicule'}
                     </a>
                     {l.media && l.media.length > 0 && (

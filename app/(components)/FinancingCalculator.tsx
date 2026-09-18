@@ -110,7 +110,7 @@ export default function FinancingCalculator({
   return (
     <div className={`bg-white rounded-2xl border border-gray-200 overflow-hidden ${compact ? '' : 'shadow-md'}`}>
       {/* Header */}
-      <div className={`bg-[#1a3a6b] ${compact ? 'px-4 py-3' : 'p-5'}`}>
+      <div className={`bg-brand-navy ${compact ? 'px-4 py-3' : 'p-5'}`}>
         <p className={`text-white font-bold ${compact ? 'text-sm' : 'text-xl'}`}>Simulateur de financement</p>
         {!compact && (
           <p className="text-blue-300 text-sm mt-1">Estimez vos mensualités en quelques secondes</p>
@@ -130,7 +130,7 @@ export default function FinancingCalculator({
               value={price || ''}
               onChange={(e) => setPrice(Number(e.target.value))}
               placeholder="ex: 3 500 000"
-              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#3d9e3d] focus:ring-1 focus:ring-[#3d9e3d]"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green"
             />
           </div>
         )}
@@ -144,7 +144,7 @@ export default function FinancingCalculator({
             <select
               value={zone}
               onChange={(e) => setZone(e.target.value)}
-              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#3d9e3d] focus:ring-1 focus:ring-[#3d9e3d]"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green"
             >
               <option value="A">Zone A — Grandes villes</option>
               <option value="B">Zone B — Villes secondaires</option>
@@ -162,7 +162,7 @@ export default function FinancingCalculator({
             <select
               value={conditionGrade}
               onChange={(e) => setConditionGrade(e.target.value)}
-              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#3d9e3d] focus:ring-1 focus:ring-[#3d9e3d]"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green"
             >
               {CONDITION_GRADES.map((g) => (
                 <option key={g.value} value={g.value}>{g.label}</option>
@@ -179,7 +179,7 @@ export default function FinancingCalculator({
           <select
             value={incomeGrade}
             onChange={(e) => setIncomeGrade(e.target.value)}
-            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#3d9e3d] focus:ring-1 focus:ring-[#3d9e3d]"
+            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green"
           >
             {INCOME_GRADES.map((g) => (
               <option key={g.value} value={g.value}>{g.label}</option>
@@ -219,7 +219,7 @@ export default function FinancingCalculator({
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Apport initial</label>
-                <span className="text-sm font-bold text-[#1a3a6b]">{downPct}% — {formatXAF(downAmount)}</span>
+                <span className="text-sm font-bold text-brand-navy">{downPct}% — {formatXAF(downAmount)}</span>
               </div>
               <input
                 type="range"
@@ -228,7 +228,7 @@ export default function FinancingCalculator({
                 step={5}
                 value={downPct}
                 onChange={(e) => setDownPct(Number(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#3d9e3d]"
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-green"
               />
               <div className="flex justify-between text-xs text-gray-400 mt-1">
                 <span>Min {minDown}%</span>
@@ -249,7 +249,7 @@ export default function FinancingCalculator({
                     onClick={() => setTenor(t)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
                       tenor === t
-                        ? 'bg-[#1a3a6b] text-white shadow-sm'
+                        ? 'bg-brand-navy text-white shadow-sm'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
@@ -272,7 +272,7 @@ export default function FinancingCalculator({
                     onClick={() => setRate(r.value)}
                     className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition ${
                       rate === r.value
-                        ? 'bg-[#3d9e3d] text-white shadow-sm'
+                        ? 'bg-brand-green text-white shadow-sm'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
@@ -284,7 +284,7 @@ export default function FinancingCalculator({
 
             {/* Result card */}
             {monthlyPayment > 0 && (
-              <div className="bg-gradient-to-br from-[#1a3a6b] to-[#0d2147] rounded-xl p-4 text-white">
+              <div className="bg-gradient-to-br from-brand-navy to-brand-navy-dark rounded-xl p-4 text-white">
                 <p className="text-blue-300 text-xs font-semibold uppercase tracking-wide mb-1">
                   Mensualité estimée
                 </p>

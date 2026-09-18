@@ -49,7 +49,7 @@ export default function SellPage({
     <>
       <Navbar />
       <main className="bg-white">
-        <section className="bg-[#0d1f3c] px-4 py-16 sm:px-6 lg:px-8">
+        <section className="bg-brand-navy-dark px-4 py-16 sm:px-6 lg:px-8">
           <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
             <div>
               <div className="mb-5 inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-green-200">
@@ -64,7 +64,7 @@ export default function SellPage({
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/register?role=seller_individual"
-                  className="inline-flex items-center justify-center rounded-xl bg-[#3d9e3d] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#2d8a2d]"
+                  className="inline-flex items-center justify-center rounded-xl bg-brand-green px-6 py-3 text-sm font-bold text-white transition hover:bg-brand-green-dark"
                 >
                   Creer un compte vendeur
                 </Link>
@@ -78,12 +78,12 @@ export default function SellPage({
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-white p-6 shadow-2xl shadow-black/20">
-              <p className="text-sm font-bold uppercase tracking-wide text-[#3d9e3d]">Ce qui est gratuit</p>
-              <h2 className="mt-2 text-2xl font-extrabold text-[#1a3a6b]">Publication de base</h2>
+              <p className="text-sm font-bold uppercase tracking-wide text-brand-green">Ce qui est gratuit</p>
+              <h2 className="mt-2 text-2xl font-extrabold text-brand-navy">Publication de base</h2>
               <ul className="mt-6 space-y-3 text-sm text-gray-600">
                 {sellerBenefits.map((item) => (
                   <li key={item} className="flex gap-3">
-                    <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-green-50 text-xs font-bold text-[#3d9e3d]">✓</span>
+                    <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-green-50 text-xs font-bold text-brand-green">✓</span>
                     <span>{item}</span>
                   </li>
                 ))}
@@ -98,8 +98,8 @@ export default function SellPage({
         <section className="px-4 py-14 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-6xl">
             <div className="mb-8 max-w-2xl">
-              <span className="text-xs font-bold uppercase tracking-widest text-[#3d9e3d]">Confiance</span>
-              <h2 className="mt-2 text-3xl font-extrabold text-[#1a3a6b]">Les labels doivent etre clairs pour les acheteurs.</h2>
+              <span className="text-xs font-bold uppercase tracking-widest text-brand-green">Confiance</span>
+              <h2 className="mt-2 text-3xl font-extrabold text-brand-navy">Les labels doivent etre clairs pour les acheteurs.</h2>
               <p className="mt-3 text-sm leading-6 text-gray-500">
                 MotoPayee peut publier une annonce revue sans pretendre que le vehicule est inspecte. Les vendeurs qui fournissent plus de preuves peuvent obtenir plus de signaux de confiance.
               </p>
@@ -107,7 +107,7 @@ export default function SellPage({
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               {trustLevels.map((level) => (
                 <div key={level.label} className="rounded-xl border border-gray-200 bg-gray-50 p-5">
-                  <p className="text-sm font-bold text-[#1a3a6b]">{level.label}</p>
+                  <p className="text-sm font-bold text-brand-navy">{level.label}</p>
                   <p className="mt-3 text-sm leading-6 text-gray-500">{level.text}</p>
                 </div>
               ))}
@@ -118,19 +118,19 @@ export default function SellPage({
         <section className="bg-gray-50 px-4 py-14 sm:px-6 lg:px-8">
           <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
             <div>
-              <span className="text-xs font-bold uppercase tracking-widest text-[#3d9e3d]">Processus</span>
-              <h2 className="mt-2 text-3xl font-extrabold text-[#1a3a6b]">Simple pour le vendeur, structure pour l acheteur.</h2>
+              <span className="text-xs font-bold uppercase tracking-widest text-brand-green">Processus</span>
+              <h2 className="mt-2 text-3xl font-extrabold text-brand-navy">Simple pour le vendeur, structure pour l acheteur.</h2>
               <p className="mt-3 text-sm leading-6 text-gray-500">
                 Le lancement vise a construire une offre solide: annonces de particuliers, concessions pilotes et vehicules eligibles au financement quand les informations sont suffisantes.
               </p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <Link href="/inspection" className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-[#1a3a6b] hover:bg-gray-100">
+                <Link href="/inspection" className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-brand-navy hover:bg-gray-100">
                   Voir l inspection
                 </Link>
-                <Link href="/trust" className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-[#1a3a6b] hover:bg-gray-100">
+                <Link href="/trust" className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-brand-navy hover:bg-gray-100">
                   Comprendre les labels
                 </Link>
-                <Link href="/dealers" className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-[#1a3a6b] hover:bg-gray-100">
+                <Link href="/dealers" className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-brand-navy hover:bg-gray-100">
                   Programme concessionnaires
                 </Link>
               </div>
@@ -139,10 +139,10 @@ export default function SellPage({
             <div className="grid gap-4 sm:grid-cols-2">
               {processSteps.map((item) => (
                 <div key={item.step} className="rounded-xl border border-gray-200 bg-white p-5">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#3d9e3d] text-sm font-bold text-white">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-green text-sm font-bold text-white">
                     {item.step}
                   </span>
-                  <h3 className="mt-4 text-base font-bold text-[#1a3a6b]">{item.label}</h3>
+                  <h3 className="mt-4 text-base font-bold text-brand-navy">{item.label}</h3>
                   <p className="mt-2 text-sm leading-6 text-gray-500">{item.desc}</p>
                 </div>
               ))}
@@ -153,8 +153,8 @@ export default function SellPage({
         <section id="seller-lead" className="px-4 py-14 sm:px-6 lg:px-8">
           <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.8fr_1.2fr]">
             <div>
-              <span className="text-xs font-bold uppercase tracking-widest text-[#3d9e3d]">Contact vendeur</span>
-              <h2 className="mt-2 text-3xl font-extrabold text-[#1a3a6b]">Vous preferez parler avant de creer un compte?</h2>
+              <span className="text-xs font-bold uppercase tracking-widest text-brand-green">Contact vendeur</span>
+              <h2 className="mt-2 text-3xl font-extrabold text-brand-navy">Vous preferez parler avant de creer un compte?</h2>
               <p className="mt-3 text-sm leading-6 text-gray-500">
                 Laissez vos informations. L equipe MotoPayee peut vous rappeler, confirmer les details du vehicule et vous aider a choisir entre publication simple, verification ou inspection.
               </p>

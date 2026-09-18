@@ -54,7 +54,7 @@ export default function RouteError({
         <div className="flex gap-3 justify-center">
           <button
             onClick={reset}
-            className="bg-[#1a3a6b] text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-[#15305a] transition text-sm"
+            className="bg-brand-navy text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-brand-navy-dark transition text-sm"
           >
             Réessayer
           </button>

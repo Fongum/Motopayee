@@ -15,17 +15,22 @@ export default function ApplyPage({
   return (
     <>
       <Navbar />
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-[#1a3a6b] mb-4">Financez votre véhicule</h1>
-          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+      <main className="bg-white">
+        <section className="bg-brand-navy-dark px-4 py-16 text-center text-white sm:px-6 lg:px-8">
+          <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-blue-100">
+            Financement
+          </span>
+          <h1 className="mt-5 text-4xl font-extrabold leading-tight sm:text-5xl">Financez votre véhicule</h1>
+          <p className="mt-5 max-w-2xl mx-auto text-base leading-8 text-blue-100">
             MotoPayee facilite votre accès au crédit véhicule via des institutions de microfinance partenaires.
           </p>
-        </div>
+        </section>
+
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
 
         {/* Eligibility factors */}
         <div className="bg-white border border-gray-200 rounded-2xl p-8 mb-10">
-          <h2 className="text-xl font-bold text-[#1a3a6b] mb-6">Comment est calculée l&apos;éligibilité ?</h2>
+          <h2 className="text-xl font-bold text-brand-navy mb-6">Comment est calculée l&apos;éligibilité ?</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {[
               {
@@ -50,11 +55,11 @@ export default function ApplyPage({
               },
             ].map((item) => (
               <div key={item.title} className="flex gap-4">
-                <span className="w-10 h-10 rounded-xl bg-[#3d9e3d]/10 text-[#3d9e3d] flex items-center justify-center flex-shrink-0">
+                <span className="w-10 h-10 rounded-xl bg-brand-green/10 text-brand-green flex items-center justify-center flex-shrink-0">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">{item.icon}</svg>
                 </span>
                 <div>
-                  <p className="font-semibold text-[#1a3a6b] text-sm mb-1">{item.title}</p>
+                  <p className="font-semibold text-brand-navy text-sm mb-1">{item.title}</p>
                   <p className="text-xs text-gray-500 leading-relaxed">{item.desc}</p>
                 </div>
               </div>
@@ -64,7 +69,7 @@ export default function ApplyPage({
 
         {/* Steps */}
         <div className="space-y-4 mb-12">
-          <h2 className="text-xl font-bold text-[#1a3a6b] mb-4">Comment ça marche</h2>
+          <h2 className="text-xl font-bold text-brand-navy mb-4">Comment ça marche</h2>
           {[
             {
               num: 1,
@@ -88,11 +93,11 @@ export default function ApplyPage({
             },
           ].map((item) => (
             <div key={item.num} className="flex gap-4 items-start bg-gray-50 rounded-xl p-4 border border-gray-100">
-              <div className="w-8 h-8 rounded-full bg-[#3d9e3d] text-white font-bold flex items-center justify-center flex-shrink-0 text-sm">
+              <div className="w-8 h-8 rounded-full bg-brand-green text-white font-bold flex items-center justify-center flex-shrink-0 text-sm">
                 {item.num}
               </div>
               <div>
-                <p className="font-semibold text-[#1a3a6b] text-sm">{item.title}</p>
+                <p className="font-semibold text-brand-navy text-sm">{item.title}</p>
                 <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
               </div>
             </div>
@@ -102,7 +107,7 @@ export default function ApplyPage({
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/register?role=buyer"
-            className="bg-[#3d9e3d] text-white font-semibold px-8 py-3 rounded-xl hover:bg-[#2d8a2d] transition shadow-sm text-center"
+            className="bg-brand-green text-white font-semibold px-8 py-3 rounded-xl hover:bg-brand-green-dark transition shadow-sm text-center"
           >
             Créer mon compte acheteur
           </Link>
@@ -114,7 +119,7 @@ export default function ApplyPage({
           </Link>
         </div>
         <div className="mt-10 bg-white border border-gray-200 rounded-2xl p-6">
-          <h2 className="text-xl font-bold text-[#1a3a6b] mb-2">Vous cherchez un financement?</h2>
+          <h2 className="text-xl font-bold text-brand-navy mb-2">Vous cherchez un financement?</h2>
           <p className="text-sm text-gray-500 mb-6">
             Laissez vos informations si vous voulez que MotoPayee vous aide a trouver un vehicule financeable et un partenaire IMF.
           </p>
@@ -124,6 +129,7 @@ export default function ApplyPage({
             campaignName={campaignName}
             defaultInterest="Je cherche un vehicule financeable avec un partenaire MotoPayee."
           />
+        </div>
         </div>
       </main>
       <Footer />

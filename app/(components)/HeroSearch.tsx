@@ -46,7 +46,7 @@ export default function HeroSearch({ makes }: { makes: string[] }) {
     router.push(qs ? `${active.action}?${qs}` : active.action);
   }
 
-  const inputCls = 'flex-1 min-w-0 bg-white/15 border border-white/25 text-white placeholder-white/50 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#3d9e3d] focus:bg-white/20 transition';
+  const inputCls = 'flex-1 min-w-0 bg-white/15 border border-white/25 text-white placeholder-white/50 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-brand-green focus:bg-white/20 transition';
   const selectCls = inputCls + ' appearance-none';
 
   return (
@@ -60,7 +60,7 @@ export default function HeroSearch({ makes }: { makes: string[] }) {
             onClick={() => setTab(t.key)}
             className={`px-4 sm:px-5 py-2 rounded-full text-sm font-semibold transition-all ${
               tab === t.key
-                ? 'bg-white text-[#1a3a6b] shadow-md'
+                ? 'bg-white text-brand-navy shadow-md'
                 : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'
             }`}
           >
@@ -95,7 +95,7 @@ export default function HeroSearch({ makes }: { makes: string[] }) {
               <option value="8000000" className="text-gray-900">Moins de 8M XAF</option>
               <option value="12000000" className="text-gray-900">Moins de 12M XAF</option>
             </select>
-            <button type="submit" className="bg-[#3d9e3d] text-white font-bold px-6 py-3 rounded-xl hover:bg-[#2d8a2d] transition flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0">
+            <button type="submit" className="bg-brand-green text-white font-bold px-6 py-3 rounded-xl hover:bg-brand-green-dark transition flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
@@ -124,7 +124,7 @@ export default function HeroSearch({ makes }: { makes: string[] }) {
               <option value="50000" className="text-gray-900">Moins de 50K/jour</option>
               <option value="100000" className="text-gray-900">Moins de 100K/jour</option>
             </select>
-            <button type="submit" className="bg-[#f5a623] text-[#1a3a6b] font-bold px-6 py-3 rounded-xl hover:bg-[#e6951c] transition flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0">
+            <button type="submit" className="bg-brand-amber text-brand-navy font-bold px-6 py-3 rounded-xl hover:bg-brand-amber-dark transition flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
@@ -140,14 +140,14 @@ export default function HeroSearch({ makes }: { makes: string[] }) {
               <button
                 type="button"
                 onClick={() => router.push('/sell')}
-                className="bg-[#1a3a6b] text-white font-bold px-6 py-3 rounded-xl hover:bg-blue-800 transition text-sm"
+                className="bg-brand-navy text-white font-bold px-6 py-3 rounded-xl hover:bg-blue-800 transition text-sm"
               >
                 Vendre mon véhicule
               </button>
               <button
                 type="button"
                 onClick={() => router.push('/me/hire-listings/new')}
-                className="bg-[#f5a623] text-[#1a3a6b] font-bold px-6 py-3 rounded-xl hover:bg-[#e6951c] transition text-sm"
+                className="bg-brand-amber text-brand-navy font-bold px-6 py-3 rounded-xl hover:bg-brand-amber-dark transition text-sm"
               >
                 Mettre en location
               </button>
@@ -162,7 +162,7 @@ export default function HeroSearch({ makes }: { makes: string[] }) {
               <button
                 type="button"
                 onClick={() => router.push('/apply')}
-                className="bg-[#3d9e3d] text-white font-bold px-6 py-3 rounded-xl hover:bg-[#2d8a2d] transition text-sm"
+                className="bg-brand-green text-white font-bold px-6 py-3 rounded-xl hover:bg-brand-green-dark transition text-sm"
               >
                 Demander un financement
               </button>
@@ -184,7 +184,7 @@ export default function HeroSearch({ makes }: { makes: string[] }) {
               <button
                 type="button"
                 onClick={() => router.push('/imports')}
-                className="bg-[#f5a623] text-[#1a3a6b] font-bold px-6 py-3 rounded-xl hover:bg-[#e6951c] transition text-sm"
+                className="bg-brand-amber text-brand-navy font-bold px-6 py-3 rounded-xl hover:bg-brand-amber-dark transition text-sm"
               >
                 Voir les offres d&apos;import
               </button>

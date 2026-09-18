@@ -82,7 +82,7 @@ export default function BookingForm({ listing }: { listing: HireListing }) {
             min={today}
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#3d9e3d]"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-green"
           />
         </div>
         <div>
@@ -93,7 +93,7 @@ export default function BookingForm({ listing }: { listing: HireListing }) {
             min={startDate || today}
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#3d9e3d]"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-green"
           />
         </div>
       </div>
@@ -104,7 +104,7 @@ export default function BookingForm({ listing }: { listing: HireListing }) {
           <select
             value={hireType}
             onChange={(e) => setHireType(e.target.value as 'self_drive' | 'with_driver')}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#3d9e3d]"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-green"
           >
             <option value="self_drive">Sans chauffeur</option>
             <option value="with_driver">Avec chauffeur</option>
@@ -119,7 +119,7 @@ export default function BookingForm({ listing }: { listing: HireListing }) {
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
           placeholder="Heure de prise en charge, lieu spécifique..."
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#3d9e3d] resize-none"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-green resize-none"
         />
       </div>
 
@@ -142,7 +142,7 @@ export default function BookingForm({ listing }: { listing: HireListing }) {
           )}
           <div className="flex justify-between text-sm font-bold border-t border-gray-200 pt-1 mt-1">
             <span>Total estimé</span>
-            <span className="text-[#1a3a6b]">{formatXAF(estimate)}</span>
+            <span className="text-brand-navy">{formatXAF(estimate)}</span>
           </div>
           {/* The deposit is held by the vehicle owner, not by MotoPayee, and is
               not part of this total. It used to sit above the total line among
@@ -169,7 +169,7 @@ export default function BookingForm({ listing }: { listing: HireListing }) {
       <button
         type="submit"
         disabled={loading || totalDays < 1}
-        className="w-full bg-[#3d9e3d] text-white font-semibold py-3 rounded-xl hover:bg-[#2d8a2d] transition disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-brand-green text-white font-semibold py-3 rounded-xl hover:bg-brand-green-dark transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? 'Réservation en cours...' : 'Réserver ce véhicule'}
       </button>

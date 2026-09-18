@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRef } from 'react';
 import type { HireListing } from '@/lib/types';
+import { BRAND } from '@/lib/brand-colors';
 
 function formatXAF(n: number) {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -20,7 +21,7 @@ export default function HireCarousel({
   listings,
   title,
   seeAllHref,
-  accent = '#f5a623',
+  accent = BRAND.amber,
 }: {
   listings: HireListing[];
   title: string;
@@ -40,7 +41,7 @@ export default function HireCarousel({
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold text-[#1a3a6b] flex items-center gap-2">
+        <h2 className="text-lg font-bold text-brand-navy flex items-center gap-2">
           <span className="w-1 h-5 rounded-full inline-block" style={{ backgroundColor: accent }} />
           {title}
         </h2>
@@ -81,7 +82,7 @@ export default function HireCarousel({
                 className="flex-shrink-0 w-48 group/card hover:-translate-y-1 transition-transform"
               >
                 {/* Image */}
-                <div className="w-48 h-32 bg-gray-100 rounded-xl overflow-hidden relative mb-2 border border-gray-200 group-hover/card:border-[#f5a623] transition-colors">
+                <div className="w-48 h-32 bg-gray-100 rounded-xl overflow-hidden relative mb-2 border border-gray-200 group-hover/card:border-brand-amber transition-colors">
                   {hasPhoto ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -98,7 +99,7 @@ export default function HireCarousel({
                     </div>
                   )}
                   {/* Badges */}
-                  <span className="absolute top-1.5 left-1.5 bg-[#f5a623] text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+                  <span className="absolute top-1.5 left-1.5 bg-brand-amber text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
                     {HIRE_TYPE_SHORT[listing.hire_type]}
                   </span>
                   {listing.availability === 'available' && (
@@ -108,13 +109,13 @@ export default function HireCarousel({
                   )}
                 </div>
                 {/* Info */}
-                <p className="text-[11px] font-bold text-[#1a3a6b] uppercase leading-tight group-hover/card:text-[#f5a623] transition-colors">
+                <p className="text-[11px] font-bold text-brand-navy uppercase leading-tight group-hover/card:text-brand-amber transition-colors">
                   {listing.make} {listing.model}
                 </p>
                 <p className="text-[11px] text-gray-400 mt-0.5">
                   {listing.year} · {listing.city}
                 </p>
-                <p className="text-sm font-extrabold mt-1 text-[#f5a623]">
+                <p className="text-sm font-extrabold mt-1 text-brand-amber">
                   {formatXAF(listing.daily_rate)} XAF<span className="text-[10px] font-normal text-gray-400">/jour</span>
                 </p>
               </Link>

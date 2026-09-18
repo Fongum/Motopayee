@@ -74,10 +74,10 @@ export default function InsuranceQuoteWidget({ vehicleValueXaf, listingId, hireL
   return (
     <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5">
       <div className="flex items-center gap-2 mb-3">
-        <svg className="w-5 h-5 text-[#1a3a6b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5 text-brand-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
         </svg>
-        <h3 className="text-sm font-bold text-[#1a3a6b]">Assurance véhicule</h3>
+        <h3 className="text-sm font-bold text-brand-navy">Assurance véhicule</h3>
       </div>
 
       <div className="space-y-3">
@@ -86,7 +86,7 @@ export default function InsuranceQuoteWidget({ vehicleValueXaf, listingId, hireL
           <select
             value={selectedPartner}
             onChange={(e) => setSelectedPartner(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#3d9e3d]"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-brand-green"
           >
             {partners.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
@@ -99,7 +99,7 @@ export default function InsuranceQuoteWidget({ vehicleValueXaf, listingId, hireL
           <select
             value={productType}
             onChange={(e) => setProductType(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#3d9e3d]"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-brand-green"
           >
             {Object.entries(PRODUCT_LABELS).map(([val, label]) => (
               <option key={val} value={val}>{label}</option>
@@ -113,7 +113,7 @@ export default function InsuranceQuoteWidget({ vehicleValueXaf, listingId, hireL
           <button
             onClick={requestQuote}
             disabled={loading}
-            className="w-full bg-[#1a3a6b] text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-[#15305a] transition disabled:opacity-50"
+            className="w-full bg-brand-navy text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-brand-navy-dark transition disabled:opacity-50"
           >
             {loading ? 'Calcul...' : 'Obtenir un devis'}
           </button>
@@ -124,7 +124,7 @@ export default function InsuranceQuoteWidget({ vehicleValueXaf, listingId, hireL
         {quote && (
           <div className="bg-white border border-green-200 rounded-xl p-3 text-center">
             <p className="text-xs text-gray-500 mb-1">Prime annuelle estimée</p>
-            <p className="text-xl font-extrabold text-[#3d9e3d]">
+            <p className="text-xl font-extrabold text-brand-green">
               {quote.annual_premium_xaf.toLocaleString('fr-FR')} XAF
             </p>
             <p className="text-[10px] text-gray-400 mt-1">

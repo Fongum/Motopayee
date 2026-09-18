@@ -38,7 +38,7 @@ export default function HireCard({ listing }: Props) {
   return (
     <Link
       href={`/hire/${listing.id}`}
-      className="group block bg-white rounded-2xl border border-gray-200 shadow-card hover:border-[#3d9e3d]/40 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
+      className="group block bg-white rounded-2xl border border-gray-200 shadow-card hover:border-brand-green/40 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
     >
       {/* Photo */}
       <div className="relative h-44 bg-gray-100 overflow-hidden">
@@ -63,7 +63,7 @@ export default function HireCard({ listing }: Props) {
 
         {/* Badges */}
         <div className="absolute top-2 left-2 flex gap-1.5">
-          <span className="bg-[#1a3a6b] text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
+          <span className="bg-brand-navy text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
             Zone {listing.zone}
           </span>
           <span className={`text-[10px] font-bold border px-2 py-0.5 rounded-md ${avail.cls}`}>
@@ -99,7 +99,7 @@ export default function HireCard({ listing }: Props) {
 
       {/* Info */}
       <div className="p-4">
-        <h3 className="font-bold text-[#1a3a6b] group-hover:text-[#3d9e3d] transition-colors leading-tight text-sm mb-1">
+        <h3 className="font-bold text-brand-navy group-hover:text-brand-green transition-colors leading-tight text-sm mb-1">
           {listing.year} {listing.make} {listing.model}
         </h3>
 

@@ -141,6 +141,10 @@ function formatXAF(amount: number): string {
   }).format(amount);
 }
 
+const FUEL_FR: Record<string, string> = {
+  petrol: 'Essence', diesel: 'Diesel', electric: 'Électrique', hybrid: 'Hybride', other: 'Autre',
+};
+
 function getLatestInspection(listing: PublicListing): Inspection | null {
   const inspections = listing.inspections ?? [];
   if (inspections.length === 0) return null;
@@ -175,7 +179,7 @@ export default async function ListingDetailPage({
   }
 
   const v = listing.vehicle;
-  const vehicleLabel = v ? `${v.year} ${v.make} ${v.model}` : 'ce vehicule';
+  const vehicleLabel = v ? `${v.year} ${v.make} ${v.model}` : 'ce véhicule';
   const hasInspection = Boolean(v?.condition_grade);
   const latestInspection = getLatestInspection(listing);
 
@@ -207,7 +211,7 @@ export default async function ListingDetailPage({
       <Navbar />
       <ViewTracker listingId={listing.id} />
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <Link href="/listings" className="text-sm font-medium text-[#1a3a6b] hover:text-[#3d9e3d] transition-colors mb-6 inline-block">
+        <Link href="/listings" className="text-sm font-medium text-brand-navy hover:text-brand-green transition-colors mb-6 inline-block">
           ← Retour aux annonces
         </Link>
 
@@ -274,7 +278,7 @@ export default async function ListingDetailPage({
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                 <p className="text-amber-800 font-semibold text-sm">Financement non disponible pour cette annonce</p>
                 <p className="text-amber-700 text-xs mt-1">
-                  Seules les annonces Finance eligible peuvent recevoir une demande de financement via MotoPayee.
+                  Seules les annonces éligibles au financement peuvent recevoir une demande via MotoPayee.
                 </p>
               </div>
             )}
@@ -284,8 +288,8 @@ export default async function ListingDetailPage({
               <div className="grid grid-cols-2 gap-3 text-sm">
                 {[
                   { label: 'Kilométrage', value: `${v.mileage_km.toLocaleString()} km` },
-                  { label: 'Carburant', value: v.fuel_type },
-                  { label: 'Transmission', value: v.transmission },
+                  { label: 'Carburant', value: FUEL_FR[v.fuel_type] ?? v.fuel_type },
+                  { label: 'Transmission', value: v.transmission === 'automatic' ? 'Automatique' : 'Manuelle' },
                   { label: 'Couleur', value: v.color ?? '—' },
                   { label: 'Cylindrée', value: v.engine_cc ? `${v.engine_cc} cc` : '—' },
                   { label: 'Places', value: v.seats ? `${v.seats}` : '—' },
@@ -310,13 +314,13 @@ export default async function ListingDetailPage({
               {listing.financeable ? (
                 <Link
                   href={`/me/applications/new?listing=${listing.id}`}
-                  className="block w-full text-center bg-[#3d9e3d] text-white font-semibold py-3 rounded-xl hover:bg-[#2d8a2d] transition shadow-sm"
+                  className="block w-full text-center bg-brand-green text-white font-semibold py-3 rounded-xl hover:bg-brand-green-dark transition shadow-sm"
                 >
                   Demander un financement
                 </Link>
               ) : (
                 <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-center text-sm font-medium text-gray-600">
-                  Financement disponible uniquement sur les vehicules Finance eligible.
+                  Financement disponible uniquement sur les véhicules éligibles.
                 </div>
               )}
               {listing.seller?.phone && (
@@ -383,9 +387,9 @@ export default async function ListingDetailPage({
           <section className="mt-10 rounded-2xl border border-gray-200 bg-white p-6">
             <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h2 className="text-lg font-bold text-gray-900">Resume inspection MotoPayee</h2>
+                <h2 className="text-lg font-bold text-gray-900">Résumé inspection MotoPayee</h2>
                 <p className="mt-1 text-sm text-gray-500">
-                  Rapport effectue le {new Date(latestInspection.inspected_at).toLocaleDateString('fr-FR')}.
+                  Rapport effectué le {new Date(latestInspection.inspected_at).toLocaleDateString('fr-FR')}.
                 </p>
               </div>
               <span className="inline-flex w-fit rounded-full bg-purple-50 px-3 py-1 text-sm font-semibold text-purple-700">
@@ -401,15 +405,15 @@ export default async function ListingDetailPage({
               <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
                 <p className="text-xs text-gray-500">Financement</p>
                 <p className={`mt-1 text-lg font-bold ${latestInspection.financeable ? 'text-green-700' : 'text-amber-700'}`}>
-                  {latestInspection.financeable ? 'Eligible' : 'Non eligible'}
+                  {latestInspection.financeable ? 'Éligible' : 'Non éligible'}
                 </p>
               </div>
               <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-                <p className="text-xs text-gray-500">Reparations estimees</p>
+                <p className="text-xs text-gray-500">Réparations estimées</p>
                 <p className="mt-1 text-lg font-bold text-gray-900">
                   {latestInspection.repair_estimate_low || latestInspection.repair_estimate_high
                     ? `${formatXAF(latestInspection.repair_estimate_low ?? 0)} - ${formatXAF(latestInspection.repair_estimate_high ?? latestInspection.repair_estimate_low ?? 0)}`
-                    : 'Non indique'}
+                    : 'Non indiqué'}
                 </p>
               </div>
             </div>

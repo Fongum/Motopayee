@@ -84,7 +84,7 @@ export default function InspectionRequestForm({
           minLength={2}
           maxLength={120}
           placeholder="Votre nom"
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#1a3a6b] focus:ring-2 focus:ring-[#1a3a6b]/10"
+          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/10"
         />
         <input
           value={phone}
@@ -93,7 +93,7 @@ export default function InspectionRequestForm({
           minLength={6}
           maxLength={40}
           placeholder="Telephone / WhatsApp"
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#1a3a6b] focus:ring-2 focus:ring-[#1a3a6b]/10"
+          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/10"
         />
         <input
           value={email}
@@ -101,14 +101,14 @@ export default function InspectionRequestForm({
           type="email"
           maxLength={160}
           placeholder="Email optionnel"
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#1a3a6b] focus:ring-2 focus:ring-[#1a3a6b]/10"
+          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/10"
         />
         <input
           value={preferredWindow}
           onChange={(event) => setPreferredWindow(event.target.value)}
           maxLength={160}
           placeholder="Moment prefere optionnel"
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#1a3a6b] focus:ring-2 focus:ring-[#1a3a6b]/10"
+          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/10"
         />
         <textarea
           value={notes}
@@ -116,7 +116,7 @@ export default function InspectionRequestForm({
           maxLength={1000}
           placeholder="Question ou detail utile optionnel"
           rows={3}
-          className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#1a3a6b] focus:ring-2 focus:ring-[#1a3a6b]/10"
+          className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/10"
         />
       </div>
 
@@ -125,7 +125,7 @@ export default function InspectionRequestForm({
       <button
         type="submit"
         disabled={state === 'submitting'}
-        className="mt-4 w-full rounded-xl bg-[#1a3a6b] py-3 text-sm font-semibold text-white transition hover:bg-[#132b50] disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-4 w-full rounded-xl bg-brand-navy py-3 text-sm font-semibold text-white transition hover:bg-brand-navy-dark disabled:cursor-not-allowed disabled:opacity-60"
       >
         {state === 'submitting' ? 'Envoi...' : 'Demander inspection'}
       </button>

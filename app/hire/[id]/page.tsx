@@ -121,7 +121,7 @@ export default async function HireDetailPage({ params }: Props) {
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Breadcrumb */}
           <nav className="text-sm text-gray-400 mb-6">
-            <a href="/hire" className="hover:text-[#1a3a6b]">Location</a>
+            <a href="/hire" className="hover:text-brand-navy">Location</a>
             <span className="mx-2">/</span>
             <span className="text-gray-600">{listing.year} {listing.make} {listing.model}</span>
           </nav>
@@ -143,7 +143,7 @@ export default async function HireDetailPage({ params }: Props) {
               {/* Vehicle details */}
               <div className="bg-white rounded-2xl border border-gray-200 p-6">
                 <div className="flex items-start justify-between gap-3 mb-1">
-                  <h1 className="text-2xl font-extrabold text-[#1a3a6b]">
+                  <h1 className="text-2xl font-extrabold text-brand-navy">
                     {listing.year} {listing.make} {listing.model}
                   </h1>
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -231,7 +231,7 @@ export default async function HireDetailPage({ params }: Props) {
               <div className="bg-white rounded-2xl border border-gray-200 p-6">
                 <h2 className="text-sm font-bold text-gray-800 mb-3">Propriétaire</h2>
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-[#1a3a6b] rounded-full flex items-center justify-center text-white font-bold">
+                  <div className="w-10 h-10 bg-brand-navy rounded-full flex items-center justify-center text-white font-bold">
                     {listing.owner?.full_name?.[0] ?? '?'}
                   </div>
                   <div>

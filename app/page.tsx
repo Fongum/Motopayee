@@ -12,6 +12,7 @@ import type { ListingQuery } from '@/lib/listing-query';
 import { shapeHireMedia } from '@/lib/hire-query';
 import type { HireQuery } from '@/lib/hire-query';
 import type { HireListing } from '@/lib/types';
+import { BRAND } from '@/lib/brand-colors';
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
 
@@ -107,14 +108,14 @@ export default async function HomePage() {
       <main>
 
         {/* ─── HERO ─────────────────────────────────────────────────── */}
-        <section className="relative bg-[#0d1f3c] overflow-hidden">
+        <section className="relative bg-brand-navy-dark overflow-hidden">
           {/* Background image with overlay */}
           <div className="absolute inset-0 z-0">
             <Image src="/car-hero.webp" alt="" fill className="object-cover object-right opacity-[0.28]" priority />
           </div>
           {/* Vertical wash + a centered radial knock-down so the logo printed on the
               car door doesn't read as a stray watermark behind the headline. */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0d1f3c]/92 via-[#0d1f3c]/82 to-[#0d1f3c] z-[1]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-brand-navy-dark/92 via-brand-navy-dark/82 to-brand-navy-dark z-[1]" />
           <div className="absolute inset-0 z-[1] [background:radial-gradient(65%_58%_at_50%_38%,rgba(13,31,60,0.72),transparent)]" />
 
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-20">
@@ -127,7 +128,7 @@ export default async function HomePage() {
             {/* Badge */}
             <div className="flex justify-center mb-8">
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 rounded-full px-5 py-2">
-                <span className="w-2 h-2 rounded-full bg-[#3d9e3d] animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-brand-green animate-pulse" />
                 <span className="text-white/80 text-xs font-semibold tracking-wide">Marketplace automobile de confiance au Cameroun</span>
               </div>
             </div>
@@ -137,9 +138,9 @@ export default async function HomePage() {
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.1] mb-5">
                 Achetez, louez, financez ou{' '}
                 <span className="relative">
-                  <span className="text-[#3d9e3d]">importez</span>
+                  <span className="text-brand-green">importez</span>
                   <svg className="absolute -bottom-1 left-0 w-full" viewBox="0 0 200 8" fill="none">
-                    <path d="M2 6C40 2 160 2 198 6" stroke="#3d9e3d" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
+                    <path d="M2 6C40 2 160 2 198 6" stroke={BRAND.green} strokeWidth="3" strokeLinecap="round" opacity="0.4" />
                   </svg>
                 </span>{' '}
                 votre véhicule
@@ -183,8 +184,8 @@ export default async function HomePage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   ),
-                  color: 'from-[#3d9e3d] to-emerald-600',
-                  iconBg: 'bg-[#3d9e3d]/10 text-[#3d9e3d]',
+                  color: 'from-brand-green to-emerald-600',
+                  iconBg: 'bg-brand-green/10 text-brand-green',
                 },
                 {
                   href: '/hire',
@@ -195,8 +196,8 @@ export default async function HomePage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   ),
-                  color: 'from-[#f5a623] to-orange-500',
-                  iconBg: 'bg-amber-50 text-[#f5a623]',
+                  color: 'from-brand-amber to-orange-500',
+                  iconBg: 'bg-amber-50 text-brand-amber',
                 },
                 {
                   href: '/sell',
@@ -207,8 +208,8 @@ export default async function HomePage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
                     </svg>
                   ),
-                  color: 'from-[#1a3a6b] to-blue-700',
-                  iconBg: 'bg-blue-50 text-[#1a3a6b]',
+                  color: 'from-brand-navy to-blue-700',
+                  iconBg: 'bg-blue-50 text-brand-navy',
                 },
                 {
                   href: '/apply',
@@ -219,8 +220,8 @@ export default async function HomePage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-2.2 0-4 1.12-4 2.5S9.8 13 12 13s4 1.12 4 2.5S14.2 18 12 18m0-10V6m0 12v-2m8-4a8 8 0 11-16 0 8 8 0 0116 0z" />
                     </svg>
                   ),
-                  color: 'from-[#3d9e3d] to-[#1a3a6b]',
-                  iconBg: 'bg-[#f0faf0] text-[#1a3a6b]',
+                  color: 'from-brand-green to-brand-navy',
+                  iconBg: 'bg-[#f0faf0] text-brand-navy',
                 },
                 {
                   href: '/imports',
@@ -231,8 +232,8 @@ export default async function HomePage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   ),
-                  color: 'from-[#f5a623] to-[#1a3a6b]',
-                  iconBg: 'bg-amber-50 text-[#1a3a6b]',
+                  color: 'from-brand-amber to-brand-navy',
+                  iconBg: 'bg-amber-50 text-brand-navy',
                 },
               ].map((svc) => (
                 <Link
@@ -246,11 +247,11 @@ export default async function HomePage() {
                   <div className={`w-12 h-12 rounded-xl ${svc.iconBg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                     {svc.icon}
                   </div>
-                  <h3 className="font-bold text-[#1a3a6b] text-base mb-1 group-hover:text-[#3d9e3d] transition-colors">{svc.title}</h3>
+                  <h3 className="font-bold text-brand-navy text-base mb-1 group-hover:text-brand-green transition-colors">{svc.title}</h3>
                   <p className="text-xs text-gray-500 leading-relaxed hidden sm:block">{svc.desc}</p>
 
                   {/* Arrow */}
-                  <div className="absolute bottom-4 right-4 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-[#3d9e3d] transition-colors">
+                  <div className="absolute bottom-4 right-4 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-brand-green transition-colors">
                     <svg className="w-3 h-3 text-gray-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                     </svg>
@@ -270,7 +271,7 @@ export default async function HomePage() {
                 listings={toCarousel(latest)}
                 title="Dernières annonces"
                 seeAllHref="/listings"
-                accent="#3d9e3d"
+                accent={BRAND.green}
               />
             )}
 
@@ -280,7 +281,7 @@ export default async function HomePage() {
                 listings={hireListings}
                 title="Véhicules disponibles en location"
                 seeAllHref="/hire"
-                accent="#f5a623"
+                accent={BRAND.amber}
               />
             )}
 
@@ -290,7 +291,7 @@ export default async function HomePage() {
                 listings={toCarousel(financeable)}
                 title="Éligibles au financement"
                 seeAllHref="/listings?financeable=true"
-                accent="#1a3a6b"
+                accent={BRAND.navy}
               />
             )}
 
@@ -316,10 +317,10 @@ export default async function HomePage() {
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <span className="text-[#3d9e3d] text-xs font-bold uppercase tracking-widest">Explorer</span>
-                <h2 className="text-2xl font-extrabold text-[#1a3a6b] mt-1">Parcourir par marque</h2>
+                <span className="text-brand-green text-xs font-bold uppercase tracking-widest">Explorer</span>
+                <h2 className="text-2xl font-extrabold text-brand-navy mt-1">Parcourir par marque</h2>
               </div>
-              <Link href="/listings" className="text-sm font-semibold text-[#3d9e3d] flex items-center gap-1 hover:gap-2 transition-all">
+              <Link href="/listings" className="text-sm font-semibold text-brand-green flex items-center gap-1 hover:gap-2 transition-all">
                 Toutes les marques
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -332,12 +333,12 @@ export default async function HomePage() {
                 <Link
                   key={make}
                   href={`/listings?make=${make}`}
-                  className="flex items-center gap-3 p-3.5 bg-white rounded-xl border border-gray-200 hover:border-[#1a3a6b]/30 hover:shadow-card-hover transition-all group"
+                  className="flex items-center gap-3 p-3.5 bg-white rounded-xl border border-gray-200 hover:border-brand-navy/30 hover:shadow-card-hover transition-all group"
                 >
-                  <span className="w-11 h-11 rounded-lg flex items-center justify-center text-sm font-bold bg-gradient-to-br from-[#1a3a6b] to-[#0d1f3c] text-white group-hover:from-[#3d9e3d] group-hover:to-[#2d8a2d] transition-colors flex-shrink-0">
+                  <span className="w-11 h-11 rounded-lg flex items-center justify-center text-sm font-bold bg-gradient-to-br from-brand-navy to-brand-navy-dark text-white group-hover:from-brand-green group-hover:to-brand-green-dark transition-colors flex-shrink-0">
                     {MAKE_INITIALS[make]}
                   </span>
-                  <span className="text-sm font-semibold text-gray-800 group-hover:text-[#1a3a6b] truncate">{make}</span>
+                  <span className="text-sm font-semibold text-gray-800 group-hover:text-brand-navy truncate">{make}</span>
                 </Link>
               ))}
             </div>
@@ -348,8 +349,8 @@ export default async function HomePage() {
         <section className="py-20 px-4 bg-white">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-14">
-              <span className="text-[#3d9e3d] text-xs font-bold uppercase tracking-widest">Comment ça marche</span>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-[#1a3a6b] mt-3 mb-4">Simple, rapide, transparent</h2>
+              <span className="text-brand-green text-xs font-bold uppercase tracking-widest">Comment ça marche</span>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-brand-navy mt-3 mb-4">Simple, rapide, transparent</h2>
               <p className="text-gray-500 max-w-lg mx-auto text-sm">Que vous achetiez, louiez, vendiez ou importiez — le processus est guidé du début à la fin</p>
             </div>
 
@@ -358,12 +359,12 @@ export default async function HomePage() {
               {/* Buy flow */}
               <div className="bg-gradient-to-br from-gray-50 to-white rounded-3xl border border-gray-100 p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-[#3d9e3d] rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-brand-green rounded-xl flex items-center justify-center">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-bold text-[#1a3a6b]">Acheter un véhicule</h3>
+                  <h3 className="text-lg font-bold text-brand-navy">Acheter un véhicule</h3>
                 </div>
                 <div className="space-y-4">
                   {[
@@ -372,12 +373,12 @@ export default async function HomePage() {
                     { step: '3', text: 'Déposez vos documents, réponse sous 72h' },
                   ].map((s) => (
                     <div key={s.step} className="flex items-start gap-3">
-                      <span className="w-7 h-7 rounded-full bg-[#3d9e3d]/10 text-[#3d9e3d] text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{s.step}</span>
+                      <span className="w-7 h-7 rounded-full bg-brand-green/10 text-brand-green text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{s.step}</span>
                       <p className="text-sm text-gray-600">{s.text}</p>
                     </div>
                   ))}
                 </div>
-                <Link href="/listings" className="inline-flex items-center gap-2 text-sm font-semibold text-[#3d9e3d] mt-6 hover:gap-3 transition-all">
+                <Link href="/listings" className="inline-flex items-center gap-2 text-sm font-semibold text-brand-green mt-6 hover:gap-3 transition-all">
                   Voir les véhicules
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -388,12 +389,12 @@ export default async function HomePage() {
               {/* Hire flow */}
               <div className="bg-gradient-to-br from-amber-50/50 to-white rounded-3xl border border-amber-100/50 p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-[#f5a623] rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-brand-amber rounded-xl flex items-center justify-center">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-bold text-[#1a3a6b]">Louer un véhicule</h3>
+                  <h3 className="text-lg font-bold text-brand-navy">Louer un véhicule</h3>
                 </div>
                 <div className="space-y-4">
                   {[
@@ -402,12 +403,12 @@ export default async function HomePage() {
                     { step: '3', text: 'Réservez et récupérez le véhicule' },
                   ].map((s) => (
                     <div key={s.step} className="flex items-start gap-3">
-                      <span className="w-7 h-7 rounded-full bg-[#f5a623]/10 text-[#f5a623] text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{s.step}</span>
+                      <span className="w-7 h-7 rounded-full bg-brand-amber/10 text-brand-amber text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{s.step}</span>
                       <p className="text-sm text-gray-600">{s.text}</p>
                     </div>
                   ))}
                 </div>
-                <Link href="/hire" className="inline-flex items-center gap-2 text-sm font-semibold text-[#f5a623] mt-6 hover:gap-3 transition-all">
+                <Link href="/hire" className="inline-flex items-center gap-2 text-sm font-semibold text-brand-amber mt-6 hover:gap-3 transition-all">
                   Parcourir les locations
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -420,15 +421,15 @@ export default async function HomePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="bg-gradient-to-br from-blue-50/50 to-white rounded-3xl border border-blue-100/50 p-8">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-[#1a3a6b] rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-brand-navy rounded-xl flex items-center justify-center">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-bold text-[#1a3a6b]">Vendre votre véhicule</h3>
+                  <h3 className="text-lg font-bold text-brand-navy">Vendre votre véhicule</h3>
                 </div>
                 <p className="text-sm text-gray-500 mb-4">Listez votre véhicule, recevez une estimation MVE, et touchez des milliers d&apos;acheteurs vérifiés dans les 3 zones.</p>
-                <Link href="/sell" className="inline-flex items-center gap-2 text-sm font-semibold text-[#1a3a6b] hover:gap-3 transition-all">
+                <Link href="/sell" className="inline-flex items-center gap-2 text-sm font-semibold text-brand-navy hover:gap-3 transition-all">
                   Commencer à vendre
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -443,7 +444,7 @@ export default async function HomePage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-bold text-[#1a3a6b]">Importer des USA</h3>
+                  <h3 className="text-lg font-bold text-brand-navy">Importer des USA</h3>
                 </div>
                 <p className="text-sm text-gray-500 mb-4">Import assisté depuis les enchères américaines — devis tout inclus, suivi en temps réel et dédouanement facilité.</p>
                 <Link href="/imports" className="inline-flex items-center gap-2 text-sm font-semibold text-purple-600 hover:gap-3 transition-all">
@@ -458,24 +459,24 @@ export default async function HomePage() {
         </section>
 
         {/* ─── HIRE PROMO BANNER ──────────────────────────────────────── */}
-        <section className="bg-gradient-to-r from-[#1a3a6b] via-[#1a3a6b] to-[#0d1f3c] py-16 px-4 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-[#f5a623]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <section className="bg-gradient-to-r from-brand-navy via-brand-navy to-brand-navy-dark py-16 px-4 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-brand-amber/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
           <div className="max-w-6xl mx-auto relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
               <div>
-                <div className="inline-flex items-center gap-2 bg-[#f5a623]/20 border border-[#f5a623]/30 rounded-full px-4 py-1.5 mb-6">
-                  <span className="text-[#f5a623] text-xs font-bold tracking-wide uppercase">Nouveau</span>
+                <div className="inline-flex items-center gap-2 bg-brand-amber/20 border border-brand-amber/30 rounded-full px-4 py-1.5 mb-6">
+                  <span className="text-brand-amber text-xs font-bold tracking-wide uppercase">Nouveau</span>
                 </div>
                 <h2 className="text-3xl md:text-4xl font-extrabold text-white leading-tight mb-4">
                   Location de véhicules<br />
-                  <span className="text-[#f5a623]">partout au Cameroun</span>
+                  <span className="text-brand-amber">partout au Cameroun</span>
                 </h2>
                 <p className="text-blue-200/70 text-sm leading-relaxed mb-8 max-w-md">
                   Besoin d&apos;un véhicule pour quelques jours ? Louez auprès de propriétaires dont le statut de vérification est indiqué sur chaque annonce.
                   Avec ou sans chauffeur, à des tarifs transparents.
                 </p>
                 <div className="flex flex-wrap gap-4">
-                  <Link href="/hire" className="inline-flex items-center gap-2 bg-[#f5a623] text-[#1a3a6b] font-bold px-6 py-3 rounded-xl hover:bg-[#e6951c] transition text-sm">
+                  <Link href="/hire" className="inline-flex items-center gap-2 bg-brand-amber text-brand-navy font-bold px-6 py-3 rounded-xl hover:bg-brand-amber-dark transition text-sm">
                     Parcourir les véhicules
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -510,7 +511,7 @@ export default async function HomePage() {
                   },
                 ].map((f) => (
                   <div key={f.value} className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
-                    <span className="w-10 h-10 mx-auto mb-3 rounded-xl bg-[#f5a623]/15 text-[#f5a623] flex items-center justify-center">
+                    <span className="w-10 h-10 mx-auto mb-3 rounded-xl bg-brand-amber/15 text-brand-amber flex items-center justify-center">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">{f.icon}</svg>
                     </span>
                     <p className="text-white text-sm font-bold">{f.value}</p>
@@ -533,32 +534,32 @@ export default async function HomePage() {
                 <div className="absolute -bottom-5 -right-5 bg-white rounded-2xl shadow-xl p-5 border border-gray-100">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-[#f0faf0] flex items-center justify-center">
-                      <svg className="w-5 h-5 text-[#3d9e3d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-2xl font-extrabold text-[#1a3a6b] leading-none">{counts.vehicles > 0 ? `${counts.vehicles}+` : '500+'}</p>
+                      <p className="text-2xl font-extrabold text-brand-navy leading-none">{counts.vehicles > 0 ? `${counts.vehicles}+` : '500+'}</p>
                       <p className="text-xs text-gray-500 mt-0.5">Annonces revues</p>
                     </div>
                   </div>
                 </div>
               </div>
               <div>
-                <span className="text-[#3d9e3d] text-xs font-bold uppercase tracking-widest">Pourquoi MotoPayee</span>
-                <h2 className="text-3xl md:text-4xl font-extrabold text-[#1a3a6b] mt-3 mb-5">La confiance au centre<br />de chaque transaction</h2>
+                <span className="text-brand-green text-xs font-bold uppercase tracking-widest">Pourquoi MotoPayee</span>
+                <h2 className="text-3xl md:text-4xl font-extrabold text-brand-navy mt-3 mb-5">La confiance au centre<br />de chaque transaction</h2>
                 <p className="text-gray-500 mb-8 leading-relaxed text-sm">Notre équipe revoit chaque annonce avant publication. L&apos;inspection et la vérification des documents ne sont pas systématiques : elles sont indiquées sur les annonces concernées.</p>
                 <div className="space-y-5">
                   {[
-                    { title: 'Inspection professionnelle', desc: 'Rapport en 12 points par nos agents certifiés.', bg: 'bg-[#f0faf0]', color: 'text-[#3d9e3d]', icon: (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>) },
-                    { title: 'Prix de marché transparent', desc: 'Estimation MVE pour chaque annonce — pas de mauvaise surprise.', bg: 'bg-amber-50', color: 'text-[#f5a623]', icon: (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>) },
-                    { title: 'Financement sous 72h', desc: 'Traitement express avec nos IMF partenaires.', bg: 'bg-blue-50', color: 'text-[#1a3a6b]', icon: (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>) },
+                    { title: 'Inspection professionnelle', desc: 'Rapport en 12 points par nos agents certifiés.', bg: 'bg-[#f0faf0]', color: 'text-brand-green', icon: (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>) },
+                    { title: 'Prix de marché transparent', desc: 'Estimation MVE pour chaque annonce — pas de mauvaise surprise.', bg: 'bg-amber-50', color: 'text-brand-amber', icon: (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>) },
+                    { title: 'Financement sous 72h', desc: 'Traitement express avec nos IMF partenaires.', bg: 'bg-blue-50', color: 'text-brand-navy', icon: (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>) },
                     { title: 'Location encadrée', desc: 'Statut du propriétaire indiqué, réservation en ligne, conditions claires.', bg: 'bg-purple-50', color: 'text-purple-600', icon: (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>) },
                   ].map((f) => (
                     <div key={f.title} className="flex items-start gap-4">
                       <div className={`w-10 h-10 ${f.bg} ${f.color} rounded-xl flex items-center justify-center flex-shrink-0`}>{f.icon}</div>
                       <div>
-                        <p className="font-bold text-[#1a3a6b] text-sm">{f.title}</p>
+                        <p className="font-bold text-brand-navy text-sm">{f.title}</p>
                         <p className="text-sm text-gray-500 mt-0.5">{f.desc}</p>
                       </div>
                     </div>
@@ -573,8 +574,8 @@ export default async function HomePage() {
         <section className="py-20 px-4 bg-white">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
-              <span className="text-[#3d9e3d] text-xs font-bold uppercase tracking-widest">Témoignages</span>
-              <h2 className="text-3xl font-extrabold text-[#1a3a6b] mt-3">Ce que disent nos clients</h2>
+              <span className="text-brand-green text-xs font-bold uppercase tracking-widest">Témoignages</span>
+              <h2 className="text-3xl font-extrabold text-brand-navy mt-3">Ce que disent nos clients</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
@@ -585,7 +586,7 @@ export default async function HomePage() {
                 <div key={t.name} className="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:shadow-md transition-shadow">
                   <div className="flex gap-1 mb-4">
                     {[...Array(5)].map((_, i) => (
-                      <svg key={i} className="w-4 h-4 text-[#f5a623]" fill="currentColor" viewBox="0 0 20 20">
+                      <svg key={i} className="w-4 h-4 text-brand-amber" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                       </svg>
                     ))}
@@ -597,7 +598,7 @@ export default async function HomePage() {
                         <Image src={t.photo} alt={t.name} width={40} height={40} className="w-full h-full object-cover" />
                       </div>
                       <div>
-                        <p className="font-bold text-[#1a3a6b] text-sm">{t.name}</p>
+                        <p className="font-bold text-brand-navy text-sm">{t.name}</p>
                         <p className="text-[11px] text-gray-400">{t.city}</p>
                       </div>
                     </div>
@@ -610,20 +611,20 @@ export default async function HomePage() {
         </section>
 
         {/* ─── FINAL CTA ────────────────────────────────────────────── */}
-        <section className="relative bg-[#0d1f3c] overflow-hidden py-20 px-4">
-          <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-[#3d9e3d]/10 blur-3xl" />
-          <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-[#f5a623]/10 blur-3xl" />
+        <section className="relative bg-brand-navy-dark overflow-hidden py-20 px-4">
+          <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-brand-green/10 blur-3xl" />
+          <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-brand-amber/10 blur-3xl" />
           <div className="relative z-10 max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-5 leading-tight">Prêt à démarrer ?</h2>
             <p className="text-blue-200/70 text-base mb-10 max-w-xl mx-auto">Que vous cherchiez à acheter, louer, vendre ou importer — MotoPayee vous accompagne à chaque étape.</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/listings" className="inline-flex items-center justify-center gap-2 bg-[#3d9e3d] text-white font-bold px-7 py-3.5 rounded-xl hover:bg-[#2d8a2d] transition shadow-lg text-sm">
+              <Link href="/listings" className="inline-flex items-center justify-center gap-2 bg-brand-green text-white font-bold px-7 py-3.5 rounded-xl hover:bg-brand-green-dark transition shadow-lg text-sm">
                 Acheter un véhicule
               </Link>
-              <Link href="/apply" className="inline-flex items-center justify-center gap-2 bg-white text-[#1a3a6b] font-bold px-7 py-3.5 rounded-xl hover:bg-blue-50 transition shadow-lg text-sm">
+              <Link href="/apply" className="inline-flex items-center justify-center gap-2 bg-white text-brand-navy font-bold px-7 py-3.5 rounded-xl hover:bg-blue-50 transition shadow-lg text-sm">
                 Demander un financement
               </Link>
-              <Link href="/hire" className="inline-flex items-center justify-center gap-2 bg-[#f5a623] text-[#1a3a6b] font-bold px-7 py-3.5 rounded-xl hover:bg-[#e6951c] transition shadow-lg text-sm">
+              <Link href="/hire" className="inline-flex items-center justify-center gap-2 bg-brand-amber text-brand-navy font-bold px-7 py-3.5 rounded-xl hover:bg-brand-amber-dark transition shadow-lg text-sm">
                 Louer un véhicule
               </Link>
               <Link href="/sell" className="inline-flex items-center justify-center gap-2 bg-white/10 border border-white/20 text-white font-bold px-7 py-3.5 rounded-xl hover:bg-white/20 transition text-sm">

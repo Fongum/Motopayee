@@ -5,10 +5,10 @@ import { supabaseAdmin } from '@/lib/auth/server';
 import type { ImportOffer } from '@/lib/types';
 
 const FEATURES = [
-  'Trusted US sourcing partner',
-  'Structured quote before purchase',
-  'Shipping and document tracking',
-  'Buyer can self-clear or prepare for broker support',
+  "Partenaire d'approvisionnement fiable aux USA",
+  'Devis structuré avant achat',
+  "Suivi de l'expédition et des documents",
+  "Dédouanement possible seul ou avec l'appui d'un transitaire",
 ];
 
 function formatXAF(value: number | string) {
@@ -40,43 +40,43 @@ export default async function ImportsLandingPage() {
     <>
       <Navbar />
       <main className="bg-white">
-        <section className="relative overflow-hidden bg-[#0d1f3c] py-24 text-white">
+        <section className="relative overflow-hidden bg-brand-navy-dark py-24 text-white">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(61,158,61,0.25),_transparent_35%),radial-gradient(circle_at_bottom_left,_rgba(245,166,35,0.18),_transparent_30%)]" />
           <div className="relative mx-auto flex max-w-6xl flex-col gap-12 px-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
             <div className="max-w-2xl">
               <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-blue-100">
-                MotoPayee Assisted Import
+                Import assisté MotoPayee
               </span>
               <h1 className="mt-5 text-4xl font-bold leading-tight sm:text-5xl">
-                Source auction and dealer vehicles from the US with a controlled MotoPayee flow.
+                Trouvez des véhicules aux enchères ou chez des concessionnaires américains grâce à un parcours encadré par MotoPayee.
               </h1>
               <p className="mt-5 max-w-xl text-base leading-8 text-blue-100">
-                Start with a request, receive a transparent quote, then decide before any vehicle is purchased. This keeps the
-                import process structured instead of turning it into a risky open marketplace.
+                Commencez par une demande, recevez un devis transparent, puis décidez avant tout achat de véhicule. Le processus
+                d&apos;import reste ainsi structuré plutôt que de devenir un marché ouvert risqué.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
                   href="/imports/request"
-                  className="rounded-xl bg-[#3d9e3d] px-6 py-3 text-sm font-semibold text-white hover:bg-[#2d8a2d]"
+                  className="rounded-xl bg-brand-green px-6 py-3 text-sm font-semibold text-white hover:bg-brand-green-dark"
                 >
-                  Request a vehicle
+                  Demander un véhicule
                 </Link>
                 <Link
                   href="/me/import-requests"
                   className="rounded-xl border border-white/20 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
                 >
-                  Track my requests
+                  Suivre mes demandes
                 </Link>
               </div>
             </div>
 
             <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-white/10 p-6 shadow-2xl backdrop-blur">
               <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-100">Phase 1</p>
-              <p className="mt-3 text-2xl font-bold">US to Cameroon only</p>
+              <p className="mt-3 text-2xl font-bold">USA vers Cameroun uniquement</p>
               <ul className="mt-6 space-y-3 text-sm text-blue-100">
                 {FEATURES.map((feature) => (
                   <li key={feature} className="flex items-start gap-3">
-                    <span className="mt-1 h-2.5 w-2.5 rounded-full bg-[#3d9e3d]" />
+                    <span className="mt-1 h-2.5 w-2.5 rounded-full bg-brand-green" />
                     <span>{feature}</span>
                   </li>
                 ))}
@@ -89,25 +89,25 @@ export default async function ImportsLandingPage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#3d9e3d]">Curated offers</span>
-                <h2 className="mt-2 text-3xl font-bold text-[#1a3a6b]">Available now from our US partner</h2>
+                <span className="text-xs font-bold uppercase tracking-[0.25em] text-brand-green">Offres sélectionnées</span>
+                <h2 className="mt-2 text-3xl font-bold text-brand-navy">Disponibles dès maintenant chez notre partenaire américain</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-7 text-gray-600">
-                  These are controlled sourcing opportunities, not instant local stock. Each offer still goes through a quote and confirmation step before purchase.
+                  Ce sont des opportunités d&apos;approvisionnement encadrées, pas un stock local immédiat. Chaque offre passe par un devis et une étape de confirmation avant achat.
                 </p>
               </div>
               <Link
                 href="/imports/request"
-                className="inline-flex rounded-xl border border-[#1a3a6b] px-5 py-3 text-sm font-semibold text-[#1a3a6b] hover:bg-[#1a3a6b] hover:text-white"
+                className="inline-flex rounded-xl border border-brand-navy px-5 py-3 text-sm font-semibold text-brand-navy hover:bg-brand-navy hover:text-white"
               >
-                Need a different car?
+                Besoin d&apos;un autre véhicule ?
               </Link>
             </div>
 
             {offers.length === 0 ? (
               <div className="rounded-[2rem] border border-dashed border-gray-300 bg-white px-6 py-14 text-center">
-                <p className="text-lg font-semibold text-gray-900">No active offers yet</p>
+                <p className="text-lg font-semibold text-gray-900">Aucune offre active pour le moment</p>
                 <p className="mt-2 text-sm text-gray-500">
-                  Start with a custom import request and the MotoPayee team will source a suitable vehicle.
+                  Commencez par une demande d&apos;import personnalisée et l&apos;équipe MotoPayee recherchera un véhicule adapté.
                 </p>
               </div>
             ) : (
@@ -127,8 +127,8 @@ export default async function ImportsLandingPage() {
                       <div className="space-y-4 p-6">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#3d9e3d]">{offer.source_type}</p>
-                            <h3 className="mt-2 text-xl font-bold text-[#1a3a6b] group-hover:text-[#3d9e3d]">{offer.headline}</h3>
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-green">{offer.source_type}</p>
+                            <h3 className="mt-2 text-xl font-bold text-brand-navy group-hover:text-brand-green">{offer.headline}</h3>
                           </div>
                           <span className="rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold text-blue-700">
                             {offer.source_country}
@@ -137,23 +137,23 @@ export default async function ImportsLandingPage() {
 
                         <div className="grid grid-cols-2 gap-3 text-sm text-gray-600">
                           <div>
-                            <p className="text-xs uppercase tracking-wide text-gray-400">Vehicle</p>
+                            <p className="text-xs uppercase tracking-wide text-gray-400">Véhicule</p>
                             <p className="mt-1 font-medium text-gray-900">
                               {offer.year} {offer.make} {offer.model}
                             </p>
                           </div>
                           <div>
-                            <p className="text-xs uppercase tracking-wide text-gray-400">Mileage</p>
+                            <p className="text-xs uppercase tracking-wide text-gray-400">Kilométrage</p>
                             <p className="mt-1 font-medium text-gray-900">
-                              {offer.mileage_km ? `${offer.mileage_km.toLocaleString('fr-FR')} km` : 'Not listed'}
+                              {offer.mileage_km ? `${offer.mileage_km.toLocaleString('fr-FR')} km` : 'Non renseigné'}
                             </p>
                           </div>
                         </div>
 
                         <div className="rounded-2xl bg-gray-50 p-4">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Estimated landed total</p>
-                          <p className="mt-1 text-2xl font-bold text-[#1a3a6b]">{formatXAF(offer.total_estimated_xaf)}</p>
-                          <p className="mt-1 text-xs text-gray-500">Includes shipping, MotoPayee fee, and estimated customs.</p>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Total estimé à la livraison</p>
+                          <p className="mt-1 text-2xl font-bold text-brand-navy">{formatXAF(offer.total_estimated_xaf)}</p>
+                          <p className="mt-1 text-xs text-gray-500">Inclut le transport, les frais MotoPayee et une estimation des douanes.</p>
                         </div>
                       </div>
                     </Link>

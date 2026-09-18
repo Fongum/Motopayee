@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Navbar from '../(components)/Navbar';
 import Footer from '../(components)/Footer';
 import HireCard from '../(components)/HireCard';
+import FilterChips from '../(components)/FilterChips';
 import HireSearchFilters from './SearchFilters';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { reportError } from '@/lib/error-reporting';
@@ -26,6 +27,29 @@ export const metadata: Metadata = {
     description: 'Trouvez le véhicule idéal à louer. Tarifs transparents, propriétaires vérifiés.',
     type: 'website',
   },
+};
+
+// ─── Filter chip labels ───────────────────────────────────────────────────────
+
+const FUEL_FR: Record<string, string> = {
+  petrol: 'Essence', diesel: 'Diesel', electric: 'Électrique', hybrid: 'Hybride', other: 'Autre',
+};
+const HIRE_TYPE_FR: Record<string, string> = {
+  self_drive: 'Sans chauffeur', with_driver: 'Avec chauffeur', both: 'Avec/Sans chauffeur',
+};
+const HIRE_SORT_FR: Record<string, string> = {
+  price_asc: 'Prix croissant', price_desc: 'Prix décroissant',
+};
+const CHIP_LABELS: Record<string, string | ((value: string) => string)> = {
+  city: (v) => `Ville : ${v}`,
+  make: (v) => `Marque : ${v}`,
+  zone: (v) => `Zone ${v}`,
+  hire_type: (v) => `Type : ${HIRE_TYPE_FR[v] ?? v}`,
+  max_price: (v) => `Prix max/jour : ${Number(v).toLocaleString('fr-FR')} XAF`,
+  fuel_type: (v) => `Carburant : ${FUEL_FR[v] ?? v}`,
+  min_seats: (v) => `Places min : ${v}+`,
+  sort: (v) => `Tri : ${HIRE_SORT_FR[v] ?? v}`,
+  available: () => 'Disponible uniquement',
 };
 
 async function getHireListings(params: HireSearchParams) {
@@ -68,7 +92,7 @@ export default async function HirePage({ searchParams }: { searchParams: RawHire
       <Navbar />
       <main className="bg-gray-50 min-h-screen">
         {/* Header */}
-        <div className="bg-[#1a3a6b] py-10 px-4">
+        <div className="bg-brand-navy py-10 px-4">
           <div className="max-w-7xl mx-auto">
             <h1 className="text-2xl md:text-3xl font-extrabold text-white mb-1">Location de véhicules</h1>
             <p className="text-blue-300 text-sm">Louez un véhicule avec ou sans chauffeur, tarifs transparents</p>
@@ -78,7 +102,7 @@ export default async function HirePage({ searchParams }: { searchParams: RawHire
         <div className="max-w-7xl mx-auto px-4 py-6">
           <section className="mb-6 grid gap-4 lg:grid-cols-[1fr_420px]">
             <div className="rounded-2xl border border-gray-200 bg-white p-5">
-              <h2 className="text-lg font-bold text-[#1a3a6b]">Vous avez un vehicule a mettre en location?</h2>
+              <h2 className="text-lg font-bold text-brand-navy">Vous avez un vehicule a mettre en location?</h2>
               <p className="mt-1 text-sm text-gray-500">
                 MotoPayee onboarde des proprietaires et partenaires de location au Cameroun pour le pic Octobre-Decembre.
               </p>
@@ -107,17 +131,7 @@ export default async function HirePage({ searchParams }: { searchParams: RawHire
           </Suspense>
 
           {/* Active filter chips */}
-          {Object.entries(searchParams).filter(([k, v]) => k !== 'page' && v).length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-5">
-              {Object.entries(searchParams)
-                .filter(([k, v]) => k !== 'page' && v)
-                .map(([k, v]) => (
-                  <span key={k} className="inline-flex items-center gap-1.5 bg-[#1a3a6b]/10 text-[#1a3a6b] text-xs font-semibold px-3 py-1 rounded-full">
-                    {k.replace(/_/g, ' ')}: {v}
-                  </span>
-                ))}
-            </div>
-          )}
+          <FilterChips basePath="/hire" searchParams={searchParams} labels={CHIP_LABELS} />
 
           {/* Grid */}
           {listings.length === 0 ? (
@@ -150,7 +164,7 @@ export default async function HirePage({ searchParams }: { searchParams: RawHire
               {page > 1 && (
                 <a
                   href={pageHref(page - 1)}
-                  className="px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium bg-white hover:bg-gray-50 hover:border-[#3d9e3d] transition flex items-center gap-2"
+                  className="px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium bg-white hover:bg-gray-50 hover:border-brand-green transition flex items-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -168,8 +182,8 @@ export default async function HirePage({ searchParams }: { searchParams: RawHire
                       href={pageHref(p)}
                       className={`w-9 h-9 flex items-center justify-center rounded-xl text-sm font-semibold transition ${
                         p === page
-                          ? 'bg-[#1a3a6b] text-white'
-                          : 'bg-white border border-gray-300 text-gray-700 hover:border-[#3d9e3d]'
+                          ? 'bg-brand-navy text-white'
+                          : 'bg-white border border-gray-300 text-gray-700 hover:border-brand-green'
                       }`}
                     >
                       {p}
@@ -180,7 +194,7 @@ export default async function HirePage({ searchParams }: { searchParams: RawHire
               {page < totalPages && (
                 <a
                   href={pageHref(page + 1)}
-                  className="px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium bg-white hover:bg-gray-50 hover:border-[#3d9e3d] transition flex items-center gap-2"
+                  className="px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium bg-white hover:bg-gray-50 hover:border-brand-green transition flex items-center gap-2"
                 >
                   Suivant
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

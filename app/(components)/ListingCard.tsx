@@ -36,7 +36,7 @@ export default function ListingCard({ listing }: Props) {
   return (
     <Link
       href={`/listings/${listing.id}`}
-      className="group block bg-white rounded-2xl border border-gray-200 shadow-card hover:border-[#3d9e3d]/40 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
+      className="group block bg-white rounded-2xl border border-gray-200 shadow-card hover:border-brand-green/40 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
     >
       {/* Photo */}
       <div className="relative h-44 bg-gray-100 overflow-hidden">
@@ -61,11 +61,11 @@ export default function ListingCard({ listing }: Props) {
 
         {/* Overlay badges */}
         <div className="absolute top-2 left-2 flex gap-1.5">
-          <span className="bg-[#1a3a6b] text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
+          <span className="bg-brand-navy text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
             Zone {listing.zone}
           </span>
           {listing.financeable && (
-            <span className="bg-[#3d9e3d] text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
+            <span className="bg-brand-green text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
               Finançable
             </span>
           )}
@@ -93,7 +93,7 @@ export default function ListingCard({ listing }: Props) {
 
       {/* Info */}
       <div className="p-4">
-        <h3 className="font-bold text-[#1a3a6b] group-hover:text-[#3d9e3d] transition-colors leading-tight text-sm mb-1">
+        <h3 className="font-bold text-brand-navy group-hover:text-brand-green transition-colors leading-tight text-sm mb-1">
           {v ? `${v.year} ${v.make} ${v.model}` : 'Véhicule'}
         </h3>
 

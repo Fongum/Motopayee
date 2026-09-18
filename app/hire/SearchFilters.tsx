@@ -27,7 +27,7 @@ export default function HireSearchFilters({ total }: { total: number }) {
             defaultValue={searchParams.get('city') ?? ''}
             onBlur={(e) => update('city', e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && update('city', (e.target as HTMLInputElement).value)}
-            className="w-32 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#3d9e3d]"
+            className="w-32 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-green"
           />
         </div>
 
@@ -39,7 +39,7 @@ export default function HireSearchFilters({ total }: { total: number }) {
             defaultValue={searchParams.get('make') ?? ''}
             onBlur={(e) => update('make', e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && update('make', (e.target as HTMLInputElement).value)}
-            className="w-32 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#3d9e3d]"
+            className="w-32 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-green"
           />
         </div>
 
@@ -48,7 +48,7 @@ export default function HireSearchFilters({ total }: { total: number }) {
           <select
             defaultValue={searchParams.get('zone') ?? ''}
             onChange={(e) => update('zone', e.target.value)}
-            className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#3d9e3d]"
+            className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-green"
           >
             <option value="">Toutes</option>
             <option value="A">Zone A</option>
@@ -62,7 +62,7 @@ export default function HireSearchFilters({ total }: { total: number }) {
           <select
             defaultValue={searchParams.get('hire_type') ?? ''}
             onChange={(e) => update('hire_type', e.target.value)}
-            className="w-36 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#3d9e3d]"
+            className="w-36 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-green"
           >
             <option value="">Tous</option>
             <option value="self_drive">Sans chauffeur</option>
@@ -78,7 +78,7 @@ export default function HireSearchFilters({ total }: { total: number }) {
             defaultValue={searchParams.get('max_price') ?? ''}
             onBlur={(e) => update('max_price', e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && update('max_price', (e.target as HTMLInputElement).value)}
-            className="w-28 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#3d9e3d]"
+            className="w-28 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-green"
           />
         </div>
 
@@ -87,7 +87,7 @@ export default function HireSearchFilters({ total }: { total: number }) {
           <select
             defaultValue={searchParams.get('fuel_type') ?? ''}
             onChange={(e) => update('fuel_type', e.target.value)}
-            className="w-28 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#3d9e3d]"
+            className="w-28 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-green"
           >
             <option value="">Tous</option>
             <option value="petrol">Essence</option>
@@ -102,7 +102,7 @@ export default function HireSearchFilters({ total }: { total: number }) {
           <select
             defaultValue={searchParams.get('min_seats') ?? ''}
             onChange={(e) => update('min_seats', e.target.value)}
-            className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#3d9e3d]"
+            className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-green"
           >
             <option value="">Toutes</option>
             <option value="4">4+</option>
@@ -117,7 +117,7 @@ export default function HireSearchFilters({ total }: { total: number }) {
           <select
             defaultValue={searchParams.get('sort') ?? ''}
             onChange={(e) => update('sort', e.target.value)}
-            className="w-32 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#3d9e3d]"
+            className="w-32 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-green"
           >
             <option value="">Plus récent</option>
             <option value="price_asc">Prix croissant</option>
@@ -132,7 +132,7 @@ export default function HireSearchFilters({ total }: { total: number }) {
             type="checkbox"
             defaultChecked={searchParams.get('available') === 'true'}
             onChange={(e) => update('available', e.target.checked ? 'true' : '')}
-            className="w-4 h-4 rounded border-gray-300 text-[#3d9e3d] focus:ring-[#3d9e3d]"
+            className="w-4 h-4 rounded border-gray-300 text-brand-green focus:ring-brand-green"
           />
           <span className="text-sm text-gray-700 font-medium">Disponible uniquement</span>
         </label>

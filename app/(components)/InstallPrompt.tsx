@@ -45,7 +45,7 @@ export default function InstallPrompt() {
 
   return (
     <div className="fixed bottom-20 left-4 right-4 z-40 md:left-auto md:right-5 md:max-w-sm">
-      <div className="bg-[#1a3a6b] text-white rounded-2xl p-4 shadow-xl flex items-center gap-3">
+      <div className="bg-brand-navy text-white rounded-2xl p-4 shadow-xl flex items-center gap-3">
         <div className="flex-shrink-0 w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -57,7 +57,7 @@ export default function InstallPrompt() {
         </div>
         <button
           onClick={install}
-          className="flex-shrink-0 bg-white text-[#1a3a6b] font-bold text-xs px-3 py-2 rounded-lg hover:bg-gray-100 transition"
+          className="flex-shrink-0 bg-white text-brand-navy font-bold text-xs px-3 py-2 rounded-lg hover:bg-gray-100 transition"
         >
           Installer
         </button>
