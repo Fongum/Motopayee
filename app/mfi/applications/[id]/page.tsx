@@ -57,7 +57,7 @@ export default async function MFIApplicationDetailPage({
       id, status, income_grade, down_payment_percent, max_tenor,
       manual_review_required, mfi_institution_id, submitted_at, decided_at,
       disbursed_at, created_at,
-      listing:listings(id, asking_price, zone, vehicle:vehicles(make, model, year)),
+      listing:listings(id, asking_price, zone, financeable, vehicle:vehicles(make, model, year)),
       buyer:profiles!buyer_id(id, email, full_name, phone, city, zone)
     `)
     .eq('id', params.id)
