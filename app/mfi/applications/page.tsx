@@ -70,12 +70,16 @@ export default async function MFIApplicationsPage({
     .select(`
       id, status, created_at, income_grade,
       disbursed_at, mfi_institution_id,
-      listing:listings(asking_price, zone, financeable, vehicle:vehicles(make, model, year)),
+      listing:listings!inner(asking_price, zone, financeable, vehicle:vehicles(make, model, year)),
       buyer:profiles!buyer_id(full_name, city)
     `)
     .order('created_at', { ascending: false });
 
   if (institutionId) {
+    // `listings!inner` above is what makes the financeable filter drop rows:
+    // on a plain embed it only nulls `listing`, and the application still
+    // appeared as a bare "Vehicule" with no zone or price.
+    //
     // Scoped to files routed to this institution. Applicant name and city are
     // selected above, so an unscoped list would show every partner — including
     // competitors — who is applying for finance and where they live.
@@ -128,8 +132,6 @@ export default async function MFIApplicationsPage({
       ? allItems.filter((app) => app.mfi_institution_id === institutionId)
     : searchParams.filter === 'needs_response'
       ? allItems.filter((app) => app.mfi_institution_id === institutionId && !offersByApplication.has(app.id))
-    : searchParams.filter === 'open_market'
-      ? allItems.filter((app) => app.mfi_institution_id !== institutionId && !offersByApplication.has(app.id))
     : searchParams.filter === 'my_offers'
       ? allItems.filter((app) => {
         const offer = offersByApplication.get(app.id);
@@ -161,7 +163,6 @@ export default async function MFIApplicationsPage({
             { value: '', label: 'Toutes' },
             { value: 'assigned', label: 'Assignees' },
             { value: 'needs_response', label: 'A repondre' },
-            { value: 'open_market', label: 'Ouvertes' },
             { value: 'my_offers', label: 'Mes offres actives' },
             { value: 'buyer_interested', label: 'Acheteurs interesses' },
             { value: 'accepted', label: 'Offres retenues' },
@@ -192,8 +193,6 @@ export default async function MFIApplicationsPage({
                 ? 'Aucune demande assignee a votre IMF pour le moment.'
               : searchParams.filter === 'needs_response'
                 ? 'Aucune demande assignee sans reponse pour le moment.'
-              : searchParams.filter === 'open_market'
-                ? 'Aucune demande ouverte disponible pour le moment.'
               : searchParams.filter === 'my_offers'
                 ? 'Aucune offre active pour le moment.'
               : searchParams.filter === 'accepted'
@@ -240,11 +239,6 @@ export default async function MFIApplicationsPage({
                     {assignedToThisMfi && !offer && (
                       <p className="mt-2 inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
                         Assignee a votre IMF - reponse attendue
-                      </p>
-                    )}
-                    {!assignedToThisMfi && !offer && (
-                      <p className="mt-2 inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-                        Ouverte aux offres partenaires
                       </p>
                     )}
                     {app.status === 'disbursed' && app.disbursed_at && (

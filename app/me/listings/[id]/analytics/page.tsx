@@ -1,7 +1,6 @@
 import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
 import { redirect, notFound } from 'next/navigation';
-import { buildDailySeries, dayKey } from '@/lib/daily-series';
-import { dedupeContactEvents, type ContactEventRecord } from '@/lib/contact-events';
+import { getListingAnalytics, type ListingAnalytics } from '@/lib/listing-analytics.server';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
@@ -11,58 +10,16 @@ export const metadata: Metadata = {
 
 interface DayData { date: string; count: number }
 
-interface AnalyticsData {
-  total_views: number;
-  views_7d: number;
-  favourites_count: number;
-  contacts_30d: number;
-  contacts_7d: number;
-  contact_clicks_30d: number;
-  by_day: DayData[];
-  contacts_by_day: DayData[];
-}
-
-async function getAnalytics(listingId: string, sellerId: string): Promise<AnalyticsData | null> {
+async function getAnalytics(listingId: string, sellerId: string): Promise<ListingAnalytics | null> {
   const { data: listing } = await supabaseAdmin
     .from('listings')
-    .select('id, seller_id, vehicle:vehicles(make, model, year)')
+    .select('id')
     .eq('id', listingId)
     .eq('seller_id', sellerId)
     .single();
 
   if (!listing) return null;
-
-  const ago7d  = dayKey(new Date(Date.now() - 7  * 86_400_000));
-  const ago30d = dayKey(new Date(Date.now() - 30 * 86_400_000));
-
-  const [totalRes, week7Res, byDayRes, favRes, contactsRes] = await Promise.all([
-    supabaseAdmin.from('listing_views').select('id', { count: 'exact', head: true }).eq('listing_id', listingId),
-    supabaseAdmin.from('listing_views').select('id', { count: 'exact', head: true }).eq('listing_id', listingId).gte('date_day', ago7d),
-    supabaseAdmin.from('listing_views').select('date_day').eq('listing_id', listingId).gte('date_day', ago30d).order('date_day'),
-    supabaseAdmin.from('favourites').select('id', { count: 'exact', head: true }).eq('listing_id', listingId),
-    supabaseAdmin
-      .from('contact_events')
-      .select('id, surface, listing_id, hire_listing_id, actor_id, visitor_key, date_day')
-      .eq('listing_id', listingId)
-      .gte('date_day', ago30d)
-      .order('date_day'),
-  ]);
-
-  const viewDays = ((byDayRes.data ?? []) as { date_day: string }[]).map((r) => r.date_day);
-  // One row per click; collapse repeat taps by the same viewer on the same day.
-  const contactRows = (contactsRes.data ?? []) as unknown as ContactEventRecord[];
-  const contacts = dedupeContactEvents(contactRows);
-
-  return {
-    total_views: totalRes.count ?? 0,
-    views_7d: week7Res.count ?? 0,
-    favourites_count: favRes.count ?? 0,
-    contacts_30d: contacts.length,
-    contacts_7d: contacts.filter((r) => r.date_day >= ago7d).length,
-    contact_clicks_30d: contactRows.length,
-    by_day: buildDailySeries(viewDays, 30),
-    contacts_by_day: buildDailySeries(contacts.map((r) => r.date_day), 30),
-  };
+  return getListingAnalytics(listingId);
 }
 
 /** Simple SVG bar chart — no dependencies */

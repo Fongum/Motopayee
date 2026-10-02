@@ -3,6 +3,7 @@ import { requireAdminPage } from '@/lib/auth/admin-access';
 import Link from 'next/link';
 import { PARTNER_ENGAGED_STATUSES } from '@/lib/launch-lead-metrics';
 import { OPEN_LEAD_STATUSES } from '@/lib/launch-lead-metrics';
+import { fetchAllRows } from '@/lib/fetch-all-rows';
 
 
 const LEAD_TYPE_LABELS: Record<string, string> = {
@@ -132,11 +133,16 @@ export default async function AdminDashboardPage() {
       .lte('next_follow_up_at', endOfDay.toISOString())
       .order('next_follow_up_at', { ascending: true })
       .limit(6),
-    supabaseAdmin
-      .from('payments')
-      .select('amount')
-      .eq('payment_type', 'inspection_fee')
-      .eq('status', 'successful'),
+    // Summed in JS, so every row is needed: an unpaged select stops at 1000
+    // payments and the revenue tile would quietly stop growing.
+    fetchAllRows((from, to) =>
+      supabaseAdmin
+        .from('payments')
+        .select('amount')
+        .eq('payment_type', 'inspection_fee')
+        .eq('status', 'successful')
+        .order('id')
+        .range(from, to)),
   ]);
 
   const inspectionRevenue = (inspectionPayments ?? []).reduce((total, payment) => (

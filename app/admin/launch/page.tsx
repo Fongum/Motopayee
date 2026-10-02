@@ -9,6 +9,7 @@ import {
   WEEKLY_METRICS,
 } from '@/lib/launch-metrics';
 import { PARTNER_ENGAGED_STATUSES, isOpenLeadStatus } from '@/lib/launch-lead-metrics';
+import { fetchAllRows } from '@/lib/fetch-all-rows';
 
 // Shared with the admin dashboard, which asks the same question.
 const ACTIVE_PARTNER_STATUSES: readonly string[] = PARTNER_ENGAGED_STATUSES;
@@ -195,10 +196,15 @@ export default async function AdminLaunchPage() {
     supabaseAdmin.from('hire_service_fees').select('*', { count: 'exact', head: true }).eq('status', 'expected'),
     supabaseAdmin.from('hire_service_fees').select('*', { count: 'exact', head: true }).eq('status', 'invoiced'),
     supabaseAdmin.from('hire_bookings').select('*', { count: 'exact', head: true }).gte('created_at', since),
-    supabaseAdmin
-      .from('launch_leads')
-      .select('lead_type, status, source, campaign_name, next_follow_up_at, created_at')
-      .gte('created_at', since),
+    // Grouped by type/source/campaign in JS, so every row is needed — paged
+    // rather than left to stop silently at PostgREST's 1000-row cap.
+    fetchAllRows((from, to) =>
+      supabaseAdmin
+        .from('launch_leads')
+        .select('lead_type, status, source, campaign_name, next_follow_up_at, created_at')
+        .gte('created_at', since)
+        .order('id')
+        .range(from, to)),
     supabaseAdmin
       .from('launch_readiness_checks')
       .select('key, label, detail, status, notes, updated_at')

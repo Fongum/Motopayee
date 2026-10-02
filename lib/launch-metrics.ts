@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/auth/server';
-import { dedupeContactEvents, type ContactEventRecord } from '@/lib/contact-events';
+import { CONTACT_EVENT_COLUMNS, dedupeContactEvents, type ContactEventRecord } from '@/lib/contact-events';
+import { fetchAllRows } from '@/lib/fetch-all-rows';
 import {
   endOfLaunchWeek,
   groupWeeklyRows,
@@ -30,7 +31,12 @@ export async function computeWeeklyMetrics(weekStart: Date): Promise<WeeklyMetri
     { count: rentalBookings },
     contactRows,
   ] = await Promise.all([
-    supabaseAdmin.from('launch_leads').select('lead_type').gte('created_at', from).lt('created_at', to),
+    // Row fetches, not counts: leads are split by type and contacts deduped in
+    // JS. Paged so a busy week is not silently capped at 1000 rows.
+    fetchAllRows((rangeFrom, rangeTo) =>
+      supabaseAdmin.from('launch_leads').select('lead_type')
+        .gte('created_at', from).lt('created_at', to)
+        .order('id').range(rangeFrom, rangeTo)),
     supabaseAdmin
       .from('listings')
       .select('*', { count: 'exact', head: true })
@@ -52,12 +58,15 @@ export async function computeWeeklyMetrics(weekStart: Date): Promise<WeeklyMetri
     supabaseAdmin.from('inspection_requests').select('*', { count: 'exact', head: true }).gte('created_at', from).lt('created_at', to),
     supabaseAdmin.from('financing_applications').select('*', { count: 'exact', head: true }).gte('created_at', from).lt('created_at', to),
     supabaseAdmin.from('hire_bookings').select('*', { count: 'exact', head: true }).gte('created_at', from).lt('created_at', to),
-    supabaseAdmin
-      .from('contact_events')
-      .select('id, surface, listing_id, hire_listing_id, actor_id, visitor_key, date_day')
-      .in('surface', ['listing', 'hire'])
-      .gte('created_at', from)
-      .lt('created_at', to),
+    fetchAllRows((rangeFrom, rangeTo) =>
+      supabaseAdmin
+        .from('contact_events')
+        .select(CONTACT_EVENT_COLUMNS)
+        .in('surface', ['listing', 'hire'])
+        .gte('created_at', from)
+        .lt('created_at', to)
+        .order('id')
+        .range(rangeFrom, rangeTo)),
   ]);
 
   const leads = (leadRows.data ?? []) as { lead_type: string }[];
