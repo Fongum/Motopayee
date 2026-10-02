@@ -3,6 +3,7 @@ import { requireAdminPage } from '@/lib/auth/admin-access';
 import { supabaseAdmin } from '@/lib/auth/server';
 import type { InspectionRequest, InspectionRequestStatus } from '@/lib/types';
 import InspectionRequestActions from './InspectionRequestActions';
+import { fetchAllRows } from '@/lib/fetch-all-rows';
 
 const STATUS_LABELS: Record<InspectionRequestStatus, string> = {
   submitted: 'Nouveau',
@@ -136,10 +137,15 @@ export default async function AdminInspectionRequestsPage({
       .eq('payment_type', 'inspection_fee')
       .order('created_at', { ascending: false })
     : { data: [] };
-  const { data: allInspectionPaymentRows } = await supabaseAdmin
-    .from('payments')
-    .select('amount, status')
-    .eq('payment_type', 'inspection_fee');
+  // Revenue and per-status counts are reduced in JS over every inspection
+  // payment, so the fetch is paged rather than stopping at 1000 rows.
+  const { data: allInspectionPaymentRows } = await fetchAllRows((from, to) =>
+    supabaseAdmin
+      .from('payments')
+      .select('amount, status')
+      .eq('payment_type', 'inspection_fee')
+      .order('id')
+      .range(from, to));
   const latestPayments = new Map<string, PaymentSummary>();
   ((paymentRows ?? []) as unknown as PaymentSummary[]).forEach((payment) => {
     if (!latestPayments.has(payment.inspection_request_id)) {
@@ -156,15 +162,28 @@ export default async function AdminInspectionRequestsPage({
     id: inspector.id as string,
     label: ((inspector.full_name as string | null) || (inspector.email as string | null) || 'Inspecteur') as string,
   }));
+  // The tiles count the whole table. Counting `requests` instead tied them to
+  // the active filter and the 100-row cap: on "Termines", "A programmer" read 0.
+  const countRequests = (status: InspectionRequestStatus) => supabaseAdmin
+    .from('inspection_requests')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', status)
+    .then(({ count }) => count ?? 0);
+  const [paidCount, scheduledCount, completedCount] = await Promise.all([
+    countRequests('paid'),
+    countRequests('scheduled'),
+    countRequests('completed'),
+  ]);
+
   const inspectionPayments = (allInspectionPaymentRows ?? []) as Array<{ amount: number | string | null; status: string }>;
   const paymentCountByStatus = (status: string) => inspectionPayments.filter((payment) => payment.status === status).length;
   const paymentAmountByStatus = (status: string) => inspectionPayments
     .filter((payment) => payment.status === status)
     .reduce((total, payment) => total + Number(payment.amount ?? 0), 0);
   const stats = [
-    { label: 'A programmer', value: requests.filter((request) => request.status === 'paid').length.toLocaleString('fr-FR'), href: '/admin/inspection-requests?status=paid', color: 'text-green-700' },
-    { label: 'Programmees', value: requests.filter((request) => request.status === 'scheduled').length.toLocaleString('fr-FR'), href: '/admin/inspection-requests?status=scheduled', color: 'text-purple-700' },
-    { label: 'Terminees', value: requests.filter((request) => request.status === 'completed').length.toLocaleString('fr-FR'), href: '/admin/inspection-requests?status=completed', color: 'text-gray-900' },
+    { label: 'A programmer', value: paidCount.toLocaleString('fr-FR'), href: '/admin/inspection-requests?status=paid', color: 'text-green-700' },
+    { label: 'Programmees', value: scheduledCount.toLocaleString('fr-FR'), href: '/admin/inspection-requests?status=scheduled', color: 'text-purple-700' },
+    { label: 'Terminees', value: completedCount.toLocaleString('fr-FR'), href: '/admin/inspection-requests?status=completed', color: 'text-gray-900' },
     { label: 'Paiements en cours', value: paymentCountByStatus('pending') + paymentCountByStatus('processing'), href: '/admin/inspection-requests?payment=pending', color: 'text-amber-700' },
     { label: 'Revenu recu', value: formatXAF(paymentAmountByStatus('successful')), href: '/admin/inspection-requests?payment=successful', color: 'text-green-700' },
     { label: 'Paiements echoues', value: paymentCountByStatus('failed'), href: '/admin/inspection-requests?payment=failed', color: 'text-red-700' },

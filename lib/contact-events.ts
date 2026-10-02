@@ -44,6 +44,9 @@ export function contactEventRow(input: ContactEventInput, actorId: string | null
   };
 }
 
+/** The select list that yields a ContactEventRecord. */
+export const CONTACT_EVENT_COLUMNS = 'id, surface, listing_id, hire_listing_id, actor_id, visitor_key, date_day';
+
 /** The subset of a `contact_events` row that dedupe needs. */
 export interface ContactEventRecord {
   id: string;

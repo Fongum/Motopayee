@@ -142,7 +142,7 @@ export default async function AdminApplicationDetailPage({ params }: { params: {
               ['Apport initial', app.down_payment_percent ? `${app.down_payment_percent}%` : '—'],
               ['Durée max', app.max_tenor ? `${app.max_tenor} mois` : '—'],
               ['Revue manuelle', app.manual_review_required ? 'Oui' : 'Non'],
-              ['Decaisse le', app.disbursed_at ? new Date(app.disbursed_at).toLocaleDateString('fr-FR') : 'â€”'],
+              ['Decaisse le', app.disbursed_at ? new Date(app.disbursed_at).toLocaleDateString('fr-FR') : '—'],
             ].map(([l, v]) => (
               <div key={l} className="flex justify-between border-b border-gray-50 py-1">
                 <dt className="text-gray-500">{l}</dt>

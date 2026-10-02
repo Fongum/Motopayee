@@ -3,7 +3,8 @@ import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
 import type { Metadata } from 'next';
 import DealerDashboardClient from './DealerDashboardClient';
 import { dayKey } from '@/lib/daily-series';
-import { dedupeContactEvents, type ContactEventRecord } from '@/lib/contact-events';
+import { CONTACT_EVENT_COLUMNS, dedupeContactEvents, type ContactEventRecord } from '@/lib/contact-events';
+import { fetchAllRows } from '@/lib/fetch-all-rows';
 import {
   inventoryAttention,
   inventoryTotals,
@@ -49,15 +50,25 @@ export default async function DealerPage() {
   const measuredIds = allListings.filter((l) => l.status === 'published').map((l) => l.id);
   const since = dayKey(new Date(Date.now() - PERFORMANCE_DAYS * 86_400_000));
 
+  // One row per view / click / favourite across the whole inventory, so a busy
+  // dealer passes PostgREST's 1000-row cap within days — paged, not capped.
   const [viewsRes, contactsRes, favouritesRes] = measuredIds.length
     ? await Promise.all([
-        supabaseAdmin.from('listing_views').select('listing_id').in('listing_id', measuredIds).gte('date_day', since),
-        supabaseAdmin
-          .from('contact_events')
-          .select('id, surface, listing_id, hire_listing_id, actor_id, visitor_key, date_day')
-          .in('listing_id', measuredIds)
-          .gte('date_day', since),
-        supabaseAdmin.from('favourites').select('listing_id').in('listing_id', measuredIds),
+        fetchAllRows((from, to) =>
+          supabaseAdmin.from('listing_views').select('listing_id')
+            .in('listing_id', measuredIds).gte('date_day', since)
+            .order('id').range(from, to)),
+        fetchAllRows((from, to) =>
+          supabaseAdmin
+            .from('contact_events')
+            .select(CONTACT_EVENT_COLUMNS)
+            .in('listing_id', measuredIds)
+            .gte('date_day', since)
+            .order('id').range(from, to)),
+        fetchAllRows((from, to) =>
+          supabaseAdmin.from('favourites').select('listing_id')
+            .in('listing_id', measuredIds)
+            .order('id').range(from, to)),
       ])
     : [{ data: [] }, { data: [] }, { data: [] }];
 
@@ -79,13 +90,15 @@ export default async function DealerPage() {
   // Recent conversations (leads)
   const { data: convs } = await supabaseAdmin
     .from('conversations')
-    .select('id, last_message_at, listing:listings(id, vehicle:vehicles(make, model, year)), participant_a_profile:profiles!participant_a(full_name), participant_b_profile:profiles!participant_b(full_name)')
+    .select('id, last_message_at, participant_a, participant_b, listing:listings(id, vehicle:vehicles(make, model, year)), participant_a_profile:profiles!participant_a(full_name), participant_b_profile:profiles!participant_b(full_name)')
     .or(`participant_a.eq.${user.id},participant_b.eq.${user.id}`)
     .order('last_message_at', { ascending: false })
     .limit(10);
 
   const leads = (convs ?? []).map((c: Record<string, unknown>) => {
-    const otherProfile = (c.participant_a_profile as unknown as { full_name: string | null })?.full_name === user.name
+    // By id, not by name: comparing full_name to user.name picked the dealer
+    // themself whenever their profile had no name or a buyer shared it.
+    const otherProfile = c.participant_a === user.id
       ? c.participant_b_profile as unknown as { full_name: string | null }
       : c.participant_a_profile as unknown as { full_name: string | null };
     const listing = c.listing as unknown as { id: string; vehicle: { make: string; model: string; year: number } | null } | null;

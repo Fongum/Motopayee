@@ -1,6 +1,7 @@
 import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { fetchAllRows } from '@/lib/fetch-all-rows';
 
 function formatXAF(n: number) {
   return new Intl.NumberFormat('fr-CM', {
@@ -47,24 +48,34 @@ export default async function MFIRootPage() {
 
   const openStatuses = ['submitted', 'docs_received', 'under_review', 'approved'];
 
+  // Scoped like /mfi/applications, which this tile links to: a partner only
+  // ever sees files routed to them, so counting every institution's open
+  // files made the tile disagree with the list behind it.
+  let openApplicationsQuery = supabaseAdmin
+    .from('financing_applications')
+    .select('id, listing:listings!inner(financeable)', { count: 'exact', head: true })
+    .in('status', openStatuses)
+    .eq('listing.financeable', true);
+  openApplicationsQuery = institutionId
+    ? openApplicationsQuery.eq('mfi_institution_id', institutionId)
+    : openApplicationsQuery.not('mfi_institution_id', 'is', null);
+
   const [
-    { data: openApplicationRows },
+    { count: openApplicationCount },
     { data: offerRows },
     { data: interestedRows },
   ] = await Promise.all([
-    supabaseAdmin
-      .from('financing_applications')
-      .select('id, listing:listings!inner(financeable)')
-      .in('status', openStatuses)
-      .eq('listing.financeable', true),
-    institutionId
-      ? supabaseAdmin
+    openApplicationsQuery,
+    // Every offer is tallied in JS below, so the fetch is paged rather than
+    // stopping at 1000 rows (the admin view spans every institution).
+    fetchAllRows((from, to) => {
+      const offers = supabaseAdmin
         .from('mfi_application_offers')
-        .select('id, status, buyer_response, application:financing_applications(status)')
-        .eq('mfi_institution_id', institutionId)
-      : supabaseAdmin
-        .from('mfi_application_offers')
-        .select('id, status, buyer_response, application:financing_applications(status)'),
+        .select('id, status, buyer_response, application:financing_applications(status)');
+      return (institutionId ? offers.eq('mfi_institution_id', institutionId) : offers)
+        .order('id')
+        .range(from, to);
+    }),
     institutionId
       ? supabaseAdmin
         .from('mfi_application_offers')
@@ -91,7 +102,7 @@ export default async function MFIRootPage() {
     buyer_response: string | null;
     application?: { status: string } | Array<{ status: string }> | null;
   }>;
-  const openApplications = (openApplicationRows ?? []).length;
+  const openApplications = openApplicationCount ?? 0;
   const submittedOffers = offers.filter((offer) => ['submitted', 'shortlisted', 'accepted'].includes(offer.status)).length;
   const interestedOffers = offers.filter((offer) => offer.buyer_response === 'interested').length;
   const acceptedOffers = offers.filter((offer) => offer.status === 'accepted').length;
