@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { IMPORT_OFFER_PUBLIC_COLUMNS } from '@/lib/import-offer-public';
 import Navbar from '@/app/(components)/Navbar';
 import Footer from '@/app/(components)/Footer';
 import { supabaseAdmin } from '@/lib/auth/server';
@@ -29,7 +30,7 @@ function getOfferImage(offer: ImportOffer) {
 export default async function ImportsLandingPage() {
   const { data } = await supabaseAdmin
     .from('import_offers')
-    .select('*')
+    .select(IMPORT_OFFER_PUBLIC_COLUMNS)
     .eq('status', 'active')
     .order('created_at', { ascending: false })
     .limit(12);

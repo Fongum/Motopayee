@@ -8,10 +8,15 @@ interface RouteParams {
 export async function GET(_request: Request, { params }: RouteParams) {
   const { data, error } = await supabaseAdmin
     .from('listings')
+    // Unauthenticated, so named public columns only. `*` here handed anyone
+    // who knew a listing id MotoPayee's internal valuation (mve_low/high,
+    // suggested_price), the price_band withdrawn from public display, the
+    // staff assignments, and from the vehicle its VIN and inspection notes.
     .select(
       `
-      *,
-      vehicle:vehicles(*),
+      id, status, asking_price, previous_price, zone, city, description,
+      financeable, published_at, created_at,
+      vehicle:vehicles(make, model, year, mileage_km, fuel_type, transmission, color, engine_cc, seats, condition_grade),
       media:media_assets(id, storage_path, bucket, display_order, asset_type, caption)
       `
     )

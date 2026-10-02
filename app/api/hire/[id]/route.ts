@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/auth/server';
+import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
 import { requireAuth } from '@/lib/auth/middleware';
 import { parseBody } from '@/lib/validation';
 import { updateHireListingSchema } from '@/lib/hire-schemas';
 import type { HireListing } from '@/lib/types';
+import { isStaffRole } from '@/lib/auth/roles';
+
+/** Stored on a hire listing but never displayed to the public. */
+const HIRE_PRIVATE_COLUMNS = ['plate_number', 'latitude', 'longitude'] as const;
 
 // GET /api/hire/[id] — Get hire listing detail (public for published)
 export async function GET(
@@ -20,13 +24,23 @@ export async function GET(
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  // Only published listings are publicly visible
-  if (data.status !== 'published') {
-    // Check if requester is owner or admin
+  // The owner and staff see the whole row in any status. This branch used to
+  // say "check if requester is owner or admin" and then return the row to
+  // anyone — drafts, listings under review and suspended ones included.
+  const user = await getCurrentUser().catch(() => null);
+  if (user && (user.id === data.owner_id || isStaffRole(user.role))) {
     return NextResponse.json(data as unknown as HireListing);
   }
 
-  return NextResponse.json(data as unknown as HireListing);
+  if (data.status !== 'published') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  // Everyone else: what /hire/[id] displays. The plate number and the owner's
+  // exact coordinates are never shown publicly, so they are not served either.
+  const publicListing: Record<string, unknown> = { ...data };
+  for (const key of HIRE_PRIVATE_COLUMNS) delete publicListing[key];
+  return NextResponse.json(publicListing as unknown as HireListing);
 }
 
 // PATCH /api/hire/[id] — Update own hire listing

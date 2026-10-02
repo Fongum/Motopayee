@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/auth/server';
+import { reportError } from '@/lib/error-reporting';
 import { requireAuth } from '@/lib/auth/middleware';
 import { rateLimit } from '@/lib/rate-limit';
 import { parseBody, amountXaf } from '@/lib/validation';
@@ -24,7 +25,11 @@ export async function GET() {
     .eq('active', true)
     .order('name');
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    // Generic message: the raw Postgres text is schema detail, and this GET is public.
+    reportError(error, { source: 'api/insurance', route: '/api/insurance' });
+    return NextResponse.json({ error: 'Failed to fetch insurance partners.' }, { status: 500 });
+  }
   return NextResponse.json(data ?? []);
 }
 

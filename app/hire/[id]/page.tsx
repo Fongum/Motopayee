@@ -355,7 +355,17 @@ export default async function HireDetailPage({ params }: Props) {
                 />
 
                 {/* Booking form */}
-                <BookingForm listing={listing} />
+                <BookingForm
+                  listing={{
+                    id: listing.id,
+                    hire_type: listing.hire_type,
+                    daily_rate: listing.daily_rate,
+                    weekly_rate: listing.weekly_rate,
+                    monthly_rate: listing.monthly_rate,
+                    driver_daily_rate: listing.driver_daily_rate,
+                    deposit_amount: listing.deposit_amount,
+                  }}
+                />
               </div>
             </div>
           </div>
