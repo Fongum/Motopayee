@@ -21,6 +21,7 @@ export type AdminAccessLevel = 'staff' | 'admin';
 export type AdminSection =
   | 'applications'
   | 'dashboard'
+  | 'dealers'
   | 'finance'
   | 'hire'
   | 'imports'
@@ -41,6 +42,7 @@ export const ADMIN_SECTION_ACCESS: Record<AdminSection, AdminAccessLevel> = {
 
   // Customer contact details, money, partners and business strategy.
   applications: 'admin',
+  dealers: 'admin',
   finance: 'admin',
   hire: 'admin',
   imports: 'admin',

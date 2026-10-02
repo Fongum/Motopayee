@@ -133,7 +133,8 @@ export interface Listing {
   updated_at: string;
   // Joined
   vehicle?: Vehicle;
-  seller?: Profile;
+  /** `dealers` is embedded as `dealers!profile_id(verified)` for the Trusted Dealer badge. */
+  seller?: Profile & { dealers?: Array<{ verified: boolean }> | null };
   media?: MediaAsset[];
   /**
    * Attached separately, never embedded: documents is polymorphic
