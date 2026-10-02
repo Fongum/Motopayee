@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { IMPORT_OFFER_PUBLIC_COLUMNS } from '@/lib/import-offer-public';
 import { notFound } from 'next/navigation';
 import Navbar from '@/app/(components)/Navbar';
 import Footer from '@/app/(components)/Footer';
@@ -33,7 +34,7 @@ export default async function ImportOfferDetailPage({
 }) {
   const { data } = await supabaseAdmin
     .from('import_offers')
-    .select('*')
+    .select(IMPORT_OFFER_PUBLIC_COLUMNS)
     .eq('id', params.id)
     .eq('status', 'active')
     .single();

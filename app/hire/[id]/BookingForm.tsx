@@ -16,7 +16,19 @@ const UNIT_LABEL: Record<'month' | 'week' | 'day', { one: string; many: string }
   day: { one: 'jour', many: 'jours' },
 };
 
-export default function BookingForm({ listing }: { listing: HireListing }) {
+/**
+ * Exactly what the form reads. A client component's props are serialised into
+ * the page for every visitor, so this must stay a narrow pick: the full row
+ * carries plate_number and the owner's latitude/longitude, which the page
+ * never displays. The page builds this object field by field — a type alone
+ * strips nothing at runtime.
+ */
+export type BookingFormListing = Pick<
+  HireListing,
+  'id' | 'hire_type' | 'daily_rate' | 'weekly_rate' | 'monthly_rate' | 'driver_daily_rate' | 'deposit_amount'
+>;
+
+export default function BookingForm({ listing }: { listing: BookingFormListing }) {
   const router = useRouter();
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/auth/server';
+import { reportError } from '@/lib/error-reporting';
 import { requireAuth } from '@/lib/auth/middleware';
 import { parseBody, optionalText } from '@/lib/validation';
 
@@ -41,7 +42,11 @@ export async function GET(request: Request) {
   }
 
   const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    // Generic message: the raw Postgres text is schema detail, and this GET is public.
+    reportError(error, { source: 'api/reviews', route: '/api/reviews' });
+    return NextResponse.json({ error: 'Failed to fetch reviews.' }, { status: 500 });
+  }
 
   // Flatten the response array (single response per review)
   const reviews = (data ?? []).map((r: Record<string, unknown>) => ({

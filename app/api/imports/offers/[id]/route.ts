@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { IMPORT_OFFER_PUBLIC_COLUMNS } from '@/lib/import-offer-public';
 import { supabaseAdmin } from '@/lib/auth/server';
 
 interface RouteParams {
@@ -8,7 +9,7 @@ interface RouteParams {
 export async function GET(_request: Request, { params }: RouteParams) {
   const { data, error } = await supabaseAdmin
     .from('import_offers')
-    .select('*')
+    .select(IMPORT_OFFER_PUBLIC_COLUMNS)
     .eq('id', params.id)
     .eq('status', 'active')
     .single();
