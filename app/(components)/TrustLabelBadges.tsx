@@ -1,4 +1,5 @@
 import type { HireListing, Listing } from '@/lib/types';
+import { TRUSTED_DEALER_LABEL, TRUSTED_DEALER_TITLE, isProgramDealer } from '@/lib/dealer-program';
 
 type TrustBadge = {
   label: string;
@@ -35,6 +36,17 @@ export function getListingTrustBadges(listing: Listing): TrustBadge[] {
       label: 'Vendeur verifie',
       title: 'MotoPayee a verifie le profil ou les informations du vendeur.',
       className: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    });
+  }
+
+  // Granted only through the dealer program checklist (/admin/dealers), and
+  // the dealers table refuses verified=true while any of the policy's seven
+  // requirements is missing. Having the dealer role is not enough.
+  if (isProgramDealer(listing.seller)) {
+    badges.push({
+      label: TRUSTED_DEALER_LABEL,
+      title: TRUSTED_DEALER_TITLE,
+      className: 'border-teal-200 bg-teal-50 text-teal-700',
     });
   }
 

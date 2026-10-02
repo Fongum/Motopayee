@@ -12,6 +12,7 @@ const NAV = [
   { href: '/admin/leads/action-board', label: 'Action leads' },
   { href: '/admin/leads/inventory', label: 'File inventory' },
   { href: '/admin/leads/campaign-links', label: 'Liens campagnes' },
+  { href: '/admin/dealers', label: 'Concessionnaires' },
   { href: '/admin/leads/action-board?scope=mine', label: 'Mes actions' },
   { href: '/admin/inspection-requests', label: 'Inspections' },
   { href: '/inspector', label: 'Mes inspections' },
