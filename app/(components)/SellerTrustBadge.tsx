@@ -7,7 +7,11 @@ interface Props {
 }
 
 export default function SellerTrustBadge({ isVerified, avgRating, totalReviews }: Props) {
-  const isTrusted = isVerified && (avgRating ?? 0) >= 4.0 && totalReviews >= 5;
+  // A rating signal, not a trust label: it is not one of the labels in
+  // docs/trust-verification-policy.md and MotoPayee checks nothing to award
+  // it. It used to read "Vendeur de confiance", which sat next to the policy's
+  // "Concessionnaire de confiance" and claimed more than reviews can show.
+  const isWellRated = isVerified && (avgRating ?? 0) >= 4.0 && totalReviews >= 5;
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -22,9 +26,12 @@ export default function SellerTrustBadge({ isVerified, avgRating, totalReviews }
       {(avgRating ?? 0) > 0 && (
         <StarRating rating={avgRating ?? 0} count={totalReviews} />
       )}
-      {isTrusted && (
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200">
-          Vendeur de confiance
+      {isWellRated && (
+        <span
+          title={`Note moyenne de ${(avgRating ?? 0).toFixed(1)}/5 sur ${totalReviews} avis d'acheteurs.`}
+          className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200"
+        >
+          Bien noté
         </span>
       )}
     </div>

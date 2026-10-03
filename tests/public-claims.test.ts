@@ -91,3 +91,14 @@ describe('the policy and /trust still agree', () => {
     expect(trust).toMatch(/ne promettons pas/);
   });
 });
+
+describe('rating badge is not dressed as a trust label', () => {
+  // Only the policy's labels may use trust wording. The rating-based seller
+  // badge used to say "Vendeur de confiance", next to the policy's
+  // "Concessionnaire de confiance", for something MotoPayee never checks.
+  it('does not call a well-rated seller "de confiance"', () => {
+    const src = readFileSync(join(process.cwd(), 'app', '(components)', 'SellerTrustBadge.tsx'), 'utf8');
+    expect(src).not.toMatch(/>\s*Vendeur de confiance\s*</);
+    expect(src).toContain('Bien noté');
+  });
+});
