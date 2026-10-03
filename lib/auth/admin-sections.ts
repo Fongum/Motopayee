@@ -29,6 +29,7 @@ export type AdminSection =
   | 'leads'
   | 'listings'
   | 'ops'
+  | 'pricing'
   | 'reviews'
   | 'rules'
   | 'users';
@@ -47,6 +48,7 @@ export const ADMIN_SECTION_ACCESS: Record<AdminSection, AdminAccessLevel> = {
   launch: 'admin',
   leads: 'admin',
   ops: 'admin',
+  pricing: 'admin',
   reviews: 'admin',
   rules: 'admin',
   users: 'admin',
