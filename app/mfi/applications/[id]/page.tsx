@@ -1,4 +1,5 @@
 import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
+import { rowOrNull } from '@/lib/query-result';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { FinancingApplication, Payment } from '@/lib/types';
@@ -51,7 +52,7 @@ export default async function MFIApplicationDetailPage({
   // component today, so nothing leaked; it was fetched for no reason, and a
   // later change that passed this object to a client component would have
   // handed all of it to the partner's browser.
-  const { data, error } = await supabaseAdmin
+  const result = await supabaseAdmin
     .from('financing_applications')
     .select(`
       id, status, income_grade, down_payment_percent, max_tenor,
@@ -63,7 +64,8 @@ export default async function MFIApplicationDetailPage({
     .eq('id', params.id)
     .single();
 
-  if (error || !data) notFound();
+  const data = rowOrNull(result, 'mfi/applications/[id]');
+  if (!data) notFound();
 
   const app = data as unknown as FinancingApplication & {
     mfi_institution_id?: string | null;

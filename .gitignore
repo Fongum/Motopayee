@@ -117,3 +117,7 @@ output/
 
 # Scratch screenshots
 check.png
+
+# Supabase CLI local state
+supabase/.branches
+supabase/.temp

@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { rowOrNull } from '@/lib/query-result';
 import type { Metadata } from 'next';
 import Navbar from '../../(components)/Navbar';
 import Footer from '../../(components)/Footer';
@@ -37,7 +38,7 @@ async function getListing(id: string) {
   // has to come back first, and a video must not be handed to an <img>.
   const shaped = shapeHireMedia(query as unknown as HireQuery) as unknown as typeof query;
 
-  const { data } = await shaped.single();
+  const data = rowOrNull(await shaped.single(), 'hire/[id]');
   return data as unknown as HireListing | null;
 }
 

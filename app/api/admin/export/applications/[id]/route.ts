@@ -3,6 +3,8 @@ import { requireVerifier } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { fetchDocumentsFor } from '@/lib/documents.server';
 import { DOCUMENT_STAFF_COLUMNS } from '@/lib/documents';
+import { isQueryFailure } from '@/lib/query-result';
+import { reportError } from '@/lib/error-reporting';
 
 interface RouteParams { params: { id: string } }
 
@@ -27,7 +29,12 @@ export async function GET(request: Request, { params }: RouteParams) {
     .eq('id', params.id)
     .single();
 
-  if (error || !app) {
+  // A missing row is a 404; anything else is a failure and must not be one.
+  if (isQueryFailure(error)) {
+    reportError(error, { source: 'api', route: '/api/admin/export/applications/[id]' });
+    return NextResponse.json({ error: 'Failed to load.' }, { status: 500 });
+  }
+  if (!app) {
     return NextResponse.json({ error: 'Application not found.' }, { status: 404 });
   }
 

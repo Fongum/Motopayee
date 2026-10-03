@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/auth/server';
+import { rowOrNull } from '@/lib/query-result';
 import { requireAdminPage } from '@/lib/auth/admin-access';
 import { buildContactUrl } from '@/lib/whatsapp';
 import { QUICK_LEAD_ACTIVITY_TEMPLATES, buildLeadOutreachMessage } from '@/lib/launch-lead-playbooks';
@@ -243,7 +244,7 @@ function leadSla(lead: Pick<LeadRow, 'status' | 'created_at' | 'next_follow_up_a
 export default async function AdminLeadDetailPage({ params }: PageProps) {
   await requireAdminPage('leads');
 
-  const [{ data: leadData }, { data: staffData }] = await Promise.all([
+  const [leadResult, { data: staffData }] = await Promise.all([
     supabaseAdmin
       .from('launch_leads')
       .select('*, assigned:profiles!assigned_to(full_name, email), activities:launch_lead_activities(id, action, summary, meta, created_at, actor:profiles!actor_id(full_name, email))')
@@ -257,6 +258,7 @@ export default async function AdminLeadDetailPage({ params }: PageProps) {
       .order('full_name'),
   ]);
 
+  const leadData = rowOrNull(leadResult, 'admin/leads/[id]');
   if (!leadData) notFound();
 
   const lead = leadData as unknown as LeadRow;

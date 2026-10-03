@@ -1,4 +1,5 @@
 import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
+import { rowOrNull } from '@/lib/query-result';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Listing } from '@/lib/types';
@@ -24,14 +25,16 @@ export default async function SellerListingDetailPage({ params }: { params: { id
   // no foreign key here, so PostgREST rejected it with PGRST200 and the error
   // branch below 404'd this page for every seller. Nothing on the page renders
   // documents, so the embed was dead weight as well as fatal.
-  const { data, error } = await supabaseAdmin
-    .from('listings')
-    .select('*, vehicle:vehicles(*)')
-    .eq('id', params.id)
-    .eq('seller_id', user.id)
-    .single();
-
-  if (error || !data) notFound();
+  const data = rowOrNull(
+    await supabaseAdmin
+      .from('listings')
+      .select('*, vehicle:vehicles(*)')
+      .eq('id', params.id)
+      .eq('seller_id', user.id)
+      .single(),
+    'me/listings/[id]'
+  );
+  if (!data) notFound();
 
   const listing = data as unknown as Listing;
   const v = listing.vehicle;

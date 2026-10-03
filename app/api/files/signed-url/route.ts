@@ -3,6 +3,8 @@ import { authenticateRequest } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { isStaffRole } from '@/lib/auth/roles';
 import { z } from 'zod';
+import { isQueryFailure } from '@/lib/query-result';
+import { reportError } from '@/lib/error-reporting';
 
 // GET /api/files/signed-url?doc=<doc_id> — staff or document owner
 export async function GET(request: Request) {
@@ -24,7 +26,12 @@ export async function GET(request: Request) {
     .eq('id', docId)
     .single();
 
-  if (error || !doc) {
+  // A missing row is a 404; anything else is a failure and must not be one.
+  if (isQueryFailure(error)) {
+    reportError(error, { source: 'api', route: '/api/files/signed-url' });
+    return NextResponse.json({ error: 'Failed to load.' }, { status: 500 });
+  }
+  if (!doc) {
     return NextResponse.json({ error: 'Document not found.' }, { status: 404 });
   }
 

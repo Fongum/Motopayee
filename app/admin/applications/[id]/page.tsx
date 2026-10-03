@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/auth/server';
+import { rowOrNull } from '@/lib/query-result';
 import { requireAdminPage } from '@/lib/auth/admin-access';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -71,9 +72,8 @@ export default async function AdminApplicationDetailPage({ params }: { params: {
       .order('created_at', { ascending: false }),
   ]);
 
-  const { data, error } = appResult;
-
-  if (error || !data) notFound();
+  const data = rowOrNull(appResult, 'admin/applications/[id]');
+  if (!data) notFound();
 
   const app = data as unknown as FinancingApplication & {
     mfi_institution_id?: string | null;

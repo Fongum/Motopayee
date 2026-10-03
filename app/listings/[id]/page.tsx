@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { rowOrNull } from '@/lib/query-result';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import Navbar from '../../(components)/Navbar';
@@ -46,7 +47,7 @@ async function getListing(id: string): Promise<PublicListing | null> {
     {}
   ) as unknown as typeof query;
 
-  const { data } = await shaped.single();
+  const data = rowOrNull(await shaped.single(), 'listings/[id]');
   if (!data) return null;
 
   // Fetched separately — documents is polymorphic and cannot be embedded. This
