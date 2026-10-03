@@ -27,6 +27,18 @@ Open [http://localhost:3000](http://localhost:3000) to view the app.
 | `npm run audit` | Both live-database audits (needs credentials) |
 | `npm run audit:queries` | Check every query in the codebase against the live schema |
 | `npm run audit:access` | Check what the public anon key can read |
+| `npm run db:start` | Start a local Supabase stack (Docker) and apply every migration — ports 555xx, so it runs beside other local projects |
+| `npm run gen:types` | Regenerate `lib/database.types.ts` from that local database |
+
+### Database types
+
+The Supabase client is typed with `lib/database.types.ts`, so TypeScript checks
+table and column names, nullability, and `jsonb` payloads. **After adding a
+migration, run `npm run db:start` then `npm run gen:types`** and commit the
+result; `tests/database-types-sync.test.ts` fails if a migration's tables or
+columns are missing from the types. Use `JsonObject` from `lib/json.ts` for
+`meta`/`jsonb` payloads, and `TablesUpdate<'table'>` for update objects built
+up field by field.
 
 ## Environment
 

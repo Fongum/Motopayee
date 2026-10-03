@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { JsonObject } from '@/lib/json';
 import { reportError } from '@/lib/error-reporting';
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
@@ -94,7 +95,7 @@ export async function POST(
     return NextResponse.json({ error: 'Failed to create payment record.' }, { status: 500 });
   }
 
-  let meta: Record<string, unknown> = baseMeta;
+  let meta: JsonObject = baseMeta;
   let status = initialStatus;
 
   if (parsed.data.provider === 'mtn_momo') {
