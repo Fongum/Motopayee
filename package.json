@@ -14,7 +14,7 @@
     "audit": "npm run audit:queries && npm run audit:access",
     "check:env": "node scripts/check-env.mjs",
     "db:start": "npx supabase@2.119.0 start -x studio,logflare,vector,edge-runtime,imgproxy,mailpit,realtime,supavisor",
-    "gen:types": "npx supabase@2.119.0 gen types typescript --local --schema public > lib/database.types.ts"
+    "gen:types": "node scripts/gen-types.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",
