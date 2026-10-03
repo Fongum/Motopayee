@@ -3,6 +3,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import type { Database } from '@/lib/database.types';
 import { cookies } from 'next/headers';
 import type { AuthUser, Session, AuthResult } from './types';
 import type { Profile, Role } from '../types';
@@ -15,7 +16,7 @@ const adminHeaders = {
   apikey: supabaseServiceKey,
 };
 
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+export const supabaseAdmin = createClient<Database>(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false,
