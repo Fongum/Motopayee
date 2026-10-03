@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireInspector } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
-import { computeMVE, computePriceBand } from '@/lib/pricing';
+import { estimateFor, fetchBasePrices } from '@/lib/pricing.server';
 import { z } from 'zod';
 import type { ConditionGrade } from '@/lib/types';
 
@@ -77,21 +77,23 @@ export async function POST(request: Request, { params }: RouteParams) {
   };
 
   if (vehicle) {
-    const mve = computeMVE(
-      vehicle.make,
-      vehicle.model,
-      vehicle.year,
-      vehicle.mileage_km,
+    // Base price from vehicle_base_prices (make+model, then make, then the
+    // old default); mve_basis records which, so a default-based figure is
+    // never presented to the seller as a valuation.
+    const estimate = estimateFor(
+      await fetchBasePrices(),
+      vehicle,
       parsed.data.condition_grade as ConditionGrade,
-      listing.zone
+      listing.zone,
+      listing.asking_price
     );
-    const priceBand = computePriceBand(listing.asking_price, mve.suggested_price);
     listingUpdates = {
       ...listingUpdates,
-      mve_low: mve.mve_low,
-      mve_high: mve.mve_high,
-      suggested_price: mve.suggested_price,
-      price_band: priceBand,
+      mve_low: estimate.mve_low,
+      mve_high: estimate.mve_high,
+      suggested_price: estimate.suggested_price,
+      price_band: estimate.price_band,
+      mve_basis: estimate.mve_basis,
     };
   }
 

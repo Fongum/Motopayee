@@ -95,6 +95,14 @@ export default async function AdminListingDetailPage({ params }: { params: { id:
               <div className="flex justify-between"><span className="text-gray-500">Demandé</span><span className="font-semibold">{formatXAF(listing.asking_price)}</span></div>
               {listing.suggested_price && <div className="flex justify-between"><span className="text-gray-500">Suggéré</span><span>{formatXAF(listing.suggested_price)}</span></div>}
               {listing.price_band && <div className="flex justify-between"><span className="text-gray-500">Bande</span><span className="capitalize">{listing.price_band}</span></div>}
+              {listing.suggested_price && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Base estimation</span>
+                  <span className={listing.mve_basis === 'model' || listing.mve_basis === 'make' ? 'text-gray-700' : 'text-amber-700'}>
+                    {listing.mve_basis === 'model' ? 'Prix du modele' : listing.mve_basis === 'make' ? 'Prix de la marque' : 'Prix par defaut (non fiable)'}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between"><span className="text-gray-500">Finançable</span><span>{listing.financeable ? 'Oui' : 'Non'}</span></div>
             </div>
           </div>

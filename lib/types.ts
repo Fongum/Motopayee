@@ -119,6 +119,8 @@ export interface Listing {
   mve_low: number | null;
   mve_high: number | null;
   price_band: 'green' | 'yellow' | 'red' | null;
+  /** What the estimate rested on (migration 046); null for estimates made before it. */
+  mve_basis?: 'model' | 'make' | 'default' | null;
   zone: string;
   city: string | null;
   description: string | null;
