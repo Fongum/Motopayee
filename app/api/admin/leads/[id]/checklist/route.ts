@@ -5,6 +5,8 @@ import { requireStaff } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { recordLeadActivity } from '@/lib/launch-lead-activities';
 import { z } from 'zod';
+import { isQueryFailure } from '@/lib/query-result';
+import { reportError } from '@/lib/error-reporting';
 
 interface RouteParams { params: { id: string } }
 
@@ -45,7 +47,12 @@ export async function POST(request: Request, { params }: RouteParams) {
     .eq('id', params.id)
     .single();
 
-  if (leadError || !lead) {
+  // A missing row is a 404; anything else is a failure and must not be one.
+  if (isQueryFailure(leadError)) {
+    reportError(leadError, { source: 'api', route: '/api/admin/leads/[id]/checklist' });
+    return NextResponse.json({ error: 'Failed to load.' }, { status: 500 });
+  }
+  if (!lead) {
     return NextResponse.json({ error: 'Lead not found.' }, { status: 404 });
   }
 

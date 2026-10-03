@@ -1,4 +1,5 @@
 import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
+import { rowOrNull } from '@/lib/query-result';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import ApplicationDetail from './ApplicationDetail';
@@ -8,7 +9,7 @@ export default async function ApplicationDetailPage({ params }: { params: { id: 
   const user = await getCurrentUser();
   if (!user || user.role !== 'buyer') redirect('/login');
 
-  const [{ data, error }, { data: documentsData }, { data: offersData }] = await Promise.all([
+  const [appResult, { data: documentsData }, { data: offersData }] = await Promise.all([
     // ApplicationDetail is a client component, so every column selected here is
     // serialised into the buyer's browser whether it is rendered or not. `*`
     // was shipping the listing's internal valuation (mve_low, mve_high,
@@ -47,7 +48,8 @@ export default async function ApplicationDetailPage({ params }: { params: { id: 
       .order('created_at', { ascending: false }),
   ]);
 
-  if (error || !data) notFound();
+  const data = rowOrNull(appResult, 'me/applications/[id]');
+  if (!data) notFound();
 
   const application = data as unknown as FinancingApplication & {
     offers?: Array<MFIApplicationOffer & { institution?: { name: string; code: string } | null }>;

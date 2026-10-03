@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { requireInspector } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
+import { isQueryFailure } from '@/lib/query-result';
+import { reportError } from '@/lib/error-reporting';
 
 interface RouteParams {
   params: { id: string };
@@ -23,7 +25,12 @@ export async function GET(request: Request, { params }: RouteParams) {
     .eq('id', params.id)
     .maybeSingle();
 
-  if (error || !data) {
+  // A missing row is a 404; anything else is a failure and must not be one.
+  if (isQueryFailure(error)) {
+    reportError(error, { source: 'api', route: '/api/inspector/listings/[id]' });
+    return NextResponse.json({ error: 'Failed to load.' }, { status: 500 });
+  }
+  if (!data) {
     return NextResponse.json({ error: 'Listing not found.' }, { status: 404 });
   }
 

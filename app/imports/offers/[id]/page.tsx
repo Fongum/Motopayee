@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { rowOrNull } from '@/lib/query-result';
 import { IMPORT_OFFER_PUBLIC_COLUMNS } from '@/lib/import-offer-public';
 import { notFound } from 'next/navigation';
 import Navbar from '@/app/(components)/Navbar';
@@ -32,12 +33,15 @@ export default async function ImportOfferDetailPage({
 }: {
   params: { id: string };
 }) {
-  const { data } = await supabaseAdmin
-    .from('import_offers')
-    .select(IMPORT_OFFER_PUBLIC_COLUMNS)
-    .eq('id', params.id)
-    .eq('status', 'active')
-    .single();
+  const data = rowOrNull(
+    await supabaseAdmin
+      .from('import_offers')
+      .select(IMPORT_OFFER_PUBLIC_COLUMNS)
+      .eq('id', params.id)
+      .eq('status', 'active')
+      .single(),
+    'imports/offers/[id]'
+  );
 
   if (!data) {
     notFound();

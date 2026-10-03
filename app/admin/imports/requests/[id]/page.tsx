@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { rowOrNull } from '@/lib/query-result';
 import { notFound } from 'next/navigation';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { requireAdminPage } from '@/lib/auth/admin-access';
@@ -49,11 +50,14 @@ export default async function AdminImportRequestDetailPage({
 }) {
   await requireAdminPage('imports');
 
-  const { data: requestData } = await supabaseAdmin
-    .from('import_requests')
-    .select('*, buyer:profiles!buyer_id(id, full_name, email, phone, city)')
-    .eq('id', params.id)
-    .single();
+  const requestData = rowOrNull(
+    await supabaseAdmin
+      .from('import_requests')
+      .select('*, buyer:profiles!buyer_id(id, full_name, email, phone, city)')
+      .eq('id', params.id)
+      .single(),
+    'admin/imports/requests/[id]'
+  );
 
   if (!requestData) {
     notFound();

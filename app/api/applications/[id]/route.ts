@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { requireBuyer } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
+import { isQueryFailure } from '@/lib/query-result';
+import { reportError } from '@/lib/error-reporting';
 
 interface RouteParams { params: { id: string } }
 
@@ -19,7 +21,12 @@ export async function GET(request: Request, { params }: RouteParams) {
     .eq('buyer_id', auth.user.id)
     .single();
 
-  if (error || !data) {
+  // A missing row is a 404; anything else is a failure and must not be one.
+  if (isQueryFailure(error)) {
+    reportError(error, { source: 'api', route: '/api/applications/[id]' });
+    return NextResponse.json({ error: 'Failed to load.' }, { status: 500 });
+  }
+  if (!data) {
     return NextResponse.json({ error: 'Application not found.' }, { status: 404 });
   }
 

@@ -5,6 +5,8 @@ import { parseBody } from '@/lib/validation';
 import { updateHireListingSchema } from '@/lib/hire-schemas';
 import type { HireListing } from '@/lib/types';
 import { isStaffRole } from '@/lib/auth/roles';
+import { isQueryFailure } from '@/lib/query-result';
+import { reportError } from '@/lib/error-reporting';
 
 /** Stored on a hire listing but never displayed to the public. */
 const HIRE_PRIVATE_COLUMNS = ['plate_number', 'latitude', 'longitude'] as const;
@@ -20,7 +22,12 @@ export async function GET(
     .eq('id', params.id)
     .single();
 
-  if (error || !data) {
+  // A missing row is a 404; anything else is a failure and must not be one.
+  if (isQueryFailure(error)) {
+    reportError(error, { source: 'api', route: '/api/hire/[id]' });
+    return NextResponse.json({ error: 'Failed to load.' }, { status: 500 });
+  }
+  if (!data) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 

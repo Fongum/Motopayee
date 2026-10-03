@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/auth/server';
+import { rowOrNull } from '@/lib/query-result';
 import { requireAdminPage } from '@/lib/auth/admin-access';
 import { isAdminRole } from '@/lib/auth/roles';
 import { notFound } from 'next/navigation';
@@ -14,7 +15,7 @@ function formatXAF(amount: number) {
 export default async function AdminListingDetailPage({ params }: { params: { id: string } }) {
   const user = await requireAdminPage('listings');
 
-  const { data, error } = await supabaseAdmin
+  const result = await supabaseAdmin
     .from('listings')
     .select(`
       *,
@@ -28,7 +29,8 @@ export default async function AdminListingDetailPage({ params }: { params: { id:
     .eq('id', params.id)
     .single();
 
-  if (error || !data) notFound();
+  const data = rowOrNull(result, 'admin/listings/[id]');
+  if (!data) notFound();
 
   const listing = data as unknown as Listing & {
     seller?: { id: string; email: string; full_name?: string; phone?: string };

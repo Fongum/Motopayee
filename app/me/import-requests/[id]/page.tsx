@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { rowOrNull } from '@/lib/query-result';
 import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
 import type { ImportOffer, ImportOrder, ImportQuote, ImportRequest } from '@/lib/types';
@@ -45,12 +46,15 @@ export default async function ImportRequestDetailPage({
     redirect('/login');
   }
 
-  const { data: requestData } = await supabaseAdmin
-    .from('import_requests')
-    .select('*, offer:import_offers(id, headline, status)')
-    .eq('id', params.id)
-    .eq('buyer_id', user.id)
-    .single();
+  const requestData = rowOrNull(
+    await supabaseAdmin
+      .from('import_requests')
+      .select('*, offer:import_offers(id, headline, status)')
+      .eq('id', params.id)
+      .eq('buyer_id', user.id)
+      .single(),
+    'me/import-requests/[id]'
+  );
 
   if (!requestData) {
     notFound();
