@@ -1,9 +1,10 @@
 import { supabaseAdmin } from '@/lib/auth/server';
+import type { JsonObject } from '@/lib/json';
 
 export async function updateImportPaymentStatus(
   paymentId: string,
   status: 'pending' | 'processing' | 'successful' | 'failed' | 'cancelled',
-  meta: Record<string, unknown> = {}
+  meta: JsonObject = {}
 ) {
   const { data: payment } = await supabaseAdmin
     .from('import_payments')

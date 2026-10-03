@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/auth/server';
+import type { JsonObject } from '@/lib/json';
 import { logger } from '@/lib/logger';
 
 export async function recordLeadActivity({
@@ -12,7 +13,7 @@ export async function recordLeadActivity({
   actorId: string | null;
   action: string;
   summary?: string | null;
-  meta?: Record<string, unknown>;
+  meta?: JsonObject;
 }) {
   const { error } = await supabaseAdmin.from('launch_lead_activities').insert({
     lead_id: leadId,

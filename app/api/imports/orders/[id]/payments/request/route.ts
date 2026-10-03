@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { JsonObject } from '@/lib/json';
 import { reportError } from '@/lib/error-reporting';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
@@ -96,7 +97,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: 'Failed to create import payment record.' }, { status: 500 });
   }
 
-  let meta: Record<string, unknown> = {};
+  let meta: JsonObject = {};
   let newStatus: 'pending' | 'processing' = 'pending';
 
   if (provider === 'mtn_momo') {

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { JsonObject } from '@/lib/json';
 import { z } from 'zod';
 import { requireVerifier } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
@@ -91,7 +92,7 @@ export async function POST(request: Request) {
   }
 
   // Trigger provider
-  let meta: Record<string, unknown> = {};
+  let meta: JsonObject = {};
   let newStatus = 'pending';
 
   if (provider === 'mtn_momo') {

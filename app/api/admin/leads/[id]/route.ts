@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { TablesUpdate } from '@/lib/database.types';
 import { requireStaff } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { recordLeadActivity } from '@/lib/launch-lead-activities';
@@ -39,7 +40,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: 'Invalid lead update.' }, { status: 400 });
   }
 
-  const updates: Record<string, unknown> = {};
+  const updates: TablesUpdate<'launch_leads'> = {};
   if (parsed.data.status) updates.status = parsed.data.status;
   if (parsed.data.priority) updates.priority = parsed.data.priority;
   if (parsed.data.assigned_to !== undefined) updates.assigned_to = parsed.data.assigned_to || null;
