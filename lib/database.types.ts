@@ -107,18 +107,24 @@ isOneToOne: false
                   ]
                 },"dealers": {
                   Row: {
-                    "address": string | null,"city": string | null,"contact_email": string | null,"contact_phone": string | null,"created_at": string,"dealer_code": string | null,"dealer_name": string,"id": string,"profile_id": string,"verified": boolean,"zone": string | null
+                    "address": string | null,"agreed_lead_handling_at": string | null,"agreed_listing_accuracy_at": string | null,"agreed_no_false_financeable_at": string | null,"agreed_sold_updates_at": string | null,"city": string | null,"contact_email": string | null,"contact_phone": string | null,"created_at": string,"dealer_code": string | null,"dealer_name": string,"id": string,"inventory_contact_name": string | null,"inventory_contact_phone": string | null,"manager_contact_confirmed_at": string | null,"manager_name": string | null,"manager_phone": string | null,"profile_id": string,"program_notes": string | null,"verified": boolean,"verified_at": string | null,"verified_by": string | null,"zone": string | null
                   }
                   Insert: {
-                    "address"?: string | null,"city"?: string | null,"contact_email"?: string | null,"contact_phone"?: string | null,"created_at"?: string,"dealer_code"?: string | null,"dealer_name": string,"id"?: string,"profile_id": string,"verified"?: boolean,"zone"?: string | null
+                    "address"?: string | null,"agreed_lead_handling_at"?: string | null,"agreed_listing_accuracy_at"?: string | null,"agreed_no_false_financeable_at"?: string | null,"agreed_sold_updates_at"?: string | null,"city"?: string | null,"contact_email"?: string | null,"contact_phone"?: string | null,"created_at"?: string,"dealer_code"?: string | null,"dealer_name": string,"id"?: string,"inventory_contact_name"?: string | null,"inventory_contact_phone"?: string | null,"manager_contact_confirmed_at"?: string | null,"manager_name"?: string | null,"manager_phone"?: string | null,"profile_id": string,"program_notes"?: string | null,"verified"?: boolean,"verified_at"?: string | null,"verified_by"?: string | null,"zone"?: string | null
                   }
                   Update: {
-                    "address"?: string | null,"city"?: string | null,"contact_email"?: string | null,"contact_phone"?: string | null,"created_at"?: string,"dealer_code"?: string | null,"dealer_name"?: string,"id"?: string,"profile_id"?: string,"verified"?: boolean,"zone"?: string | null
+                    "address"?: string | null,"agreed_lead_handling_at"?: string | null,"agreed_listing_accuracy_at"?: string | null,"agreed_no_false_financeable_at"?: string | null,"agreed_sold_updates_at"?: string | null,"city"?: string | null,"contact_email"?: string | null,"contact_phone"?: string | null,"created_at"?: string,"dealer_code"?: string | null,"dealer_name"?: string,"id"?: string,"inventory_contact_name"?: string | null,"inventory_contact_phone"?: string | null,"manager_contact_confirmed_at"?: string | null,"manager_name"?: string | null,"manager_phone"?: string | null,"profile_id"?: string,"program_notes"?: string | null,"verified"?: boolean,"verified_at"?: string | null,"verified_by"?: string | null,"zone"?: string | null
                   }
                   Relationships: [
                     {
       foreignKeyName: "dealers_profile_id_fkey"
       columns: ["profile_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "dealers_verified_by_fkey"
+      columns: ["verified_by"]
 isOneToOne: false
       referencedRelation: "profiles"
       referencedColumns: ["id"]

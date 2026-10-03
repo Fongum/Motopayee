@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAdmin } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { reportError } from '@/lib/error-reporting';
+import type { JsonObject } from '@/lib/json';
 import { optionalText, phoneSchema } from '@/lib/validation';
 import {
   DEALER_PROGRAM_COLUMNS,
@@ -99,21 +100,26 @@ export async function POST(request: Request, { params }: RouteParams) {
     .limit(1);
   const existing = ((existingRows ?? [])[0] ?? null) as unknown as DealerRow | null;
 
-  const audit = (action: string, meta: Record<string, unknown> = {}) =>
+  // Only ever called once a dealers row exists, so the id is required here
+  // rather than defaulted: audit_logs.entity_id is uuid not null.
+  const audit = (dealerId: string, action: string, meta: JsonObject = {}) =>
     supabaseAdmin.from('audit_logs').insert({
       actor_id: auth.user.id,
       actor_email: auth.user.email,
       actor_role: auth.user.role,
       action,
       entity_type: 'dealers',
-      entity_id: existing?.id ?? null,
+      entity_id: dealerId,
       meta: { profile_id: params.profileId, ...meta },
     });
 
   if (input.intent === 'save') {
     const now = new Date().toISOString();
-    const record: DealerProgramRecord & { city: string | null; program_notes: string | null } = {
-      dealer_name: input.dealer_name ?? existing?.dealer_name ?? profile.full_name ?? null,
+    const dealerName = input.dealer_name ?? existing?.dealer_name ?? profile.full_name ?? null;
+    if (!dealerName) return back('name_required');
+
+    const record: DealerProgramRecord & { dealer_name: string; city: string | null; program_notes: string | null } = {
+      dealer_name: dealerName,
       city: input.city ?? null,
       manager_name: input.manager_name ?? null,
       manager_phone: input.manager_phone ?? null,
@@ -126,8 +132,6 @@ export async function POST(request: Request, { params }: RouteParams) {
       agreed_no_false_financeable_at: confirmation(!!input.agreed_no_false_financeable, existing?.agreed_no_false_financeable_at ?? null, now),
       program_notes: input.program_notes ?? null,
     };
-
-    if (!record.dealer_name) return back('name_required');
 
     const losesLabel = !!existing?.verified && dealerProgramGaps(record).length > 0;
     const update = losesLabel
@@ -143,8 +147,8 @@ export async function POST(request: Request, { params }: RouteParams) {
       return back('error');
     }
 
-    if (losesLabel) {
-      await audit('dealer_program_revoked', { reason: 'requirement_removed', gaps: dealerProgramGaps(record) });
+    if (losesLabel && existing) {
+      await audit(existing.id, 'dealer_program_revoked', { reason: 'requirement_removed', gaps: dealerProgramGaps(record) });
       return back('revoked_incomplete');
     }
     return back('saved');
@@ -166,7 +170,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       reportError(error, { source: 'api/admin/dealers', route: '/api/admin/dealers/[profileId]' });
       return back('error');
     }
-    await audit('dealer_program_approved');
+    await audit(existing.id, 'dealer_program_approved');
     return back('approved');
   }
 
@@ -181,6 +185,6 @@ export async function POST(request: Request, { params }: RouteParams) {
     reportError(error, { source: 'api/admin/dealers', route: '/api/admin/dealers/[profileId]' });
     return back('error');
   }
-  await audit('dealer_program_revoked', { reason: 'manual' });
+  await audit(existing.id, 'dealer_program_revoked', { reason: 'manual' });
   return back('revoked');
 }
