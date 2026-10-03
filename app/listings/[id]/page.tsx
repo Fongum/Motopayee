@@ -35,7 +35,7 @@ type PublicListing = Listing & {
 async function getListing(id: string): Promise<PublicListing | null> {
   const query = supabaseAdmin
     .from('listings')
-    .select('*, vehicle:vehicles(*), media:media_assets(*), seller:profiles!seller_id(is_verified, full_name, phone, avg_rating, total_reviews), inspections(*)')
+    .select('*, vehicle:vehicles(*), media:media_assets(*), seller:profiles!seller_id(is_verified, full_name, phone, avg_rating, total_reviews, dealers:dealers!profile_id(verified)), inspections(*)')
     .eq('id', id)
     .eq('status', 'published');
 

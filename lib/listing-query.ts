@@ -44,7 +44,7 @@ export const LISTING_CARD_SELECT = `
   id, asking_price, price_band, zone, city, financeable, status, created_at, published_at,
   vehicle:vehicles!inner(id, make, model, year, mileage_km, fuel_type, transmission, condition_grade),
   media:media_assets(id),
-  seller:profiles!seller_id(is_verified, avg_rating, total_reviews)
+  seller:profiles!seller_id(is_verified, avg_rating, total_reviews, dealers:dealers!profile_id(verified))
 `;
 
 /**
