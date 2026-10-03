@@ -23,7 +23,7 @@ import type { KeyCount, LeadMetrics, LeadWorkload } from './launch-lead-metrics'
 export async function fetchLeadMetrics(since: string): Promise<LeadMetrics> {
   const { data, error } = await supabaseAdmin.rpc('launch_lead_metrics', {
     p_since: since,
-    p_open_statuses: OPEN_LEAD_STATUSES,
+    p_open_statuses: Array.from(OPEN_LEAD_STATUSES),
   });
 
   if (error) {
@@ -35,7 +35,7 @@ export async function fetchLeadMetrics(since: string): Promise<LeadMetrics> {
 
 export async function fetchLeadWorkload(): Promise<LeadWorkload> {
   const { data, error } = await supabaseAdmin.rpc('launch_lead_workload', {
-    p_open_statuses: OPEN_LEAD_STATUSES,
+    p_open_statuses: Array.from(OPEN_LEAD_STATUSES),
   });
 
   if (error) {

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 import { requireStaff } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { recordLeadActivity } from '@/lib/launch-lead-activities';
@@ -124,6 +125,7 @@ export async function POST(request: Request) {
   let created = 0;
   let updated = 0;
   let skipped = 0;
+  const touched: Array<{ id: string; outcome: 'created' | 'updated' }> = [];
 
   for (const row of rows) {
     const rawLeadType = value(row, 'lead_type', 'type') || parsed.data.default_lead_type;
@@ -175,6 +177,7 @@ export async function POST(request: Request) {
         continue;
       }
       updated += 1;
+      touched.push({ id: existingLead.id, outcome: 'updated' });
       await recordLeadActivity({
         leadId: existingLead.id,
         actorId: auth.user.id,
@@ -189,6 +192,7 @@ export async function POST(request: Request) {
         continue;
       }
       created += 1;
+      touched.push({ id: data.id, outcome: 'created' });
       await recordLeadActivity({
         leadId: data.id,
         actorId: auth.user.id,
@@ -199,15 +203,23 @@ export async function POST(request: Request) {
     }
   }
 
-  await supabaseAdmin.from('audit_logs').insert({
-    actor_id: auth.user.id,
-    actor_email: auth.user.email,
-    actor_role: auth.user.role,
-    action: 'launch_leads_imported',
-    entity_type: 'launch_leads',
-    entity_id: null,
-    meta: { rows: rows.length, created, updated, skipped },
-  });
+  // One row per lead touched. This used to be a single row with
+  // entity_id: null, which audit_logs.entity_id (uuid not null) refuses — and
+  // the error was never checked, so no CSV import was ever audit-logged.
+  if (touched.length > 0) {
+    const { error: auditError } = await supabaseAdmin.from('audit_logs').insert(
+      touched.map((lead) => ({
+        actor_id: auth.user.id,
+        actor_email: auth.user.email,
+        actor_role: auth.user.role,
+        action: 'launch_leads_imported',
+        entity_type: 'launch_leads',
+        entity_id: lead.id,
+        meta: { outcome: lead.outcome, batch: { rows: rows.length, created, updated, skipped } },
+      }))
+    );
+    if (auditError) logger.error('audit_log.insert_failed', { action: 'launch_leads_imported', error: auditError });
+  }
 
   if (request.headers.get('accept')?.includes('text/html')) {
     const params = new URLSearchParams({

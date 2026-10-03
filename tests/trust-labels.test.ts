@@ -112,3 +112,49 @@ describe('documents checked', () => {
     expect(route).toMatch(/action: 'document_verified'/);
   });
 });
+
+describe('trusted dealer', () => {
+  const migration = read('supabase', 'migrations', '045_dealer_program.sql');
+  const route = read('app', 'api', 'admin', 'dealers', '[profileId]', 'route.ts');
+
+  it('mirrors every minimum requirement the policy lists', async () => {
+    const { DEALER_REQUIREMENTS } = await import('@/lib/dealer-program');
+    const section = POLICY.match(/## Trusted Dealer[\s\S]*?Minimum requirements:([\s\S]*?)What it does not mean:/)?.[1] ?? '';
+    const policyLines = section.split(/\r?\n/).map((l) => l.replace(/^-\s*/, '').trim()).filter(Boolean);
+    expect(policyLines).toHaveLength(7);
+    expect(DEALER_REQUIREMENTS.map((r) => r.policy)).toEqual(policyLines);
+  });
+
+  it('cannot be set in the database without the evidence columns', () => {
+    // The CHECK is the backstop for any write path, including future ones.
+    const check = migration.match(/check \(\s*not verified or \(([\s\S]*?)\)\s*\);/)?.[1] ?? '';
+    for (const column of [
+      'dealer_name', 'manager_name', 'manager_phone', 'manager_contact_confirmed_at',
+      'inventory_contact_name', 'inventory_contact_phone', 'agreed_listing_accuracy_at',
+      'agreed_sold_updates_at', 'agreed_lead_handling_at', 'agreed_no_false_financeable_at', 'verified_at',
+    ]) {
+      expect(check).toContain(column);
+    }
+  });
+
+  it('is shown only from a verified dealer row, not from the seller_dealer role', () => {
+    expect(BADGES).toMatch(/if \(isProgramDealer\(listing\.seller\)\)/);
+    expect(BADGES).not.toMatch(/seller_dealer/);
+  });
+
+  it('is selected wherever sale-listing badges render', () => {
+    expect(read('lib', 'listing-query.ts')).toMatch(/LISTING_CARD_SELECT[\s\S]*?dealers!profile_id\(verified\)/);
+    expect(read('app', 'listings', '[id]', 'page.tsx')).toMatch(/dealers!profile_id\(verified\)/);
+  });
+
+  it('refuses approval while requirements are missing, and audits both directions', () => {
+    expect(route).toMatch(/intent === 'approve'[\s\S]*?dealerProgramGaps\(existing\)[\s\S]*?gaps\.length > 0\) return back\('incomplete'\)/);
+    expect(route).toMatch(/requireAdmin\(request\)/);
+    expect(route).toMatch(/'dealer_program_approved'/);
+    expect(route).toMatch(/'dealer_program_revoked'/);
+  });
+
+  it('withdraws the label when a save removes a requirement', () => {
+    expect(route).toMatch(/losesLabel = !!existing\?\.verified && dealerProgramGaps\(record\)\.length > 0/);
+  });
+});

@@ -10,7 +10,8 @@ interface RouteParams { params: { listingId: string } }
 const schema = z.object({
   condition_grade: z.enum(['A', 'B', 'C', 'D']),
   financeable: z.boolean(),
-  report_json: z.record(z.string(), z.unknown()).default(() => ({})),
+  // z.json(): the column is jsonb, and z.unknown() admitted values JSON cannot hold.
+  report_json: z.record(z.string(), z.json()).default(() => ({})),
   repair_estimate_low: z.number().min(0).optional(),
   repair_estimate_high: z.number().min(0).optional(),
   notes: z.string().optional(),

@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import type { JsonObject } from '@/lib/json';
+import type { TablesUpdate } from '@/lib/database.types';
 import { requireStaff } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { recordLeadActivity } from '@/lib/launch-lead-activities';
@@ -52,7 +54,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     lead.intake_checklist && typeof lead.intake_checklist === 'object' && !Array.isArray(lead.intake_checklist)
       ? lead.intake_checklist
       : {}
-  ) as Record<string, unknown>;
+  ) as JsonObject;
   const nextChecklist = {
     ...currentChecklist,
     [parsed.data.item_key]: {
@@ -63,7 +65,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     },
   };
 
-  const updates: Record<string, unknown> = { intake_checklist: nextChecklist };
+  const updates: TablesUpdate<'launch_leads'> = { intake_checklist: nextChecklist };
   if (parsed.data.auto_status && parsed.data.auto_status !== 'none') {
     updates.status = parsed.data.auto_status;
   }

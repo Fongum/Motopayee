@@ -28,7 +28,10 @@ export async function POST(request: Request, { params }: RouteParams) {
     .maybeSingle();
   const institutionId = (profile as { mfi_institution_id: string | null } | null)?.mfi_institution_id ?? null;
 
-  if (!institutionId && auth.user.role !== 'admin') {
+  // An offer is made by an institution, and mfi_application_offers.
+  // mfi_institution_id is NOT NULL. Admins used to be let through here with no
+  // institution, only for the upsert below to fail with a 500.
+  if (!institutionId) {
     return NextResponse.json({ error: 'MFI account is not linked to an institution.' }, { status: 403 });
   }
 
@@ -53,7 +56,7 @@ export async function POST(request: Request, { params }: RouteParams) {
   // institution may act on the file — the same rule /disburse enforces and the
   // MFI screens now scope to. An unrouted application is nobody's yet.
   const assignedTo = (app as { mfi_institution_id: string | null }).mfi_institution_id;
-  if (institutionId && assignedTo !== institutionId) {
+  if (assignedTo !== institutionId) {
     return NextResponse.json(
       { error: 'Application is not routed to your institution.' },
       { status: 403 }

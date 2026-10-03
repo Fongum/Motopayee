@@ -16,7 +16,7 @@ import type { PartnerStats } from './mfi-partner-stats';
  */
 export async function fetchPartnerStats(): Promise<PartnerStats> {
   const { data, error } = await supabaseAdmin.rpc('mfi_partner_stats', {
-    p_inactive_statuses: INACTIVE_APPLICATION_STATUSES,
+    p_inactive_statuses: Array.from(INACTIVE_APPLICATION_STATUSES),
   });
 
   if (error) {

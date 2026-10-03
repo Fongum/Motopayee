@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { TablesUpdate } from '@/lib/database.types';
 import { requireStaff } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { recordLeadActivity } from '@/lib/launch-lead-activities';
@@ -74,7 +75,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: 'Lead not found.' }, { status: 404 });
   }
 
-  const updates: Record<string, unknown> = {};
+  const updates: TablesUpdate<'launch_leads'> = {};
   const presetDate = presetFollowUp(parsed.data.follow_up_preset || undefined);
   if (parsed.data.next_follow_up_at?.trim()) {
     updates.next_follow_up_at = new Date(parsed.data.next_follow_up_at).toISOString();
