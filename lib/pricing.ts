@@ -29,41 +29,71 @@ function mileageDeduction(mileage: number): number {
   return Math.min(0.30, bands * 0.025);
 }
 
-// Very simplified market base prices (USD). Real implementation would use a lookup table or ML model.
-const BASE_PRICES: Record<string, number> = {
-  // Make-agnostic defaults by era; override with real data as available
-  DEFAULT: 18000,
-};
+/**
+ * The base price used when no row in vehicle_base_prices matches.
+ *
+ * This is the old hard-coded figure — 18,000 USD at the 600 XAF peg — kept so
+ * that an empty table changes nothing. It is not a valuation of anything: an
+ * estimate resting on it has mve_basis 'default' and is labelled as such.
+ */
+export const DEFAULT_BASE_PRICE_XAF = 18000 * 600;
 
-function getBasePrice(make: string, model: string): number {
-  const key = `${make.toUpperCase()}_${model.toUpperCase()}`;
-  return BASE_PRICES[key] ?? BASE_PRICES.DEFAULT;
+export type MveBasis = 'model' | 'make' | 'default';
+
+export interface BasePriceRow {
+  make: string;
+  model: string | null;
+  base_price_xaf: number;
+}
+
+/** Case- and spacing-insensitive key, matching the table's unique index. */
+export function normaliseVehicleName(value: string | null | undefined): string {
+  return (value ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+/**
+ * Which base price applies: make+model, then the make-wide row (model null),
+ * then DEFAULT_BASE_PRICE_XAF.
+ */
+export function pickBasePrice(
+  rows: readonly BasePriceRow[],
+  make: string,
+  model: string
+): { basePriceXaf: number; basis: MveBasis } {
+  const mk = normaliseVehicleName(make);
+  const md = normaliseVehicleName(model);
+  const forMake = rows.filter((row) => normaliseVehicleName(row.make) === mk);
+
+  const exact = md ? forMake.find((row) => normaliseVehicleName(row.model) === md) : undefined;
+  if (exact) return { basePriceXaf: Number(exact.base_price_xaf), basis: 'model' };
+
+  const makeWide = forMake.find((row) => row.model == null || normaliseVehicleName(row.model) === '');
+  if (makeWide) return { basePriceXaf: Number(makeWide.base_price_xaf), basis: 'make' };
+
+  return { basePriceXaf: DEFAULT_BASE_PRICE_XAF, basis: 'default' };
 }
 
 /**
  * Compute Market Value Estimate (MVE) for a vehicle.
  *
  * Returns low/high range and a single suggested price in XAF (CFA franc).
- * Note: USD × 600 ≈ XAF (rough peg used here; adjust as needed).
+ * The base price comes from pickBasePrice (vehicle_base_prices), already in XAF.
  */
 export function computeMVE(
-  make: string,
-  model: string,
+  basePriceXaf: number,
   year: number,
   mileageKm: number,
   conditionGrade: ConditionGrade,
   zone: string
 ): MVEResult {
-  const baseUsd = getBasePrice(make, model);
   const ageMultiplier = yearlyDepreciation(year);
   const mileageDed = mileageDeduction(mileageKm);
   const conditionDed = CONDITION_DEDUCTIONS[conditionGrade];
   const zoneMult = ZONE_MULTIPLIERS[zone] ?? ZONE_MULTIPLIERS.C;
 
-  const adjustedUsd = baseUsd * ageMultiplier * (1 - mileageDed) * (1 - conditionDed) * zoneMult;
+  const adjustedXaf = basePriceXaf * ageMultiplier * (1 - mileageDed) * (1 - conditionDed) * zoneMult;
 
-  const USD_TO_XAF = 600;
-  const suggested = Math.round((adjustedUsd * USD_TO_XAF) / 50000) * 50000; // round to 50k XAF
+  const suggested = Math.round(adjustedXaf / 50000) * 50000; // round to 50k XAF
   const mve_low = Math.round(suggested * 0.92 / 50000) * 50000;
   const mve_high = Math.round(suggested * 1.08 / 50000) * 50000;
 

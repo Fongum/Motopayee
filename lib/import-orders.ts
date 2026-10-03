@@ -2,7 +2,9 @@ import { supabaseAdmin } from '@/lib/auth/server';
 
 export async function syncOrderStatusFromShipment(
   orderId: string,
-  shipmentStatus: 'draft' | 'booked' | 'departed' | 'arrived' | 'released' | 'closed',
+  // The column is text (CHECK-constrained), so the DB row types it as string;
+  // a status this function does not handle simply changes nothing.
+  shipmentStatus: string,
   actualArrivalAt?: string | null
 ) {
   if (shipmentStatus === 'booked') {

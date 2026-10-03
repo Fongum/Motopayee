@@ -14,6 +14,21 @@ const currentYear = new Date().getFullYear();
 /** Rates are whole XAF amounts; null clears an optional rate. */
 const optionalRate = amountXaf.nullish();
 
+/**
+ * Security deposit. 0 is a real answer — "no deposit" — and the column is
+ * `bigint not null default 0`. This used to be amountXaf (positive only), so
+ * the form's own default of 0 was rejected and no rental could be listed
+ * without a deposit; and an explicit null passed validation, then failed the
+ * NOT NULL. Both now mean 0.
+ */
+const depositXaf = z
+  .number()
+  .int()
+  .min(0)
+  .max(1_000_000_000)
+  .nullish()
+  .transform((v) => (v === null ? 0 : v));
+
 export const hireListingFields = {
   make: z.string().trim().min(1).max(60),
   model: z.string().trim().min(1).max(60),
@@ -28,7 +43,7 @@ export const hireListingFields = {
   daily_rate: amountXaf,
   weekly_rate: optionalRate,
   monthly_rate: optionalRate,
-  deposit_amount: amountXaf.nullish(),
+  deposit_amount: depositXaf,
   driver_daily_rate: optionalRate,
   mileage_limit_per_day_km: z.number().int().min(0).max(100000).nullish(),
   extra_km_charge: amountXaf.nullish(),
@@ -60,7 +75,7 @@ export const createHireListingSchema = z
     transmission: hireListingFields.transmission.default('automatic'),
     seats: hireListingFields.seats.default(5),
     hire_type: hireListingFields.hire_type.default('self_drive'),
-    deposit_amount: amountXaf.nullish().default(0),
+    deposit_amount: depositXaf.default(0),
     min_hire_days: hireListingFields.min_hire_days.default(1),
     zone: hireListingFields.zone.default('A'),
     features: hireListingFields.features.default([]),

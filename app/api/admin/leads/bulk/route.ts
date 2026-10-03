@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import type { TablesUpdate } from '@/lib/database.types';
+import { logger } from '@/lib/logger';
 import { requireStaff } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { recordLeadActivity } from '@/lib/launch-lead-activities';
@@ -91,7 +93,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'No leads selected for bulk update.' }, { status: 400 });
   }
 
-  const updates: Record<string, unknown> = {};
+  const updates: TablesUpdate<'launch_leads'> = {};
   const activityTemplate = parsed.data.activity_template && parsed.data.activity_template !== '__no_change'
     ? QUICK_LEAD_ACTIVITY_TEMPLATES.find((template) => template.id === parsed.data.activity_template)
     : undefined;
@@ -156,15 +158,23 @@ export async function POST(request: Request) {
 
   const updatedIds = (data ?? []).map((lead) => lead.id as string);
 
-  await supabaseAdmin.from('audit_logs').insert({
-    actor_id: auth.user.id,
-    actor_email: auth.user.email,
-    actor_role: auth.user.role,
-    action: 'launch_leads_bulk_update',
-    entity_type: 'launch_leads',
-    entity_id: null,
-    meta: { lead_ids: updatedIds, updates },
-  });
+  // One row per lead. A single row with entity_id: null is refused by
+  // audit_logs.entity_id (uuid not null), and the error went unchecked, so no
+  // bulk update was ever audit-logged.
+  if (updatedIds.length > 0) {
+    const { error: auditError } = await supabaseAdmin.from('audit_logs').insert(
+      updatedIds.map((leadId) => ({
+        actor_id: auth.user.id,
+        actor_email: auth.user.email,
+        actor_role: auth.user.role,
+        action: 'launch_leads_bulk_update',
+        entity_type: 'launch_leads',
+        entity_id: leadId,
+        meta: { updates, batch_size: updatedIds.length },
+      }))
+    );
+    if (auditError) logger.error('audit_log.insert_failed', { action: 'launch_leads_bulk_update', error: auditError });
+  }
 
   await Promise.all(updatedIds.map((leadId) => recordLeadActivity({
     leadId,
