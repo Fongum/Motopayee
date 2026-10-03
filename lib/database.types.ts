@@ -786,13 +786,13 @@ isOneToOne: false
                   ]
                 },"listings": {
                   Row: {
-                    "asking_price": number,"city": string | null,"created_at": string,"dealer_id": string | null,"description": string | null,"field_agent_id": string | null,"financeable": boolean,"id": string,"inspector_id": string | null,"mve_high": number | null,"mve_low": number | null,"previous_price": number | null,"price_band": string | null,"published_at": string | null,"seller_id": string,"sold_at": string | null,"status": string,"suggested_price": number | null,"updated_at": string,"vehicle_id": string,"vehicle_mileage_km": number | null,"verifier_id": string | null,"zone": string
+                    "asking_price": number,"city": string | null,"created_at": string,"dealer_id": string | null,"description": string | null,"field_agent_id": string | null,"financeable": boolean,"id": string,"inspector_id": string | null,"mve_basis": string | null,"mve_high": number | null,"mve_low": number | null,"previous_price": number | null,"price_band": string | null,"published_at": string | null,"seller_id": string,"sold_at": string | null,"status": string,"suggested_price": number | null,"updated_at": string,"vehicle_id": string,"vehicle_mileage_km": number | null,"verifier_id": string | null,"zone": string
                   }
                   Insert: {
-                    "asking_price": number,"city"?: string | null,"created_at"?: string,"dealer_id"?: string | null,"description"?: string | null,"field_agent_id"?: string | null,"financeable"?: boolean,"id"?: string,"inspector_id"?: string | null,"mve_high"?: number | null,"mve_low"?: number | null,"previous_price"?: number | null,"price_band"?: string | null,"published_at"?: string | null,"seller_id": string,"sold_at"?: string | null,"status"?: string,"suggested_price"?: number | null,"updated_at"?: string,"vehicle_id": string,"vehicle_mileage_km"?: number | null,"verifier_id"?: string | null,"zone": string
+                    "asking_price": number,"city"?: string | null,"created_at"?: string,"dealer_id"?: string | null,"description"?: string | null,"field_agent_id"?: string | null,"financeable"?: boolean,"id"?: string,"inspector_id"?: string | null,"mve_basis"?: string | null,"mve_high"?: number | null,"mve_low"?: number | null,"previous_price"?: number | null,"price_band"?: string | null,"published_at"?: string | null,"seller_id": string,"sold_at"?: string | null,"status"?: string,"suggested_price"?: number | null,"updated_at"?: string,"vehicle_id": string,"vehicle_mileage_km"?: number | null,"verifier_id"?: string | null,"zone": string
                   }
                   Update: {
-                    "asking_price"?: number,"city"?: string | null,"created_at"?: string,"dealer_id"?: string | null,"description"?: string | null,"field_agent_id"?: string | null,"financeable"?: boolean,"id"?: string,"inspector_id"?: string | null,"mve_high"?: number | null,"mve_low"?: number | null,"previous_price"?: number | null,"price_band"?: string | null,"published_at"?: string | null,"seller_id"?: string,"sold_at"?: string | null,"status"?: string,"suggested_price"?: number | null,"updated_at"?: string,"vehicle_id"?: string,"vehicle_mileage_km"?: number | null,"verifier_id"?: string | null,"zone"?: string
+                    "asking_price"?: number,"city"?: string | null,"created_at"?: string,"dealer_id"?: string | null,"description"?: string | null,"field_agent_id"?: string | null,"financeable"?: boolean,"id"?: string,"inspector_id"?: string | null,"mve_basis"?: string | null,"mve_high"?: number | null,"mve_low"?: number | null,"previous_price"?: number | null,"price_band"?: string | null,"published_at"?: string | null,"seller_id"?: string,"sold_at"?: string | null,"status"?: string,"suggested_price"?: number | null,"updated_at"?: string,"vehicle_id"?: string,"vehicle_mileage_km"?: number | null,"verifier_id"?: string | null,"zone"?: string
                   }
                   Relationships: [
                     {
@@ -1110,6 +1110,25 @@ isOneToOne: false
                     {
       foreignKeyName: "saved_searches_user_id_fkey"
       columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"vehicle_base_prices": {
+                  Row: {
+                    "base_price_xaf": number,"created_at": string,"id": string,"make": string,"model": string | null,"notes": string | null,"updated_at": string,"updated_by": string | null
+                  }
+                  Insert: {
+                    "base_price_xaf": number,"created_at"?: string,"id"?: string,"make": string,"model"?: string | null,"notes"?: string | null,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "base_price_xaf"?: number,"created_at"?: string,"id"?: string,"make"?: string,"model"?: string | null,"notes"?: string | null,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "vehicle_base_prices_updated_by_fkey"
+      columns: ["updated_by"]
 isOneToOne: false
       referencedRelation: "profiles"
       referencedColumns: ["id"]

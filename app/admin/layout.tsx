@@ -24,6 +24,7 @@ const NAV = [
   { href: '/admin/hire', label: 'Location' },
   { href: '/admin/hire/bookings', label: 'Reservations' },
   { href: '/admin/rules', label: 'Règles de zone' },
+  { href: '/admin/pricing', label: 'Prix de reference' },
   { href: '/admin/users', label: 'Utilisateurs' },
 ];
 

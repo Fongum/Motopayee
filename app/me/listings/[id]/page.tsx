@@ -34,6 +34,7 @@ export default async function SellerListingDetailPage({ params }: { params: { id
   if (error || !data) notFound();
 
   const listing = data as unknown as Listing;
+  const hasRealEstimate = listing.mve_basis === 'model' || listing.mve_basis === 'make';
   const v = listing.vehicle;
 
   return (
@@ -73,7 +74,10 @@ export default async function SellerListingDetailPage({ params }: { params: { id
         )}
       </div>
 
-      {/* Pricing */}
+      {/* Pricing. The estimate is shown only when it rests on a real base price
+          for the make or model: one resting on the platform default values
+          every older car the same, and would tell most sellers they are
+          overpriced on no evidence. */}
       <div className="bg-white border border-gray-200 rounded-2xl p-6">
         <h2 className="font-semibold text-gray-900 mb-4">Prix</h2>
         <div className="grid grid-cols-2 gap-4 text-sm">
@@ -83,7 +87,7 @@ export default async function SellerListingDetailPage({ params }: { params: { id
               {new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(listing.asking_price)}
             </p>
           </div>
-          {listing.suggested_price && (
+          {hasRealEstimate && listing.suggested_price && (
             <div>
               <p className="text-gray-500">Prix suggéré</p>
               <p className="font-semibold text-gray-900 text-lg">
@@ -91,7 +95,7 @@ export default async function SellerListingDetailPage({ params }: { params: { id
               </p>
             </div>
           )}
-          {listing.mve_low && listing.mve_high && (
+          {hasRealEstimate && listing.mve_low && listing.mve_high && (
             <div className="col-span-2">
               <p className="text-gray-500">Fourchette estimée (MVE)</p>
               <p className="text-gray-700">
