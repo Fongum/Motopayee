@@ -4,7 +4,7 @@ import { requireAdmin } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { z } from 'zod';
 
-interface RouteParams { params: { id: string } }
+interface RouteParams { params: Promise<{ id: string }> }
 
 const schema = z.object({
   mfi_institution_id: z.string().uuid(),
@@ -25,6 +25,7 @@ async function parseBody(request: Request): Promise<Record<string, unknown>> {
 }
 
 async function assignMfi(request: Request, { params }: RouteParams) {
+  const { id } = await params;
   const auth = await requireAdmin(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
@@ -39,7 +40,7 @@ async function assignMfi(request: Request, { params }: RouteParams) {
   const { data: existing } = await supabaseAdmin
     .from('financing_applications')
     .select('id, mfi_institution_id, follow_up_status')
-    .eq('id', params.id)
+    .eq('id', id)
     .maybeSingle();
 
   if (!existing) {
@@ -58,7 +59,7 @@ async function assignMfi(request: Request, { params }: RouteParams) {
       follow_up_updated_at: now,
       verifier_id: auth.user.id,
     })
-    .eq('id', params.id)
+    .eq('id', id)
     .select('id, mfi_institution_id')
     .single();
 
@@ -73,7 +74,7 @@ async function assignMfi(request: Request, { params }: RouteParams) {
     actor_role: auth.user.role,
     action: 'application_mfi_assigned',
     entity_type: 'financing_applications',
-    entity_id: params.id,
+    entity_id: id,
     meta: {
       previous_mfi_institution_id: existing.mfi_institution_id,
       new_mfi_institution_id: parsed.data.mfi_institution_id,
@@ -83,7 +84,7 @@ async function assignMfi(request: Request, { params }: RouteParams) {
   if (request.headers.get('accept')?.includes('text/html')) {
     const returnTo = parsed.data.return_to?.startsWith('/admin/applications')
       ? parsed.data.return_to
-      : `/admin/applications/${params.id}`;
+      : `/admin/applications/${id}`;
     return NextResponse.redirect(new URL(returnTo, request.url));
   }
 

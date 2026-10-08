@@ -294,11 +294,12 @@ function leadSla(lead: Pick<LeadRow, 'status' | 'created_at' | 'next_follow_up_a
   return { label: `${ageDays}j`, className: 'bg-gray-100 text-gray-600' };
 }
 
-export default async function AdminLeadsPage({
-  searchParams,
-}: {
-  searchParams: { status?: string; type?: string; source?: string; assigned?: string; priority?: string; campaign?: string; inbound?: string };
-}) {
+export default async function AdminLeadsPage(
+  props: {
+    searchParams: Promise<{ status?: string; type?: string; source?: string; assigned?: string; priority?: string; campaign?: string; inbound?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const user = await requireAdminPage('leads');
 
   // Bounded explicitly. Unbounded, PostgREST stopped at db-max-rows and the

@@ -4,9 +4,10 @@ import { supabaseAdmin } from '@/lib/auth/server';
 import { isStaffRole } from '@/lib/auth/roles';
 import { checkMomoPayment } from '@/lib/mobilemoney';
 
-interface RouteParams { params: { id: string } }
+interface RouteParams { params: Promise<{ id: string }> }
 
-export async function GET(request: Request, { params }: RouteParams) {
+export async function GET(request: Request, props: RouteParams) {
+  const params = await props.params;
   const auth = await authenticateRequest(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

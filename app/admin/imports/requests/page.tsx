@@ -28,11 +28,12 @@ type RequestWithBuyer = ImportRequest & {
   };
 };
 
-export default async function AdminImportRequestsPage({
-  searchParams,
-}: {
-  searchParams: { status?: string; page?: string };
-}) {
+export default async function AdminImportRequestsPage(
+  props: {
+    searchParams: Promise<{ status?: string; page?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   await requireAdminPage('imports');
 
   const page = Math.max(1, parseInt(searchParams.page ?? '1', 10));

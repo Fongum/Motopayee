@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { isQueryFailure } from '@/lib/query-result';
 import { reportError } from '@/lib/error-reporting';
 
-interface RouteParams { params: { id: string } }
+interface RouteParams { params: Promise<{ id: string }> }
 
 const schema = z.object({
   action: z.enum(['call', 'whatsapp', 'email', 'meeting', 'documents', 'note', 'other']),
@@ -56,7 +56,8 @@ function parseBody(request: Request): Promise<Record<string, unknown>> {
   return Promise.resolve({});
 }
 
-export async function POST(request: Request, { params }: RouteParams) {
+export async function POST(request: Request, props: RouteParams) {
+  const params = await props.params;
   const auth = await requireStaff(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

@@ -38,11 +38,12 @@ const PROCESS = [
   { step: '4', title: 'Recevoir des réservations', text: 'Les paiements de réservation sont suivis via MotoPayee, avec une commission de lancement à partir de 10%.' },
 ];
 
-export default function RentalPartnersPage({
-  searchParams,
-}: {
-  searchParams?: AcquisitionSearchParams;
-}) {
+export default async function RentalPartnersPage(
+  props: {
+    searchParams?: Promise<AcquisitionSearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const campaignName = campaignNameFromSearch(searchParams, 'Rental partner page');
   const source = leadSourceFromSearch(searchParams);
 

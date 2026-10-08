@@ -43,11 +43,12 @@ const ORDER_PROGRESS_INDEX: Record<string, number> = {
   disputed: 1,
 };
 
-export default async function ImportOrderDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function ImportOrderDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   const user = await getCurrentUser();
   if (!user || user.role !== 'buyer') {
     redirect('/login');

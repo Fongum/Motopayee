@@ -38,7 +38,8 @@ const STATUS_LABELS: Record<string, string> = {
   approved: 'Approuvé', rejected: 'Refusé', disbursed: 'Financé', withdrawn: 'Annulé',
 };
 
-export default async function AdminApplicationDetailPage({ params }: { params: { id: string } }) {
+export default async function AdminApplicationDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const user = await requireAdminPage('applications');
 
   const [appResult, paymentsResult, institutionsResult, offersResult] = await Promise.all([

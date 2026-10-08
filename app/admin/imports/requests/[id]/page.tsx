@@ -43,11 +43,12 @@ type QuoteWithCreator = ImportQuote & {
   };
 };
 
-export default async function AdminImportRequestDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function AdminImportRequestDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   await requireAdminPage('imports');
 
   const requestData = rowOrNull(

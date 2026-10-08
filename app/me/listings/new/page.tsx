@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -11,7 +11,8 @@ function firstParam(searchParams: SearchParams | undefined, key: string) {
   return Array.isArray(value) ? value[0] ?? '' : value ?? '';
 }
 
-export default function NewListingPage({ searchParams }: { searchParams?: SearchParams }) {
+export default function NewListingPage(props: { searchParams: Promise<SearchParams> }) {
+  const searchParams = use(props.searchParams);
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');

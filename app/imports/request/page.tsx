@@ -4,18 +4,19 @@ import Footer from '@/app/(components)/Footer';
 import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
 import ImportRequestForm from './ImportRequestForm';
 
-export default async function ImportRequestPage({
-  searchParams,
-}: {
-  searchParams: {
-    offer_id?: string;
-    make?: string;
-    model?: string;
-    year_min?: string;
-    year_max?: string;
-    budget_max_xaf?: string;
-  };
-}) {
+export default async function ImportRequestPage(
+  props: {
+    searchParams: Promise<{
+      offer_id?: string;
+      make?: string;
+      model?: string;
+      year_min?: string;
+      year_max?: string;
+      budget_max_xaf?: string;
+    }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const user = await getCurrentUser();
   const isBuyer = user?.role === 'buyer';
   const linkedOffer = searchParams.offer_id

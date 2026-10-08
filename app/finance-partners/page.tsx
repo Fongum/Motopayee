@@ -51,11 +51,12 @@ const CLARIFICATIONS = [
   'Le classement des partenaires doit tenir compte de l\'adéquation avec l\'acheteur, de la rapidité de réponse, du coût et de la fiabilité.',
 ];
 
-export default function FinancePartnersPage({
-  searchParams,
-}: {
-  searchParams?: AcquisitionSearchParams;
-}) {
+export default async function FinancePartnersPage(
+  props: {
+    searchParams?: Promise<AcquisitionSearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const campaignName = campaignNameFromSearch(searchParams, 'Finance partner page');
   const source = leadSourceFromSearch(searchParams);
 

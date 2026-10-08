@@ -6,10 +6,11 @@ import { checkMomoPayment } from '@/lib/mobilemoney';
 import { updateImportPaymentStatus } from '@/lib/import-payments';
 
 interface RouteParams {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export async function GET(request: Request, { params }: RouteParams) {
+export async function GET(request: Request, props: RouteParams) {
+  const params = await props.params;
   const auth = await authenticateRequest(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

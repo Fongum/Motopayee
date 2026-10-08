@@ -59,7 +59,7 @@ describe('GET /api/payments/[id]/status', () => {
     });
 
     const { GET } = await load();
-    const response = await GET(request(), { params: { id: 'pay-1' } });
+    const response = await GET(request(), { params: Promise.resolve({ id: 'pay-1' }) });
 
     expect(response.status).toBe(403);
   });
@@ -70,7 +70,7 @@ describe('GET /api/payments/[id]/status', () => {
     });
 
     const { GET } = await load();
-    const response = await GET(request(), { params: { id: 'pay-1' } });
+    const response = await GET(request(), { params: Promise.resolve({ id: 'pay-1' }) });
 
     expect(response.status).toBe(200);
   });
@@ -82,7 +82,7 @@ describe('GET /api/payments/[id]/status', () => {
     });
 
     const { GET } = await load();
-    const response = await GET(request(), { params: { id: 'pay-1' } });
+    const response = await GET(request(), { params: Promise.resolve({ id: 'pay-1' }) });
 
     expect(response.status).toBe(200);
   });
@@ -97,7 +97,7 @@ describe('GET /api/files/thumb/[id]', () => {
     });
 
     const { GET } = await load();
-    const response = await GET(request(), { params: { id: 'asset-1' } });
+    const response = await GET(request(), { params: Promise.resolve({ id: 'asset-1' }) });
 
     expect(response.status).toBe(302);
     expect(supabase.signedUrls).toEqual([{ bucket: 'listing-media', path: 'listings/a.jpg' }]);
@@ -109,7 +109,7 @@ describe('GET /api/files/thumb/[id]', () => {
     });
 
     const { GET } = await load();
-    const response = await GET(request(), { params: { id: 'asset-1' } });
+    const response = await GET(request(), { params: Promise.resolve({ id: 'asset-1' }) });
 
     expect(response.status).toBe(404);
     expect(supabase.signedUrls).toEqual([]);
@@ -118,7 +118,7 @@ describe('GET /api/files/thumb/[id]', () => {
   it('does not distinguish a private asset from a missing one', async () => {
     supabase = createSupabaseMock({ media_assets: { data: null } });
     const { GET } = await load();
-    const missing = await GET(request(), { params: { id: 'nope' } });
+    const missing = await GET(request(), { params: Promise.resolve({ id: 'nope' }) });
 
     expect(missing.status).toBe(404);
   });
@@ -134,7 +134,7 @@ describe('GET /api/seller/listings/[id]/analytics', () => {
     });
 
     const { GET } = await load();
-    const response = await GET(request(), { params: { id: 'listing-1' } });
+    const response = await GET(request(), { params: Promise.resolve({ id: 'listing-1' }) });
 
     expect(response.status).toBe(404);
   });
@@ -149,7 +149,7 @@ describe('GET /api/seller/listings/[id]/analytics', () => {
     });
 
     const { GET } = await load();
-    const response = await GET(request(), { params: { id: 'listing-1' } });
+    const response = await GET(request(), { params: Promise.resolve({ id: 'listing-1' }) });
 
     expect(response.status).toBe(200);
   });
@@ -175,7 +175,7 @@ describe('POST /api/mfi/applications/[id]/offer', () => {
     });
 
     const { POST } = await load();
-    const response = await POST(jsonRequest(offerBody), { params: { id: 'app-1' } });
+    const response = await POST(jsonRequest(offerBody), { params: Promise.resolve({ id: 'app-1' }) });
 
     expect(response.status).toBe(403);
     // The follow-up update is the damaging part: it would overwrite the notes
@@ -199,7 +199,7 @@ describe('POST /api/mfi/applications/[id]/offer', () => {
     });
 
     const { POST } = await load();
-    const response = await POST(jsonRequest(offerBody), { params: { id: 'app-1' } });
+    const response = await POST(jsonRequest(offerBody), { params: Promise.resolve({ id: 'app-1' }) });
 
     expect(response.status).toBe(403);
     expect(supabase.writesTo('mfi_application_offers')).toEqual([]);
@@ -221,7 +221,7 @@ describe('POST /api/mfi/applications/[id]/offer', () => {
     });
 
     const { POST } = await load();
-    const response = await POST(jsonRequest(offerBody), { params: { id: 'app-1' } });
+    const response = await POST(jsonRequest(offerBody), { params: Promise.resolve({ id: 'app-1' }) });
 
     expect(response.status).toBeLessThan(300);
     expect(supabase.writesTo('mfi_application_offers')).toHaveLength(1);
@@ -234,7 +234,7 @@ describe('POST /api/mfi/applications/[id]/offer', () => {
     });
 
     const { POST } = await load();
-    const response = await POST(jsonRequest(offerBody), { params: { id: 'app-1' } });
+    const response = await POST(jsonRequest(offerBody), { params: Promise.resolve({ id: 'app-1' }) });
 
     expect(response.status).toBe(403);
     expect(supabase.writes).toEqual([]);
@@ -256,7 +256,7 @@ describe('POST /api/applications/[id]/docs', () => {
     });
 
     const { POST } = await load();
-    const response = await POST(jsonRequest(docBody), { params: { id: 'app-1' } });
+    const response = await POST(jsonRequest(docBody), { params: Promise.resolve({ id: 'app-1' }) });
 
     expect(response.status).toBe(404);
     expect(supabase.writesTo('documents')).toEqual([]);
@@ -269,7 +269,7 @@ describe('POST /api/applications/[id]/docs', () => {
     });
 
     const { POST } = await load();
-    const response = await POST(jsonRequest(docBody), { params: { id: 'app-1' } });
+    const response = await POST(jsonRequest(docBody), { params: Promise.resolve({ id: 'app-1' }) });
 
     expect(response.status).toBe(201);
     expect(supabase.writesTo('documents')).toHaveLength(1);
@@ -282,7 +282,7 @@ describe('POST /api/applications/[id]/docs', () => {
     });
 
     const { POST } = await load();
-    await POST(jsonRequest({ ...docBody, uploader_id: 'someone-else' }), { params: { id: 'app-1' } });
+    await POST(jsonRequest({ ...docBody, uploader_id: 'someone-else' }), { params: Promise.resolve({ id: 'app-1' }) });
 
     const write = supabase.writesTo('documents')[0].payload as { uploader_id: string; entity_id: string };
     expect(write.uploader_id).toBe('user-self');
@@ -295,7 +295,7 @@ describe('POST /api/applications/[id]/docs', () => {
     });
 
     const { POST } = await load();
-    const response = await POST(jsonRequest(docBody), { params: { id: 'app-1' } });
+    const response = await POST(jsonRequest(docBody), { params: Promise.resolve({ id: 'app-1' }) });
 
     expect(response.status).toBe(400);
     expect(supabase.writesTo('documents')).toEqual([]);
@@ -312,7 +312,7 @@ describe('POST /api/imports/orders/[id]/payments/request', () => {
     });
 
     const { POST } = await load();
-    const response = await POST(jsonRequest(depositBody), { params: { id: 'order-1' } });
+    const response = await POST(jsonRequest(depositBody), { params: Promise.resolve({ id: 'order-1' }) });
 
     expect(response.status).toBe(404);
     expect(supabase.writesTo('import_payments')).toEqual([]);
@@ -325,7 +325,7 @@ describe('POST /api/imports/orders/[id]/payments/request', () => {
     });
 
     const { POST } = await load();
-    const response = await POST(jsonRequest(depositBody), { params: { id: 'order-1' } });
+    const response = await POST(jsonRequest(depositBody), { params: Promise.resolve({ id: 'order-1' }) });
 
     expect(response.status).toBe(409);
     expect(supabase.writesTo('import_payments')).toEqual([]);
@@ -338,7 +338,7 @@ describe('POST /api/imports/orders/[id]/payments/request', () => {
     });
 
     const { POST } = await load();
-    const response = await POST(jsonRequest(depositBody), { params: { id: 'order-1' } });
+    const response = await POST(jsonRequest(depositBody), { params: Promise.resolve({ id: 'order-1' }) });
 
     expect(response.status).toBe(409);
     expect(supabase.writesTo('import_payments')).toEqual([]);
@@ -363,7 +363,7 @@ describe('PATCH /api/mfi-offers/[id]/buyer-response', () => {
     });
 
     const { PATCH } = await load();
-    const response = await PATCH(jsonRequest(responseBody), { params: { id: 'offer-1' } });
+    const response = await PATCH(jsonRequest(responseBody), { params: Promise.resolve({ id: 'offer-1' }) });
 
     expect(response.status).toBe(404);
     expect(supabase.writesTo('mfi_application_offers')).toEqual([]);
@@ -386,7 +386,7 @@ describe('PATCH /api/mfi-offers/[id]/buyer-response', () => {
     });
 
     const { PATCH } = await load();
-    const response = await PATCH(jsonRequest(responseBody), { params: { id: 'offer-1' } });
+    const response = await PATCH(jsonRequest(responseBody), { params: Promise.resolve({ id: 'offer-1' }) });
 
     expect(response.status).toBeLessThan(300);
     expect(supabase.writesTo('mfi_application_offers')).toHaveLength(1);

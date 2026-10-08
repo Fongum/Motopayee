@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireFieldAgent } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 
-interface RouteParams { params: { id: string } }
+interface RouteParams { params: Promise<{ id: string }> }
 
 /**
  * GET /api/field/listings/[id] — the vehicle a field agent is uploading for.
@@ -18,7 +18,8 @@ interface RouteParams { params: { id: string } }
  *
  * Same guard as the media upload beside it: assigned agent, or admin.
  */
-export async function GET(request: Request, { params }: RouteParams) {
+export async function GET(request: Request, props: RouteParams) {
+  const params = await props.params;
   const auth = await requireFieldAgent(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

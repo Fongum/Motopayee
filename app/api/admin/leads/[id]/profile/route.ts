@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { isQueryFailure } from '@/lib/query-result';
 import { reportError } from '@/lib/error-reporting';
 
-interface RouteParams { params: { id: string } }
+interface RouteParams { params: Promise<{ id: string }> }
 
 const schema = z.object({
   role: z.enum(['buyer', 'seller_individual', 'seller_dealer']),
@@ -42,7 +42,8 @@ function fallbackEmail(leadId: string, phone: string | null | undefined) {
   return `${digits || leadId.slice(0, 8)}.${leadId.slice(0, 8)}@lead.motopayee.local`;
 }
 
-export async function POST(request: Request, { params }: RouteParams) {
+export async function POST(request: Request, props: RouteParams) {
+  const params = await props.params;
   const auth = await requireStaff(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

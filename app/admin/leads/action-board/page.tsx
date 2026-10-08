@@ -262,11 +262,12 @@ function BoardSection({
   );
 }
 
-export default async function LeadActionBoardPage({
-  searchParams,
-}: {
-  searchParams: { scope?: string; campaign?: string };
-}) {
+export default async function LeadActionBoardPage(
+  props: {
+    searchParams: Promise<{ scope?: string; campaign?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const user = await requireAdminPage('leads');
   const isMine = searchParams.scope === 'mine';
   const campaignParam = searchParams.campaign;

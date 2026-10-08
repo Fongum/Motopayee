@@ -30,11 +30,12 @@ function queueHref(queue: string) {
   return queue === 'ready' ? '/admin/finance/eligible' : `/admin/finance/eligible?queue=${queue}`;
 }
 
-export default async function AdminFinanceEligiblePage({
-  searchParams,
-}: {
-  searchParams: { queue?: string };
-}) {
+export default async function AdminFinanceEligiblePage(
+  props: {
+    searchParams: Promise<{ queue?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   await requireAdminPage('finance');
 
   const queue = searchParams.queue ?? 'ready';

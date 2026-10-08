@@ -16,7 +16,8 @@ type LeadRow = {
   notes: string | null;
 };
 
-export default async function AdminNewListingPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function AdminNewListingPage(props: { searchParams: Promise<SearchParams> }) {
+  const searchParams = await props.searchParams;
   await requireAdminPage('listings');
 
   const [{ data: sellersData }, { data: leadData }] = await Promise.all([

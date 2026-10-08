@@ -75,11 +75,12 @@ type BookingRow = HireBooking & {
   fee?: FeeRow | FeeRow[] | null;
 };
 
-export default async function AdminHireBookingsPage({
-  searchParams,
-}: {
-  searchParams: { status?: string; fee?: string };
-}) {
+export default async function AdminHireBookingsPage(
+  props: {
+    searchParams: Promise<{ status?: string; fee?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   await requireAdminPage('hire');
 
   const feeFilter = isFeeStatus(searchParams.fee) ? searchParams.fee : null;

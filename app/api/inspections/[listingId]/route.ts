@@ -5,7 +5,7 @@ import { computeMVE, computePriceBand } from '@/lib/pricing';
 import { z } from 'zod';
 import type { ConditionGrade } from '@/lib/types';
 
-interface RouteParams { params: { listingId: string } }
+interface RouteParams { params: Promise<{ listingId: string }> }
 
 const schema = z.object({
   condition_grade: z.enum(['A', 'B', 'C', 'D']),
@@ -17,7 +17,8 @@ const schema = z.object({
   notes: z.string().optional(),
 });
 
-export async function POST(request: Request, { params }: RouteParams) {
+export async function POST(request: Request, props: RouteParams) {
+  const params = await props.params;
   const auth = await requireInspector(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

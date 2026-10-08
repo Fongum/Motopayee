@@ -54,7 +54,7 @@ export async function POST(request: Request) {
   // Auto sign-in after registration
   const loginResult = await signIn(email, password);
   if (loginResult.success && loginResult.session) {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     cookieStore.set('mp_access_token', loginResult.session.accessToken, {
       ...COOKIE_OPTIONS,
       maxAge: 60 * 60,

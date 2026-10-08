@@ -17,7 +17,8 @@ const NEXT_STEPS: Record<string, string> = {
   withdrawn: "Cette annonce a été retirée.",
 };
 
-export default async function SellerListingDetailPage({ params }: { params: { id: string } }) {
+export default async function SellerListingDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const user = await getCurrentUser();
   if (!user || !['seller_individual', 'seller_dealer'].includes(user.role)) redirect('/login');
 

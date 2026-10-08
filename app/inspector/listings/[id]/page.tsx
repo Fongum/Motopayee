@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/app/(components)/Navbar';
 
@@ -19,7 +19,8 @@ const CHECKLIST_ITEMS = [
   'Papiers — titre de propriété conforme',
 ];
 
-export default function InspectorPage({ params }: { params: { id: string } }) {
+export default function InspectorPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const router = useRouter();
   const [listing, setListing] = useState<Record<string, unknown> | null>(null);
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});

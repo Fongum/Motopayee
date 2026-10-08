@@ -26,11 +26,12 @@ type OrderRow = {
   request?: { make?: string | null; model?: string | null };
 };
 
-export default async function AdminImportOrdersPage({
-  searchParams,
-}: {
-  searchParams: { status?: string };
-}) {
+export default async function AdminImportOrdersPage(
+  props: {
+    searchParams: Promise<{ status?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   await requireAdminPage('imports');
 
   let query = supabaseAdmin
@@ -87,7 +88,6 @@ export default async function AdminImportOrdersPage({
           </Link>
         ))}
       </div>
-
 
       <TruncationNotice shown={orders.length} total={count} noun="commandes" />
       <div className="overflow-hidden rounded-[2rem] border border-gray-200 bg-white shadow-sm">

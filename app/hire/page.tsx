@@ -73,7 +73,8 @@ async function getHireListings(params: HireSearchParams) {
   return { listings: (data ?? []) as unknown as HireListing[], total: count ?? 0, failed: false };
 }
 
-export default async function HirePage({ searchParams }: { searchParams: RawHireParams }) {
+export default async function HirePage(props: { searchParams: Promise<RawHireParams> }) {
+  const searchParams = await props.searchParams;
   const params = parseHireSearch(searchParams);
   const page = params.page;
   const { listings, total, failed } = await getHireListings(params);

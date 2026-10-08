@@ -5,10 +5,11 @@ import { isQueryFailure } from '@/lib/query-result';
 import { reportError } from '@/lib/error-reporting';
 
 interface RouteParams {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export async function GET(request: Request, { params }: RouteParams) {
+export async function GET(request: Request, props: RouteParams) {
+  const params = await props.params;
   const auth = await requireInspector(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

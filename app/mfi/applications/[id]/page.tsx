@@ -25,11 +25,12 @@ const PAYMENT_STATUS_COLORS: Record<string, string> = {
   cancelled: 'bg-gray-100 text-gray-600',
 };
 
-export default async function MFIApplicationDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function MFIApplicationDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   const user = await getCurrentUser();
   if (!user) redirect('/login');
   if (user.role !== 'mfi_partner' && user.role !== 'admin') redirect('/');

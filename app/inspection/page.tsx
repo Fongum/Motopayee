@@ -49,11 +49,12 @@ const LIMITS = [
   "MotoPayee ne garantit ni l'approbation du financement ni la performance future du véhicule.",
 ];
 
-export default function InspectionPage({
-  searchParams,
-}: {
-  searchParams?: AcquisitionSearchParams;
-}) {
+export default async function InspectionPage(
+  props: {
+    searchParams?: Promise<AcquisitionSearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const campaignName = campaignNameFromSearch(searchParams, 'Inspection page');
   const source = leadSourceFromSearch(searchParams);
 

@@ -27,11 +27,12 @@ type OrderWithBuyer = ImportOrder & {
   };
 };
 
-export default async function AdminImportOrderDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function AdminImportOrderDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   await requireAdminPage('imports');
 
   const orderData = rowOrNull(

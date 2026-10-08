@@ -25,11 +25,12 @@ const ROLE_LABELS: Record<string, string> = {
   mfi_partner: 'Partenaire MFI',
 };
 
-export default async function UsersPage({
-  searchParams,
-}: {
-  searchParams: { role?: string; page?: string };
-}) {
+export default async function UsersPage(
+  props: {
+    searchParams: Promise<{ role?: string; page?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   await requireAdminPage('users');
 
   const page = Math.max(1, parseInt(searchParams.page ?? '1', 10));

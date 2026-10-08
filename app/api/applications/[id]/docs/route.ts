@@ -4,7 +4,7 @@ import { requireBuyer } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { z } from 'zod';
 
-interface RouteParams { params: { id: string } }
+interface RouteParams { params: Promise<{ id: string }> }
 
 const schema = z.object({
   doc_type: z.enum(['id_national', 'id_passport', 'income_proof', 'bank_statement', 'utility_bill', 'other']),
@@ -15,7 +15,8 @@ const schema = z.object({
   file_size_bytes: z.number().optional(),
 });
 
-export async function POST(request: Request, { params }: RouteParams) {
+export async function POST(request: Request, props: RouteParams) {
+  const params = await props.params;
   const auth = await requireBuyer(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

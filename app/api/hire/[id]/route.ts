@@ -12,10 +12,8 @@ import { reportError } from '@/lib/error-reporting';
 const HIRE_PRIVATE_COLUMNS = ['plate_number', 'latitude', 'longitude'] as const;
 
 // GET /api/hire/[id] — Get hire listing detail (public for published)
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { data, error } = await supabaseAdmin
     .from('hire_listings')
     .select('*, owner:profiles!owner_id(id, full_name, phone, is_verified, city), media:hire_listing_media(*)')
@@ -51,10 +49,8 @@ export async function GET(
 }
 
 // PATCH /api/hire/[id] — Update own hire listing
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const auth = await requireAuth(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
@@ -95,10 +91,8 @@ export async function PATCH(
 }
 
 // DELETE /api/hire/[id] — Withdraw own hire listing
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const auth = await requireAuth(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

@@ -26,11 +26,12 @@ const SOURCES = [
 
 const CSV_TEMPLATE = 'name,business_name,phone,email,city,interest,notes,campaign_name,lead_type,source,priority';
 
-export default async function LeadImportPage({
-  searchParams,
-}: {
-  searchParams: { created?: string; updated?: string; skipped?: string };
-}) {
+export default async function LeadImportPage(
+  props: {
+    searchParams: Promise<{ created?: string; updated?: string; skipped?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const user = await requireAdminPage('leads');
 
   const { data: staffData } = await supabaseAdmin
@@ -54,6 +55,7 @@ export default async function LeadImportPage({
           <Link href="/admin/leads/new" className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
             Nouveau lead
           </Link>
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- a file download from an API route, not a page */}
           <a href="/api/admin/leads/import/template" className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
             Template CSV
           </a>

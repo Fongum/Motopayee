@@ -15,7 +15,8 @@ type LeadRow = {
   notes: string | null;
 };
 
-export default async function AdminNewHireListingPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function AdminNewHireListingPage(props: { searchParams: Promise<SearchParams> }) {
+  const searchParams = await props.searchParams;
   await requireAdminPage('hire');
 
   const [{ data: ownersData }, { data: leadData }] = await Promise.all([

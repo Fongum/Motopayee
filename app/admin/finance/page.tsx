@@ -61,11 +61,12 @@ const COMMISSION_COLORS: Record<string, string> = {
   waived: 'bg-gray-100 text-gray-600',
 };
 
-export default async function AdminFinancePage({
-  searchParams,
-}: {
-  searchParams: { status?: string; commission?: string };
-}) {
+export default async function AdminFinancePage(
+  props: {
+    searchParams: Promise<{ status?: string; commission?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   await requireAdminPage('finance');
 
   const commissionFilter = isCommissionStatus(searchParams.commission) ? searchParams.commission : null;
