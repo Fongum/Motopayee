@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/auth/server';
 import { notifyListingPublished } from '@/lib/notifications';
 import { logFailure } from '@/lib/logger';
 
-interface RouteParams { params: { id: string } }
+interface RouteParams { params: Promise<{ id: string }> }
 
 /**
  * Where a listing may go next.
@@ -32,7 +32,8 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   published: ['sold', 'withdrawn'],
 };
 
-export async function POST(request: Request, { params }: RouteParams) {
+export async function POST(request: Request, props: RouteParams) {
+  const params = await props.params;
   const auth = await requireAdmin(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

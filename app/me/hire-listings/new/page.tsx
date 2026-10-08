@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 
 const FEATURES_OPTIONS = [
@@ -16,7 +16,8 @@ function firstParam(searchParams: SearchParams | undefined, key: string) {
   return Array.isArray(value) ? value[0] ?? '' : value ?? '';
 }
 
-export default function NewHireListingPage({ searchParams }: { searchParams?: SearchParams }) {
+export default function NewHireListingPage(props: { searchParams: Promise<SearchParams> }) {
+  const searchParams = use(props.searchParams);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

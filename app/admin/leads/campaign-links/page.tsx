@@ -1,11 +1,12 @@
 import CampaignLinkBuilder from './CampaignLinkBuilder';
 import { requireAdminPage } from '@/lib/auth/admin-access';
 
-export default async function CampaignLinksPage({
-  searchParams,
-}: {
-  searchParams?: { campaign?: string; source?: string; path?: string };
-}) {
+export default async function CampaignLinksPage(
+  props: {
+    searchParams?: Promise<{ campaign?: string; source?: string; path?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   await requireAdminPage('leads');
 
   return (

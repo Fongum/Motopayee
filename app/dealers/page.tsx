@@ -44,11 +44,12 @@ const PROCESS = [
   { step: '4', title: 'Suivre les prospects', text: 'MotoPayee redirige les demandes, effectue le suivi et évalue la qualité des prospects du concessionnaire pendant le pilote.' },
 ];
 
-export default function DealersPage({
-  searchParams,
-}: {
-  searchParams?: AcquisitionSearchParams;
-}) {
+export default async function DealersPage(
+  props: {
+    searchParams?: Promise<AcquisitionSearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const campaignName = campaignNameFromSearch(searchParams, 'Dealer pilot page');
   const source = leadSourceFromSearch(searchParams);
 

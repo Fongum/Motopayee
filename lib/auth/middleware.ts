@@ -53,7 +53,7 @@ export async function authenticateRequest(request: Request): Promise<AuthCheckRe
   }
 
   // 2. Check cookie
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const accessToken = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
   if (accessToken) {
     const user = await verifyToken(accessToken);

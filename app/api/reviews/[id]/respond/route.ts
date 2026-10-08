@@ -9,10 +9,8 @@ const respondSchema = z.object({
 });
 
 // POST /api/reviews/[id]/respond — seller/owner replies to a review
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const auth = await requireAuth(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

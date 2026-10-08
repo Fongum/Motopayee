@@ -26,11 +26,12 @@ function formatXAF(n: number) {
   }).format(n);
 }
 
-export default async function MFIApplicationsPage({
-  searchParams,
-}: {
-  searchParams: { filter?: string };
-}) {
+export default async function MFIApplicationsPage(
+  props: {
+    searchParams: Promise<{ filter?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const user = await getCurrentUser();
   if (!user) redirect('/login');
   if (user.role !== 'mfi_partner' && user.role !== 'admin') redirect('/');

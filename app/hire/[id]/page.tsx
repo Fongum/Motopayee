@@ -22,8 +22,9 @@ import ViewTracker from '../../(components)/ViewTracker';
 import PhotoGallery from '../../(components)/PhotoGallery';
 import JsonLd from '../../(components)/JsonLd';
 import { HireTrustBadges } from '../../(components)/TrustLabelBadges';
+import Link from 'next/link';
 
-type Props = { params: { id: string } };
+type Props = { params: Promise<{ id: string }> };
 
 async function getListing(id: string) {
   // The owner's phone is selected deliberately here — this page is the contact
@@ -66,7 +67,8 @@ async function getReviews(ownerId: string): Promise<ReviewData[]> {
   }));
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
   const listing = await getListing(params.id);
   if (!listing) return { title: 'Non trouvé — MotoPayee' };
   return {
@@ -89,7 +91,8 @@ const HIRE_TYPE_FR: Record<string, string> = {
   both: 'Avec ou sans chauffeur',
 };
 
-export default async function HireDetailPage({ params }: Props) {
+export default async function HireDetailPage(props: Props) {
+  const params = await props.params;
   const [listing, user] = await Promise.all([
     getListing(params.id),
     getCurrentUser().catch(() => null),
@@ -122,7 +125,7 @@ export default async function HireDetailPage({ params }: Props) {
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Breadcrumb */}
           <nav className="text-sm text-gray-400 mb-6">
-            <a href="/hire" className="hover:text-brand-navy">Location</a>
+            <Link href="/hire" className="hover:text-brand-navy">Location</Link>
             <span className="mx-2">/</span>
             <span className="text-gray-600">{listing.year} {listing.make} {listing.model}</span>
           </nav>

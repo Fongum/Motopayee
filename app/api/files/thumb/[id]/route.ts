@@ -11,10 +11,8 @@ import { PUBLIC_MEDIA_BUCKET } from '@/lib/storage-buckets';
  * public image endpoint into a reader for private ownership and ID documents
  * for anyone holding an asset id. Only the public media bucket is served.
  */
-export async function GET(
-  _request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { data: asset } = await supabaseAdmin
     .from('media_assets')
     .select('storage_path, bucket')

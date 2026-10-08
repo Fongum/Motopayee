@@ -4,14 +4,15 @@ import { requireBuyer } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 
 interface RouteParams {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 const schema = z.object({
   buyer_response: z.enum(['interested', 'not_interested']),
 });
 
-export async function PATCH(request: Request, { params }: RouteParams) {
+export async function PATCH(request: Request, props: RouteParams) {
+  const params = await props.params;
   const auth = await requireBuyer(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

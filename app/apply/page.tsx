@@ -4,11 +4,12 @@ import Footer from '../(components)/Footer';
 import LeadCaptureForm from '../(components)/LeadCaptureForm';
 import { campaignNameFromSearch, leadSourceFromSearch, type AcquisitionSearchParams } from '@/lib/campaigns';
 
-export default function ApplyPage({
-  searchParams,
-}: {
-  searchParams?: AcquisitionSearchParams;
-}) {
+export default async function ApplyPage(
+  props: {
+    searchParams?: Promise<AcquisitionSearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const campaignName = campaignNameFromSearch(searchParams, 'Buyer finance page');
   const source = leadSourceFromSearch(searchParams);
 

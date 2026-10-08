@@ -4,9 +4,10 @@ import { notifyDisbursed } from '@/lib/notifications';
 import { logFailure } from '@/lib/logger';
 import { ensureFinanceCommission } from '@/lib/finance-commissions';
 
-interface RouteParams { params: { id: string } }
+interface RouteParams { params: Promise<{ id: string }> }
 
-export async function POST(request: Request, { params }: RouteParams) {
+export async function POST(request: Request, props: RouteParams) {
+  const params = await props.params;
   const user = await getCurrentUser();
   if (!user || (user.role !== 'mfi_partner' && user.role !== 'admin')) {
     return NextResponse.json({ error: 'MFI partner access required.' }, { status: 403 });

@@ -81,7 +81,8 @@ async function getListings(params: ListingSearchParams) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default async function ListingsPage({ searchParams }: { searchParams: RawSearchParams }) {
+export default async function ListingsPage(props: { searchParams: Promise<RawSearchParams> }) {
+  const searchParams = await props.searchParams;
   const params = parseListingSearch(searchParams);
   const page = params.page;
   const { listings, total, failed } = await getListings(params);

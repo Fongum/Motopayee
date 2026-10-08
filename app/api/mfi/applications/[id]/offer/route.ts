@@ -4,7 +4,7 @@ import { requireMFIPartner } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 
 interface RouteParams {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 const schema = z.object({
@@ -15,7 +15,8 @@ const schema = z.object({
   notes: z.string().trim().max(1000).optional(),
 });
 
-export async function POST(request: Request, { params }: RouteParams) {
+export async function POST(request: Request, props: RouteParams) {
+  const params = await props.params;
   const auth = await requireMFIPartner(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

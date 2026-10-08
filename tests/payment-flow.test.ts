@@ -89,7 +89,7 @@ describe('deposit request → callback → settled', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: '677000000', provider: 'mtn_momo' }),
       }),
-      { params: { id: 'order-1' } }
+      { params: Promise.resolve({ id: 'order-1' }) }
     );
 
     expect(response.status).toBeLessThan(300);

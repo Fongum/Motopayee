@@ -4,9 +4,10 @@ import { supabaseAdmin } from '@/lib/auth/server';
 import { notifyApplicationSubmitted } from '@/lib/notifications';
 import { logFailure } from '@/lib/logger';
 
-interface RouteParams { params: { id: string } }
+interface RouteParams { params: Promise<{ id: string }> }
 
-export async function POST(request: Request, { params }: RouteParams) {
+export async function POST(request: Request, props: RouteParams) {
+  const params = await props.params;
   const auth = await requireBuyer(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

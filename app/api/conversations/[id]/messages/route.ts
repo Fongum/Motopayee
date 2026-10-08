@@ -10,10 +10,8 @@ const messageSchema = z.object({
 });
 
 // GET /api/conversations/[id]/messages — get messages for a conversation
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const auth = await requireAuth(request);
   if (!auth.authenticated) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
@@ -56,10 +54,8 @@ export async function GET(
 }
 
 // POST /api/conversations/[id]/messages — send a message
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const auth = await requireAuth(request);
   if (!auth.authenticated) return NextResponse.json({ error: auth.error }, { status: auth.status });
 

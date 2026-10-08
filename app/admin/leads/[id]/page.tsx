@@ -211,7 +211,7 @@ type LeadRow = {
   }>;
 };
 
-interface PageProps { params: { id: string } }
+interface PageProps { params: Promise<{ id: string }> }
 
 function ageInDays(date: string) {
   return Math.max(0, Math.floor((Date.now() - new Date(date).getTime()) / (24 * 60 * 60 * 1000)));
@@ -241,7 +241,8 @@ function leadSla(lead: Pick<LeadRow, 'status' | 'created_at' | 'next_follow_up_a
   return { label: `${ageDays}j`, className: 'bg-gray-100 text-gray-600' };
 }
 
-export default async function AdminLeadDetailPage({ params }: PageProps) {
+export default async function AdminLeadDetailPage(props: PageProps) {
+  const params = await props.params;
   await requireAdminPage('leads');
 
   const [leadResult, { data: staffData }] = await Promise.all([

@@ -19,11 +19,12 @@ function formatXAF(amount: number) {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
 }
 
-export default async function AdminListingsPage({
-  searchParams,
-}: {
-  searchParams: { status?: string; financeable?: string; page?: string };
-}) {
+export default async function AdminListingsPage(
+  props: {
+    searchParams: Promise<{ status?: string; financeable?: string; page?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   await requireAdminPage('listings');
 
   const page = Math.max(1, parseInt(searchParams.page ?? '1', 10));

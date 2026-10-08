@@ -19,11 +19,12 @@ const FUEL_FR: Record<string, string> = {
   petrol: 'Essence', diesel: 'Diesel', electric: 'Électrique', hybrid: 'Hybride', other: 'Autre',
 };
 
-export default async function ComparePage({
-  searchParams,
-}: {
-  searchParams: { ids?: string; type?: string };
-}) {
+export default async function ComparePage(
+  props: {
+    searchParams: Promise<{ ids?: string; type?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const ids = (searchParams.ids ?? '').split(',').filter(Boolean);
   if (ids.length < 2) notFound();
 

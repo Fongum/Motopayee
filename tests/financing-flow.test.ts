@@ -82,7 +82,7 @@ describe('step: the institution offers on a routed file', () => {
     });
 
     const { POST } = await import('@/app/api/mfi/applications/[id]/offer/route');
-    const response = await POST(jsonRequest({ status: 'submitted', proposed_tenor_months: 24 }), { params: { id: APP_ID } });
+    const response = await POST(jsonRequest({ status: 'submitted', proposed_tenor_months: 24 }), { params: Promise.resolve({ id: APP_ID }) });
 
     expect(response.status).toBeLessThan(300);
 
@@ -111,7 +111,7 @@ describe('step: the buyer answers the offer', () => {
     });
 
     const { PATCH } = await import('@/app/api/mfi-offers/[id]/buyer-response/route');
-    const response = await PATCH(jsonRequest({ buyer_response: 'interested' }), { params: { id: 'offer-1' } });
+    const response = await PATCH(jsonRequest({ buyer_response: 'interested' }), { params: Promise.resolve({ id: 'offer-1' }) });
 
     expect(response.status).toBeLessThan(300);
     const update = supabase.writesTo('mfi_application_offers')[0].payload as { buyer_response: string };
@@ -133,7 +133,7 @@ describe('step: disbursement', () => {
     });
 
     const { POST } = await load();
-    const response = await POST(jsonRequest(), { params: { id: APP_ID } });
+    const response = await POST(jsonRequest(), { params: Promise.resolve({ id: APP_ID }) });
 
     expect(response.status).toBeLessThan(300);
     const update = supabase.writesTo('financing_applications')[0].payload as { status: string; disbursed_at: string };
@@ -151,7 +151,7 @@ describe('step: disbursement', () => {
     });
 
     const { POST } = await load();
-    const response = await POST(jsonRequest(), { params: { id: APP_ID } });
+    const response = await POST(jsonRequest(), { params: Promise.resolve({ id: APP_ID }) });
 
     expect(response.status).toBe(400);
     expect(supabase.writesTo('financing_applications')).toEqual([]);
@@ -166,7 +166,7 @@ describe('step: disbursement', () => {
     });
 
     const { POST } = await load();
-    const response = await POST(jsonRequest(), { params: { id: APP_ID } });
+    const response = await POST(jsonRequest(), { params: Promise.resolve({ id: APP_ID }) });
 
     expect(response.status).toBe(403);
     expect(supabase.writesTo('financing_applications')).toEqual([]);
@@ -182,7 +182,7 @@ describe('step: disbursement', () => {
     });
 
     const { POST } = await load();
-    const response = await POST(jsonRequest(), { params: { id: APP_ID } });
+    const response = await POST(jsonRequest(), { params: Promise.resolve({ id: APP_ID }) });
 
     expect(response.status).toBe(400);
     expect(supabase.writesTo('financing_applications')).toEqual([]);
@@ -200,7 +200,7 @@ describe('step: disbursement', () => {
     });
 
     const { POST } = await load();
-    await POST(jsonRequest(), { params: { id: APP_ID } });
+    await POST(jsonRequest(), { params: Promise.resolve({ id: APP_ID }) });
 
     const audit = supabase.writesTo('audit_logs')[0].payload as { action: string; actor_id: string; entity_id: string };
     expect(audit.action).toBe('application_disbursed');

@@ -52,7 +52,8 @@ function BarChart({ data, unit, color = '#1a3a6b' }: { data: DayData[]; unit: st
   );
 }
 
-export default async function ListingAnalyticsPage({ params }: { params: { id: string } }) {
+export default async function ListingAnalyticsPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const user = await getCurrentUser();
   if (!user || !['seller_individual', 'seller_dealer'].includes(user.role)) redirect('/login');
 

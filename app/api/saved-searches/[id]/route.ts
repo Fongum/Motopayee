@@ -23,10 +23,8 @@ const patchSchema = z
   });
 
 // PATCH /api/saved-searches/[id]
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const auth = await requireAuth(request);
   if (!auth.authenticated) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
@@ -53,10 +51,8 @@ export async function PATCH(
 }
 
 // DELETE /api/saved-searches/[id]
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const auth = await requireAuth(request);
   if (!auth.authenticated) return NextResponse.json({ error: auth.error }, { status: auth.status });
 

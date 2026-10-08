@@ -3,7 +3,7 @@ import { requireAdmin } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { z } from 'zod';
 
-interface RouteParams { params: { id: string } }
+interface RouteParams { params: Promise<{ id: string }> }
 
 const patchSchema = z.object({
   financeable: z.boolean().optional(),
@@ -12,7 +12,8 @@ const patchSchema = z.object({
   manual_review_required: z.boolean().optional(),
 });
 
-export async function PATCH(request: Request, { params }: RouteParams) {
+export async function PATCH(request: Request, props: RouteParams) {
+  const params = await props.params;
   const auth = await requireAdmin(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
@@ -38,7 +39,8 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   return NextResponse.json({ rule: data });
 }
 
-export async function DELETE(request: Request, { params }: RouteParams) {
+export async function DELETE(request: Request, props: RouteParams) {
+  const params = await props.params;
   const auth = await requireAdmin(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

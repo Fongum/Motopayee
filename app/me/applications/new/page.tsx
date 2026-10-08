@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/app/(components)/Navbar';
 import type { Listing } from '@/lib/types';
+import Link from 'next/link';
 
 export default function NewApplicationPage() {
   const router = useRouter();
@@ -61,7 +62,7 @@ export default function NewApplicationPage() {
 
         {!listingId ? (
           <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-red-700">
-            Aucun véhicule sélectionné. <a href="/listings" className="underline">Choisir un véhicule</a>
+            Aucun véhicule sélectionné. <Link href="/listings" className="underline">Choisir un véhicule</Link>
           </div>
         ) : !listing ? (
           <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-red-700">

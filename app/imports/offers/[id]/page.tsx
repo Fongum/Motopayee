@@ -28,11 +28,12 @@ function getMedia(offer: ImportOffer) {
   return urls;
 }
 
-export default async function ImportOfferDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function ImportOfferDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   const data = rowOrNull(
     await supabaseAdmin
       .from('import_offers')

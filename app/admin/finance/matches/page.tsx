@@ -12,11 +12,12 @@ function leadProfileId(lead: { converted_entity_type: string | null; converted_e
   return lead.converted_entity_type === 'profile' ? lead.converted_entity_id : null;
 }
 
-export default async function AdminFinanceMatchesPage({
-  searchParams,
-}: {
-  searchParams: { lead_id?: string; buyer_id?: string };
-}) {
+export default async function AdminFinanceMatchesPage(
+  props: {
+    searchParams: Promise<{ lead_id?: string; buyer_id?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   await requireAdminPage('finance');
 
   const [{ data: leadData }, { data: listingData }, { data: applicationData }] = await Promise.all([

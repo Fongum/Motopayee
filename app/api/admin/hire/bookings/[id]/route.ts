@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/auth/server';
 import { ensureHireServiceFee } from '@/lib/hire-service-fees';
 import { z } from 'zod';
 
-interface RouteParams { params: { id: string } }
+interface RouteParams { params: Promise<{ id: string }> }
 
 const schema = z.object({
   action: z.enum(['confirm', 'start', 'complete', 'cancel', 'dispute', 'mark_deposit_paid', 'mark_fully_paid', 'refund']),
@@ -12,7 +12,8 @@ const schema = z.object({
   owner_notes: z.string().optional(),
 });
 
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
+export async function PATCH(request: NextRequest, props: RouteParams) {
+  const params = await props.params;
   const auth = await requireStaff(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

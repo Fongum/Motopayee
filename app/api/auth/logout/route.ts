@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { signOut } from '@/lib/auth/server';
 
 export async function POST() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const accessToken = cookieStore.get('mp_access_token')?.value;
 
   if (accessToken) {

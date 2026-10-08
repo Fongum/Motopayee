@@ -3,7 +3,7 @@ import { requireStaff } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/auth/server';
 import { reportError } from '@/lib/error-reporting';
 
-interface RouteParams { params: { id: string } }
+interface RouteParams { params: Promise<{ id: string }> }
 
 /**
  * POST /api/admin/imports/requests/[id] — move a request through triage.
@@ -24,7 +24,8 @@ const ALLOWED: Record<string, string[]> = {
   quoted: ['cancelled'],
 };
 
-export async function POST(request: Request, { params }: RouteParams) {
+export async function POST(request: Request, props: RouteParams) {
+  const params = await props.params;
   const auth = await requireStaff(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

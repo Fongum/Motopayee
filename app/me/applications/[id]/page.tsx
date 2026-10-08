@@ -5,7 +5,8 @@ import Link from 'next/link';
 import ApplicationDetail from './ApplicationDetail';
 import type { FinancingApplication, MFIApplicationOffer } from '@/lib/types';
 
-export default async function ApplicationDetailPage({ params }: { params: { id: string } }) {
+export default async function ApplicationDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const user = await getCurrentUser();
   if (!user || user.role !== 'buyer') redirect('/login');
 

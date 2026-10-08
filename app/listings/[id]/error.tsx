@@ -23,6 +23,7 @@ export default function ListingError({
           <button onClick={reset} className="bg-brand-navy text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-brand-navy-dark transition text-sm">
             Réessayer
           </button>
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- a full page load clears whatever state broke this page */}
           <a href="/listings" className="border border-gray-300 text-gray-700 font-medium px-5 py-2.5 rounded-xl hover:bg-gray-50 transition text-sm">
             Toutes les annonces
           </a>

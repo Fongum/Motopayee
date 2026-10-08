@@ -11,7 +11,7 @@ import { parseBody, phoneSchema } from '@/lib/validation';
 import { BUYER_PAYABLE_TYPES, PAYMENT_RULES, checkPayable } from '@/lib/import-payment-types';
 
 interface RouteParams {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 // The amount is read from the order, never from the client. The type is the
@@ -23,7 +23,8 @@ const paymentSchema = z.object({
   payment_type: z.enum(BUYER_PAYABLE_TYPES).default('reservation_deposit'),
 });
 
-export async function POST(request: Request, { params }: RouteParams) {
+export async function POST(request: Request, props: RouteParams) {
+  const params = await props.params;
   const auth = await requireBuyer(request);
   if (!auth.authenticated) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

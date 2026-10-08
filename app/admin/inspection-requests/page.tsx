@@ -71,11 +71,12 @@ type PaymentSummary = {
   created_at: string;
 };
 
-export default async function AdminInspectionRequestsPage({
-  searchParams,
-}: {
-  searchParams: { status?: string; payment?: string };
-}) {
+export default async function AdminInspectionRequestsPage(
+  props: {
+    searchParams: Promise<{ status?: string; payment?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   await requireAdminPage('inspection-requests');
 
   const paymentFilter = ['pending', 'processing', 'successful', 'failed', 'cancelled'].includes(searchParams.payment ?? '')

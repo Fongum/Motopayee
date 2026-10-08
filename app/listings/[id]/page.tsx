@@ -89,9 +89,8 @@ async function getReviews(sellerId: string): Promise<ReviewData[]> {
 
 // ─── Dynamic SEO metadata ──────────────────────────────────────────────────────
 
-export async function generateMetadata(
-  { params }: { params: { id: string } }
-): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const listing = await getListing(params.id);
   if (!listing) return { title: 'Annonce introuvable — MotoPayee' };
 
@@ -154,11 +153,12 @@ function getLatestInspection(listing: PublicListing): Inspection | null {
   ))[0];
 }
 
-export default async function ListingDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function ListingDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   const [listing, user] = await Promise.all([
     getListing(params.id),
     getCurrentUser().catch(() => null),

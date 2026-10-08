@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import Navbar from '@/app/(components)/Navbar';
 
-export default function FieldMediaPage({ params }: { params: { id: string } }) {
+export default function FieldMediaPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const [listing, setListing] = useState<Record<string, unknown> | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');

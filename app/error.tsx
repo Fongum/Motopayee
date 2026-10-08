@@ -58,6 +58,7 @@ export default function RouteError({
           >
             Réessayer
           </button>
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- a full page load clears whatever state broke the app */}
           <a
             href="/"
             className="border border-gray-300 text-gray-700 font-medium px-5 py-2.5 rounded-xl hover:bg-gray-50 transition text-sm"

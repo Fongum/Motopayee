@@ -48,7 +48,7 @@ function profileToAuthUser(profile: Profile): AuthUser {
 }
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const accessToken = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
   if (!accessToken) return null;
 

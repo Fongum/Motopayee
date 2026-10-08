@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: result.error }, { status: 401 });
   }
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   if (result.session) {
     cookieStore.set('mp_access_token', result.session.accessToken, {
       ...COOKIE_OPTIONS,

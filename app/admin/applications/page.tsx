@@ -24,11 +24,12 @@ const FOLLOW_UP_LABELS: Record<string, string> = {
   waiting_mfi: 'Attente IMF',
 };
 
-export default async function AdminApplicationsPage({
-  searchParams,
-}: {
-  searchParams: { status?: string; page?: string };
-}) {
+export default async function AdminApplicationsPage(
+  props: {
+    searchParams: Promise<{ status?: string; page?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const user = await requireAdminPage('applications');
 
   const page = Math.max(1, parseInt(searchParams.page ?? '1', 10));

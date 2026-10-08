@@ -37,11 +37,12 @@ const processSteps = [
   { step: '4', label: 'Recevez des demandes', desc: 'Les acheteurs passent par MotoPayee, surtout si le vehicule n est pas encore verifie.' },
 ];
 
-export default function SellPage({
-  searchParams,
-}: {
-  searchParams?: AcquisitionSearchParams;
-}) {
+export default async function SellPage(
+  props: {
+    searchParams?: Promise<AcquisitionSearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const campaignName = campaignNameFromSearch(searchParams, 'Sell page');
   const source = leadSourceFromSearch(searchParams);
 

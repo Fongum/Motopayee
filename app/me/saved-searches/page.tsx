@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
 import type { Metadata } from 'next';
 import SavedSearchActions from './SavedSearchActions';
+import Link from 'next/link';
 
 export const metadata: Metadata = { title: 'Recherches sauvées — MotoPayee' };
 
@@ -27,7 +28,7 @@ export default async function SavedSearchesPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold text-gray-900">Recherches sauvées</h1>
-        <a href="/listings" className="text-sm text-[#1a3a6b] hover:underline">Parcourir les annonces</a>
+        <Link href="/listings" className="text-sm text-[#1a3a6b] hover:underline">Parcourir les annonces</Link>
       </div>
 
       {searches.length === 0 ? (

@@ -4,10 +4,11 @@ import { isQueryFailure } from '@/lib/query-result';
 import { reportError } from '@/lib/error-reporting';
 
 interface RouteParams {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export async function GET(_request: Request, { params }: RouteParams) {
+export async function GET(_request: Request, props: RouteParams) {
+  const params = await props.params;
   const { data, error } = await supabaseAdmin
     .from('listings')
     // Unauthenticated, so named public columns only. `*` here handed anyone

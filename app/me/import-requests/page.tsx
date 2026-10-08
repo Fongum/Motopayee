@@ -21,11 +21,12 @@ function formatXAF(value: number | string) {
   }).format(Number(value));
 }
 
-export default async function MyImportRequestsPage({
-  searchParams,
-}: {
-  searchParams: { submitted?: string };
-}) {
+export default async function MyImportRequestsPage(
+  props: {
+    searchParams: Promise<{ submitted?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const user = await getCurrentUser();
   if (!user || user.role !== 'buyer') {
     redirect('/login');

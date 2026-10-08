@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, getCurrentUser } from '@/lib/auth/server';
 
-interface RouteParams { params: { id: string } }
+interface RouteParams { params: Promise<{ id: string }> }
 
 /** Called client-side by ViewTracker on listing detail mount. Fire-and-forget. */
-export async function POST(_req: Request, { params }: RouteParams) {
+export async function POST(_req: Request, props: RouteParams) {
+  const params = await props.params;
   const user = await getCurrentUser().catch(() => null);
 
   await supabaseAdmin.from('listing_views').insert({

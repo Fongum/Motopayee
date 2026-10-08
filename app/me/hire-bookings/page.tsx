@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser, supabaseAdmin } from '@/lib/auth/server';
 import type { HireBooking } from '@/lib/types';
 import BookingActions from './BookingActions';
+import Link from 'next/link';
 
 function formatXAF(amount: number): string {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
@@ -85,7 +86,7 @@ export default async function MyHireBookingsPage() {
         {myRentals.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
             <p className="text-gray-500 mb-2">Aucune réservation</p>
-            <a href="/hire" className="text-[#3d9e3d] font-semibold hover:underline">Parcourir les véhicules</a>
+            <Link href="/hire" className="text-[#3d9e3d] font-semibold hover:underline">Parcourir les véhicules</Link>
           </div>
         ) : (
           <div className="space-y-3">

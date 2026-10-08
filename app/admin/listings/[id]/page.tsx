@@ -12,7 +12,8 @@ function formatXAF(amount: number) {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
 }
 
-export default async function AdminListingDetailPage({ params }: { params: { id: string } }) {
+export default async function AdminListingDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const user = await requireAdminPage('listings');
 
   const result = await supabaseAdmin

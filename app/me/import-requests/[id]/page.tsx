@@ -36,11 +36,12 @@ type RequestWithOffer = ImportRequest & {
   offer?: Pick<ImportOffer, 'id' | 'headline' | 'status'>;
 };
 
-export default async function ImportRequestDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function ImportRequestDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   const user = await getCurrentUser();
   if (!user || user.role !== 'buyer') {
     redirect('/login');
